@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"echo_last_signal"
+title = "The Last Broadcast"
+category = "Broadcasts"
+quality = "Clear Echo"
+hint = "A memory stirs here. A voice, caught mid-sentence, from the night everyone left."
+memory_text = "\"...if you can still hear this, take the north road. We waited as long as we could.\" The last transmission from this place settles into you -- and a photograph you were carrying remembers its faces."
+keepsake_item = &"old_photo"

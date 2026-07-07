@@ -1,0 +1,36 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/scene_exit.gd" id="1_exit"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
+size = Vector2(82, 88)
+
+[node name="SceneExit" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_exit")
+prompt = "Leave"
+
+[node name="RoadThreshold" type="Polygon2D" parent="."]
+color = Color(0.08, 0.085, 0.085, 1)
+polygon = PackedVector2Array(-44, 20, 44, 20, 30, 42, -30, 42)
+
+[node name="Frame" type="Polygon2D" parent="."]
+color = Color(0.78, 0.66, 0.32, 1)
+polygon = PackedVector2Array(-36, -42, 36, -42, 36, 36, -36, 36)
+
+[node name="Doorway" type="Polygon2D" parent="."]
+color = Color(0.28, 0.74, 0.68, 1)
+polygon = PackedVector2Array(-24, -32, 24, -32, 24, 36, -24, 36)
+
+[node name="Beacon" type="Polygon2D" parent="."]
+color = Color(1, 0.92, 0.45, 0.65)
+polygon = PackedVector2Array(0, -62, 13, -40, 4, -40, 4, -24, -4, -24, -4, -40, -13, -40)
+
+[node name="Arrow" type="Polygon2D" parent="."]
+color = Color(1, 0.95, 0.55, 1)
+polygon = PackedVector2Array(-16, 4, 6, 4, 6, -8, 24, 14, 6, 36, 6, 24, -16, 24)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_trigger")

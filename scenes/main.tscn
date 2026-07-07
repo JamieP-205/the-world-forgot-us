@@ -1,0 +1,21 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
+[ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3_hud"]
+[ext_resource type="PackedScene" path="res://scenes/maps/test_map.tscn" id="4_startlevel"]
+
+[node name="Main" type="Node2D"]
+script = ExtResource("1_main")
+start_level = ExtResource("4_startlevel")
+start_spawn = &"from_base"
+
+[node name="WorldTint" type="CanvasModulate" parent="."]
+color = Color(0.76, 0.78, 0.76, 1)
+
+[node name="LevelHolder" type="Node2D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+position = Vector2(0, 160)
+
+[node name="HUD" parent="." instance=ExtResource("3_hud")]

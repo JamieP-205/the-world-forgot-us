@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BaseUpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/base/base_upgrade_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"route_beacon"
+title = "Roadside Beacon"
+description = "A powered marker on the road home."
+cost = {
+"battery": 1,
+"scrap": 2
+}
+required_echo_id = &""

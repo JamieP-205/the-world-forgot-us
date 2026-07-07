@@ -1,0 +1,86 @@
+[gd_scene load_steps=9 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
+[ext_resource type="Script" path="res://scripts/scanner/scanner_component.gd" id="3_scanner"]
+[ext_resource type="PackedScene" path="res://scenes/scanner/scanner_pulse.tscn" id="4_pulse"]
+[ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="5_ash"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(18, 22)
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_reach"]
+radius = 52.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
+radius = 22.0
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+motion_mode = 1
+script = ExtResource("1_player")
+
+[node name="Visual" type="Polygon2D" parent="."]
+color = Color(0.64, 0.55, 0.38, 1)
+polygon = PackedVector2Array(-8, -5, -13, 7, -6, 14, 6, 14, 13, 7, 8, -5)
+
+[node name="Coat" type="Polygon2D" parent="Visual"]
+color = Color(0.23, 0.29, 0.27, 1)
+polygon = PackedVector2Array(-7, 0, 7, 0, 10, 13, -10, 13)
+
+[node name="Head" type="Polygon2D" parent="Visual"]
+color = Color(0.78, 0.68, 0.52, 1)
+polygon = PackedVector2Array(-6, -16, 6, -16, 8, -9, 5, -4, -5, -4, -8, -9)
+
+[node name="Backpack" type="Polygon2D" parent="Visual"]
+color = Color(0.18, 0.2, 0.18, 1)
+polygon = PackedVector2Array(-13, -2, -8, -5, -8, 11, -13, 8)
+
+[node name="FacingIndicator" type="Polygon2D" parent="."]
+color = Color(0.95, 0.65, 0.25, 1)
+polygon = PackedVector2Array(8, -5, 19, 0, 8, 5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="InteractionArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 4
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractionArea"]
+shape = SubResource("CircleShape2D_reach")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+max_health = 100.0
+
+[node name="AttackArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 8
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackArea"]
+shape = SubResource("CircleShape2D_attack")
+
+[node name="SwingVisual" type="Polygon2D" parent="."]
+visible = false
+color = Color(0.95, 0.9, 0.7, 0.7)
+polygon = PackedVector2Array(0, -14, 26, -10, 30, 0, 26, 10, 0, 14)
+
+[node name="SwingTimer" type="Timer" parent="."]
+wait_time = 0.12
+one_shot = true
+
+[node name="ScannerComponent" type="Node2D" parent="."]
+script = ExtResource("3_scanner")
+pulse_scene = ExtResource("4_pulse")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+zoom = Vector2(1.9, 1.9)
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
+
+[node name="AshDrift" type="Node2D" parent="Camera2D"]
+script = ExtResource("5_ash")

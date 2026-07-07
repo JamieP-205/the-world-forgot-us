@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_canned_food.png" id="2"]
+
+[resource]
+script = ExtResource("1")
+icon = ExtResource("2")
+id = &"canned_food"
+display_name = "Canned Food"
+description = "The label has faded to nothing. Nobody remembers what's inside, but it keeps you alive."
+stack_size = 20
+category = "food"
