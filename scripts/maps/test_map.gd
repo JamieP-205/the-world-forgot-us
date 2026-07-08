@@ -39,12 +39,11 @@ func _process(delta: float) -> void:
 ## rested/saved, returning to the world reveals a louder, wrong signal from
 ## the north -- the promise of the next zone. Shown once per session.
 func _maybe_show_ending_hook() -> void:
-	var root := get_tree().root
-	if root.has_meta("ending_hook_shown"):
+	if WorldState.ending_hook_shown:
 		return
 	if not SaveManager.has_save():
 		return  # only after the safe pause at the bedroll
-	root.set_meta("ending_hook_shown", true)
+	WorldState.ending_hook_shown = true
 	var msg := "A NEW SIGNAL claws in from the north - louder than the last, and wrong somewhere underneath.\n\"...come north... it isn't finished forgetting...\"\nThe next road is out there, and it is already changing."
 	if BaseUpgradeSystem.is_built(&"route_beacon"):
 		msg += "\nBehind you the beacon burns steady. The way home, at least, will keep."

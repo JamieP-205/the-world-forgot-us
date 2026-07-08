@@ -8,6 +8,10 @@ extends Interactable
 ## Prompt shown after the container has been emptied.
 @export var empty_prompt: String = "Empty"
 
+## Stable id for persistence. Empty defaults to the node name (unique in the
+## demo), so searched state survives travel and save/load.
+@export var persistent_id: StringName = &""
+
 var _opened := false
 
 # Node2D so this works whether the Visual is the crate Sprite2D (scene) or
@@ -17,6 +21,16 @@ var _opened := false
 
 
 func _ready() -> void:
+	if persistent_id == &"":
+		persistent_id = StringName(name)
+	# Already searched in a previous visit / earlier session: show it emptied
+	# and give no loot again.
+	if WorldState.is_opened(persistent_id):
+		_opened = true
+		_visual.modulate = Color(0.42, 0.45, 0.43)
+		if _glint != null:
+			_glint.visible = false
+		return
 	if _glint != null:
 		_glint.visible = true
 		var tween := create_tween().set_loops()
@@ -33,6 +47,7 @@ func interact(_player: Node2D) -> void:
 		EventBus.notice_posted.emit("Already searched.")
 		return
 	_opened = true
+	WorldState.mark_opened(persistent_id)
 
 	var parts: Array[String] = []
 	for item_id in loot:

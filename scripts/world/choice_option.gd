@@ -16,9 +16,26 @@ extends Interactable
 ## Line shown when this option is taken.
 @export_multiline var take_notice: String = ""
 
+## Persistence ids. Empty defaults to the parent cache name (group) and this
+## node's name (option), so a resolved choice stays resolved across travel
+## and save/load.
+@export var choice_group: StringName = &""
+@export var option_id: StringName = &""
+
 var _locked := false
 
 @onready var _visual: Node2D = get_node_or_null("Visual")
+
+
+func _ready() -> void:
+	if choice_group == &"":
+		var p := get_parent()
+		choice_group = StringName(p.name) if p != null else StringName(name)
+	if option_id == &"":
+		option_id = StringName(name)
+	# If this cache was already resolved, lock every option (no re-grant).
+	if WorldState.choice_taken(choice_group):
+		set_locked(true)
 
 
 func is_available() -> bool:
@@ -56,7 +73,9 @@ func interact(_player: Node2D) -> void:
 		msg += "\n(%s)" % ", ".join(parts)
 	EventBus.notice_posted.emit(msg)
 
-	# Lock every option under this cache (including self) -- one choice only.
+	# Record the choice, then lock every option under this cache (including
+	# self) -- one choice only, and it stays chosen across travel/save.
+	WorldState.mark_choice(choice_group, option_id)
 	for c in get_parent().get_children():
 		if c is ChoiceOption:
 			c.set_locked(true)

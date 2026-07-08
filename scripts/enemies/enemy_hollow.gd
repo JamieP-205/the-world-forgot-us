@@ -8,6 +8,10 @@ extends CharacterBody2D
 @export var contact_damage: float = 8.0
 @export var attack_cooldown: float = 1.2
 
+## Stable id for persistence (hand-placed enemies only). Empty defaults to
+## the node name. A defeated enemy stays gone across travel and save/load.
+@export var persistent_id: StringName = &""
+
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _hit_spark: Polygon2D = $HitSpark
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
@@ -17,6 +21,14 @@ var _dying := false
 
 
 func _ready() -> void:
+	if persistent_id == &"":
+		persistent_id = StringName(name)
+	# Already defeated in a previous visit / earlier session: don't respawn.
+	if WorldState.is_defeated(persistent_id):
+		set_physics_process(false)
+		hide()
+		queue_free()
+		return
 	add_to_group("enemies")
 	_health.died.connect(_on_died)
 	_hit_spark.visible = false
@@ -71,6 +83,7 @@ func _flash() -> void:
 
 func _on_died() -> void:
 	_dying = true
+	WorldState.mark_defeated(persistent_id)
 	_collision_shape.set_deferred("disabled", true)
 	EventBus.notice_posted.emit("Hollow dispersed.")
 	EventBus.camera_shake_requested.emit(2.2, 0.12)

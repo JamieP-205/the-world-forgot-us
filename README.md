@@ -15,6 +15,7 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 - Returning to the Railhome works through scene exits.
 - The Radio Desk can be built if you have recovered The Last Broadcast and have the required materials. When built, it lights up and plays a short placeholder signal message.
 - The bedroll heals the player and saves progress with: `Rested. Progress saved.`
+- Progress is stable across travel and save/load: inventory, recovered echoes, built upgrades, current level, and player position/health persist, and (as of Persistence Pass 6) searched containers stay searched, resolved choices stay resolved, and defeated hand-placed Hollows stay gone. See `PERSISTENCE_PASS_6_REPORT.md`.
 - The storage crate shows a working storage manifest based on your current supplies.
 - The HUD shows health, scanner energy, an inventory list **with item icons**, recovered echo count, interaction prompts, notices, and objective progress.
 - Interactables highlight when you are close enough to use them.
@@ -28,7 +29,6 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 - Combat is a basic melee hitbox and simple Hollow chase/contact damage.
 - Storage is a manifest, not a full stash-transfer UI.
 - The Radio Desk build is a payoff milestone only. It hints at the next signal but does not unlock a new quest yet.
-- Optional choice locks are lightweight scene interactions. They prevent taking both options during the current map visit, but the choice state is not yet serialized as a dedicated save record.
 - Audio is still represented by text/visual feedback and TODO-style placeholder comments. There are no real sound assets yet.
 - There are no NPCs, factions, procedural generation, advanced crafting, or final UI styling.
 

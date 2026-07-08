@@ -19,6 +19,7 @@ EchoDatabase="*res://scripts/systems/echo_database.gd"
 InventorySystem="*res://scripts/systems/inventory_system.gd"
 ArchiveSystem="*res://scripts/systems/archive_system.gd"
 BaseUpgradeSystem="*res://scripts/systems/base_upgrade_system.gd"
+WorldState="*res://scripts/systems/world_state.gd"
 GameManager="*res://scripts/systems/game_manager.gd"
 SaveManager="*res://scripts/systems/save_manager.gd"
 

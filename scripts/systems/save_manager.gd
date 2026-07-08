@@ -6,6 +6,9 @@ extends Node
 ## built base upgrades.
 
 const SAVE_PATH := "user://savegame.json"
+## Bumped when the save schema changes. Missing/older values are read with
+## safe defaults, so pre-version saves still load (just without world flags).
+const SAVE_VERSION := 1
 
 ## Player state waiting to be applied once the loaded level is ready.
 var _pending_player: Dictionary = {}
@@ -20,6 +23,7 @@ func save_game(notice: String = "Progress saved.") -> bool:
 	var player := get_tree().get_first_node_in_group("player")
 
 	var data := {
+		"version": SAVE_VERSION,
 		"level": main.get_current_level_path() if main != null else "",
 		"player": {
 			"x": player.global_position.x if player != null else 0.0,
@@ -29,6 +33,7 @@ func save_game(notice: String = "Progress saved.") -> bool:
 		"inventory": _keys_to_strings(InventorySystem.get_items()),
 		"archive": _ids_to_strings(ArchiveSystem.get_recovered_ids()),
 		"upgrades": _ids_to_strings(BaseUpgradeSystem.get_built_ids()),
+		"world": WorldState.get_state(),
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -61,6 +66,8 @@ func load_game() -> bool:
 	InventorySystem.set_items(data.get("inventory", {}))
 	ArchiveSystem.restore(data.get("archive", []))
 	BaseUpgradeSystem.restore(data.get("upgrades", []))
+	# Older saves have no "world" key; restore() handles the empty default.
+	WorldState.restore(data.get("world", {}))
 
 	_pending_player = data.get("player", {})
 	if not EventBus.level_loaded.is_connected(_on_level_loaded):
