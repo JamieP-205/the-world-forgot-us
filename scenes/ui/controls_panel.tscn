@@ -1,0 +1,57 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/controls_panel.gd" id="1_ctl"]
+
+[node name="ControlsPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_ctl")
+
+[node name="Dim" type="ColorRect" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.05, 0.06, 0.07, 0.92)
+
+[node name="Box" type="VBoxContainer" parent="."]
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -180.0
+offset_right = 300.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 18
+
+[node name="Title" type="Label" parent="Box"]
+theme_override_colors/font_color = Color(1, 0.86, 0.42, 1)
+theme_override_font_sizes/font_size = 30
+text = "CONTROLS"
+horizontal_alignment = 1
+
+[node name="List" type="Label" parent="Box"]
+theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
+theme_override_font_sizes/font_size = 20
+text = "Move          WASD  /  Arrow keys
+Interact      E
+Scan          Q
+Attack        Left click  /  J
+Pause         Esc"
+
+[node name="Hint" type="Label" parent="Box"]
+theme_override_colors/font_color = Color(0.7, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 17
+text = "Search supplies, follow the road, scan the fallen mast, return to the Railhome."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Back" type="Button" parent="Box"]
+custom_minimum_size = Vector2(170, 42)
+size_flags_horizontal = 4
+text = "Back"

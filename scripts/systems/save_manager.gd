@@ -85,6 +85,16 @@ func delete_save() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 
 
+## Wipes the save file and all in-memory run state, for a clean New Game.
+## Leaves no stale WorldState/inventory/echo/upgrade flags behind.
+func clear_run_state() -> void:
+	delete_save()
+	InventorySystem.set_items({})
+	ArchiveSystem.restore([])
+	BaseUpgradeSystem.restore([])
+	WorldState.clear()
+
+
 func _on_level_loaded() -> void:
 	var player := get_tree().get_first_node_in_group("player")
 	if player != null and not _pending_player.is_empty():

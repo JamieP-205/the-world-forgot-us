@@ -44,6 +44,7 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 
 ## Demo walkthrough
 
+0. On launch you land on the **main menu**: **Continue** (loads your save, if any), **New Game** (clears the save and starts fresh — confirmed first if a save exists), **Controls**, **Quit**. Press Esc in-game for the pause menu (Resume / Controls / Main Menu / Quit).
 1. Start in the wasteland at the Railhome door. An opening line sets the tone (you are alone; the road east matters) and amber arrows point the way. Search supplies and follow the signal.
 2. Follow the road east. Search the roadside crate, car boot, pump locker, office crate, kiosk drawer, shed locker, repair toolbox, and optional side cache as you explore.
 3. Read a few lore props if you want more atmosphere: the missing-person poster, warning board, dead vending machine, cracked phone, and broken radio are all interactable.
@@ -63,7 +64,8 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 
 ## Run
 
-Open `project.godot` in Godot 4.7 and press F5.
+Open `project.godot` in Godot 4.7 and press F5. The game boots to the **main menu**
+(`res://scenes/ui/main_menu.tscn`).
 
 From PowerShell on this machine:
 
@@ -71,4 +73,17 @@ From PowerShell on this machine:
 & "C:\Users\Jamie Parr\Downloads\Godot_v4.7-stable_win64.exe\Godot_v4.7-stable_win64_console.exe" --path "C:\Users\Jamie Parr\Documents\Projects\the-world-forgot-us\the-world-forgot-us"
 ```
 
-The main scene is `res://scenes/main.tscn`.
+During development you can still run the game scene directly (`res://scenes/main.tscn`,
+F6) to skip the menu — it auto-continues from a save or starts the world.
+
+### Starting / resetting your save
+- **Continue** loads the current save (also auto-continued if you run the game scene directly).
+- **New Game** wipes the save and all run state (inventory, world flags, echoes, upgrades) and starts fresh; it asks to confirm if a save already exists.
+- The save lives at `user://savegame.json`.
+
+### Export / build status
+No Windows build is produced yet: Godot's 4.7 **export templates are not installed**
+on this machine. To build a test `.exe` later, install the export templates (Editor →
+Manage Export Templates), add a Windows Desktop preset pointing at `builds/`, and
+export. See `TEST_BUILD_PASS_7_REPORT.md` for exact steps. Exported binaries under
+`builds/` and `dist/` are git-ignored.

@@ -18,7 +18,9 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause"):
+	# Only pause during actual gameplay (the Main root is in the tree). On the
+	# main menu there is no Main node, so Esc must not freeze the menu.
+	if event.is_action_pressed("pause") and get_tree().get_first_node_in_group("main") != null:
 		set_paused(not is_paused)
 
 

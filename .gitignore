@@ -8,6 +8,14 @@ export_presets.cfg
 .mono/
 data_*/
 
+# Exported test builds (binaries are not committed)
+builds/
+dist/
+
+# Cloud-sync conflict duplicates (OneDrive/Drive "Name clash" copies).
+# Specific to sync artifacts; does not hide real project files.
+*Name clash*
+
 # OS / editor cruft
 *.tmp
 Thumbs.db

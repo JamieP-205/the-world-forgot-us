@@ -5,6 +5,8 @@ extends CanvasLayer
 @onready var _inv_list: VBoxContainer = $InventoryPanel/List
 @onready var _prompt_label: Label = $PromptLabel
 @onready var _pause_overlay: ColorRect = $PauseOverlay
+@onready var _pause_box: VBoxContainer = $PauseOverlay/PauseBox
+@onready var _pause_controls: Control = $PauseOverlay/PauseControls
 @onready var _notice_label: Label = $NoticeLabel
 @onready var _notice_timer: Timer = $NoticeTimer
 @onready var _health_bar: ProgressBar = $HealthBar
@@ -29,6 +31,7 @@ func _ready() -> void:
 	ArchiveSystem.echo_recorded.connect(_on_echo_recorded)
 	BaseUpgradeSystem.upgrade_built.connect(_on_upgrade_built)
 	_notice_timer.timeout.connect(_on_notice_timeout)
+	_wire_pause_menu()
 	_scanned_echo = ArchiveSystem.has_echo(&"echo_last_signal")
 	_refresh_inventory()
 	_prompt_label.text = ""
@@ -85,8 +88,36 @@ func _on_prompt_changed(text: String) -> void:
 	_prompt_label.text = text
 
 
+func _wire_pause_menu() -> void:
+	_pause_box.get_node("Resume").pressed.connect(func() -> void: GameManager.set_paused(false))
+	_pause_box.get_node("Controls").pressed.connect(_on_pause_controls)
+	_pause_box.get_node("MainMenu").pressed.connect(_on_pause_main_menu)
+	_pause_box.get_node("Quit").pressed.connect(func() -> void: get_tree().quit())
+	_pause_controls.closed.connect(_on_pause_controls_closed)
+	_pause_controls.visible = false
+
+
+func _on_pause_controls() -> void:
+	_pause_box.visible = false
+	_pause_controls.visible = true
+
+
+func _on_pause_controls_closed() -> void:
+	_pause_controls.visible = false
+	_pause_box.visible = true
+
+
+func _on_pause_main_menu() -> void:
+	GameManager.set_paused(false)
+	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+
+
 func _on_paused_changed(is_paused: bool) -> void:
 	_pause_overlay.visible = is_paused
+	# Always reopen the pause menu on its main options, not the sub-panel.
+	if not is_paused:
+		_pause_controls.visible = false
+		_pause_box.visible = true
 
 
 ## Shows a transient notice, restarting the timer each time so the latest
