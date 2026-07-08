@@ -187,7 +187,7 @@ func _next_objective_text(
 
 func _show_opening_hint() -> void:
 	if InventorySystem.get_total_count() == 0 and _current_level_path() != GameManager.BASE_SCENE_PATH:
-		_on_notice_posted("Follow the amber road arrows east. Search glinting crates with E.")
+		_on_notice_posted("You wake alone on the dead road. The Railhome is at your back; everything the world forgot lies east.\nFollow the amber arrows and search the glinting crates (E).")
 
 
 func _current_level_path() -> String:

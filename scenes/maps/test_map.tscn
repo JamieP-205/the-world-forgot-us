@@ -138,6 +138,22 @@ position = Vector2(360, -150)
 scale = Vector2(0.22, 0.22)
 texture = ExtResource("25_sign")
 
+[node name="NorthSignal" type="Node2D" parent="."]
+visible = false
+position = Vector2(150, -470)
+
+[node name="Halo" type="Polygon2D" parent="NorthSignal"]
+color = Color(0.4, 0.85, 0.95, 0.36)
+polygon = PackedVector2Array(-150, -30, 150, -30, 180, 40, -180, 46)
+
+[node name="Beam" type="Polygon2D" parent="NorthSignal"]
+color = Color(1, 0.86, 0.42, 0.24)
+polygon = PackedVector2Array(-18, -44, 18, -44, 52, 80, -52, 80)
+
+[node name="Core" type="Polygon2D" parent="NorthSignal"]
+color = Color(0.75, 0.97, 1, 0.95)
+polygon = PackedVector2Array(-15, -20, 15, -20, 20, 15, -20, 15)
+
 [node name="WastelandBounds" type="StaticBody2D" parent="."]
 collision_layer = 1
 collision_mask = 0

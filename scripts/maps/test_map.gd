@@ -5,6 +5,7 @@ extends Node2D
 @onready var _spark_a: Polygon2D = $RadioMast/StaticSparkA
 @onready var _spark_b: Polygon2D = $RadioMast/StaticSparkB
 @onready var _spark_c: Polygon2D = $RadioMast/StaticSparkC
+@onready var _north_signal: Node2D = $NorthSignal
 
 var _time := 0.0
 var _recovered := false
@@ -14,6 +15,10 @@ func _ready() -> void:
 	ArchiveSystem.echo_recorded.connect(_on_echo_recorded)
 	if ArchiveSystem.has_echo(&"echo_last_signal"):
 		_apply_mast_recovered()
+	# Once the Radio Desk is online, a new signal shows itself in the north.
+	_north_signal.visible = BaseUpgradeSystem.is_built(&"radio_desk")
+	if _north_signal.visible:
+		_maybe_show_ending_hook()
 
 
 func _process(delta: float) -> void:
@@ -26,6 +31,25 @@ func _process(delta: float) -> void:
 		_spark_a.color.a = cold_alpha
 		_spark_b.color.a = cold_alpha * 0.8
 		_spark_c.color.a = cold_alpha * 0.65
+	if _north_signal.visible:
+		_north_signal.modulate.a = 0.6 + sin(_time * 3.0) * 0.32
+
+
+## The demo's ending hook: after the player has built the Radio Desk AND
+## rested/saved, returning to the world reveals a louder, wrong signal from
+## the north -- the promise of the next zone. Shown once per session.
+func _maybe_show_ending_hook() -> void:
+	var root := get_tree().root
+	if root.has_meta("ending_hook_shown"):
+		return
+	if not SaveManager.has_save():
+		return  # only after the safe pause at the bedroll
+	root.set_meta("ending_hook_shown", true)
+	var msg := "A NEW SIGNAL claws in from the north - louder than the last, and wrong somewhere underneath.\n\"...come north... it isn't finished forgetting...\"\nThe next road is out there, and it is already changing."
+	if BaseUpgradeSystem.is_built(&"route_beacon"):
+		msg += "\nBehind you the beacon burns steady. The way home, at least, will keep."
+	EventBus.notice_posted.emit(msg)
+	EventBus.camera_shake_requested.emit(2.0, 0.16)
 
 
 func _on_echo_recorded(data: MemoryEchoData) -> void:

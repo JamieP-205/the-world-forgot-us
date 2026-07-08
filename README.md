@@ -44,7 +44,7 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 
 ## Demo walkthrough
 
-1. Start in the wasteland near the Railhome exit.
+1. Start in the wasteland at the Railhome door. An opening line sets the tone (you are alone; the road east matters) and amber arrows point the way. Search supplies and follow the signal.
 2. Follow the road east. Search the roadside crate, car boot, pump locker, office crate, kiosk drawer, shed locker, repair toolbox, and optional side cache as you explore.
 3. Read a few lore props if you want more atmosphere: the missing-person poster, warning board, dead vending machine, cracked phone, and broken radio are all interactable.
 4. Pick up the optional Child's Lunchbox near the petrol station forecourt. It is keepsake loot, not crafting material.
@@ -58,7 +58,8 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 12. Return west to the Railhome exit and press E.
 13. In the Railhome, use the Radio Desk station to build the Radio Desk. The desk glows and plays a weak signal message.
 14. Check storage to see your current supply manifest.
-15. Use the bedroll to heal and save progress.
+15. Use the bedroll to heal and save progress. Once the Radio Desk is built, resting notes that the base is a little more awake.
+16. Step back out to the world. With the Radio Desk built and a save made, a new signal claws in from the north and a cyan glow appears at the north edge — the demo's ending hook and the promise of the next zone. (The optional Route Beacon, if lit, is acknowledged but never required.)
 
 ## Run
 

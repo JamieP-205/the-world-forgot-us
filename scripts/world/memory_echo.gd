@@ -49,7 +49,7 @@ func interact(_player: Node2D) -> void:
 
 	var text := echo_data.memory_text if echo_data != null else "You remember."
 	EventBus.notice_posted.emit(
-		"Echo recovered: %s\n%s\nFor a moment, the mast remembers warmth."
+		"Echo recovered - %s.\n%s\nThe mast glows warm behind you. Carry this home, west, to the Railhome."
 		% [_echo_title(), text])
 	EventBus.camera_shake_requested.emit(2.5, 0.14)
 
@@ -67,8 +67,8 @@ func _on_revealed() -> void:
 	_revealed = true
 	EventBus.echo_revealed.emit(echo_data)
 	EventBus.camera_shake_requested.emit(2.5, 0.12)
-	var hint := echo_data.hint if echo_data != null else "A memory stirs here."
-	EventBus.notice_posted.emit("Echo signal found by the fallen mast.\n%s" % hint)
+	EventBus.notice_posted.emit(
+		"A cyan echo tears free above the fallen mast - a voice from the night everyone left.\nStep into the light and press E to recover it.")
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(_visual, "modulate", Color(0.55, 0.95, 0.95, 0.95), 0.25)
