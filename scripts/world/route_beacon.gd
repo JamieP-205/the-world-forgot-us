@@ -28,7 +28,9 @@ func is_available() -> bool:
 
 
 func get_prompt() -> String:
-	return "Power the roadside beacon"
+	if upgrade_data == null:
+		return "Power roadside beacon"
+	return "Power roadside beacon (%s)" % _cost_text()
 
 
 func interact(_player: Node2D) -> void:
@@ -40,7 +42,7 @@ func interact(_player: Node2D) -> void:
 	if BaseUpgradeSystem.build(upgrade_data):
 		_apply_powered()
 		EventBus.notice_posted.emit(
-			"The roadside beacon hums to life.\nAmber light points the way back to the Railhome.")
+			"Roadside Beacon built.\nAmber light points the way back to the Railhome.")
 		EventBus.camera_shake_requested.emit(1.5, 0.1)
 
 
@@ -51,6 +53,8 @@ func _apply_powered() -> void:
 
 
 func _cost_text() -> String:
+	if upgrade_data == null:
+		return "materials"
 	var parts: Array[String] = []
 	for item_id in upgrade_data.cost:
 		var amount := int(upgrade_data.cost[item_id])

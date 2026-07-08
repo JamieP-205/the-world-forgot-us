@@ -171,23 +171,23 @@ func _next_objective_text(
 		radio_built: bool,
 		rested: bool) -> String:
 	if not has_supplies:
-		return "Follow the cracked road east and search a crate. (Nearby: power the dead roadside beacon.)"
+		return "Follow the cracked road east. Search the glinting roadside crate."
 	if not (_scanned_echo or has_last_broadcast):
-		return "Go to the fallen radio mast and press Q to scan. (Nearby: find who left the lunchbox.)"
+		return "Keep following the cracked road to the fallen mast. Press Q near the cyan static."
 	if not has_last_broadcast:
-		return "Recover the glowing echo by the mast"
+		return "Interact with the revealed echo beside the fallen mast"
 	if not at_base and not radio_built and not rested:
-		return "Head back west to the bright Railhome exit"
+		return "Return west to the bright Railhome doorway"
 	if not radio_built:
 		return "At the Railhome, build the Radio Desk"
 	if not rested:
-		return "Radio Desk online - it now points north to the next signal. Rest at the bedroll to save."
-	return "Demo complete. The Radio Desk hints at the next signal, north"
+		return "Radio Desk built - rest at the bedroll to save."
+	return "Demo complete. Next signal detected north."
 
 
 func _show_opening_hint() -> void:
 	if InventorySystem.get_total_count() == 0 and _current_level_path() != GameManager.BASE_SCENE_PATH:
-		_on_notice_posted("Follow the cracked road east. Search highlighted crates with E.")
+		_on_notice_posted("Follow the amber road arrows east. Search glinting crates with E.")
 
 
 func _current_level_path() -> String:

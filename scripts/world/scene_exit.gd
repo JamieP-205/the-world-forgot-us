@@ -19,4 +19,12 @@ func interact(_player: Node2D) -> void:
 	if target_scene_path.is_empty():
 		push_warning("SceneExit '%s' has no target_scene_path." % name)
 		return
+	_post_travel_notice()
 	GameManager.travel_to(target_scene_path, target_spawn)
+
+
+func _post_travel_notice() -> void:
+	if target_scene_path == GameManager.BASE_SCENE_PATH:
+		EventBus.notice_posted.emit("Railhome reached.")
+	elif target_scene_path.ends_with("test_map.tscn"):
+		EventBus.notice_posted.emit("Back on the cracked road.")

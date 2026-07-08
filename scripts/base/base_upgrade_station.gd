@@ -37,7 +37,9 @@ func is_available() -> bool:
 
 
 func get_prompt() -> String:
-	return "Build: %s" % _title()
+	if upgrade_data == null:
+		return "Build upgrade"
+	return "Build %s (%s)" % [_title(), _cost_text()]
 
 
 func interact(_player: Node2D) -> void:
@@ -60,7 +62,7 @@ func interact(_player: Node2D) -> void:
 		_apply_built_visual()
 		# Audio placeholder: visible feedback stands in until real radio audio exists.
 		EventBus.notice_posted.emit(
-			"%s online.\nA weak signal repeats: NORTH ROAD... ANOTHER VOICE..."
+			"%s built.\nA weak signal repeats: NORTH ROAD... ANOTHER VOICE..."
 			% _title())
 
 
@@ -78,6 +80,8 @@ func _title() -> String:
 
 ## Human-readable cost, e.g. "3 Scrap, 1 Battery".
 func _cost_text() -> String:
+	if upgrade_data == null:
+		return "materials"
 	var parts: Array[String] = []
 	for item_id in upgrade_data.cost:
 		var amount := int(upgrade_data.cost[item_id])
