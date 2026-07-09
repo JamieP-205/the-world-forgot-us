@@ -20,16 +20,17 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 - The HUD shows health, scanner energy, an inventory list **with item icons**, recovered echo count, interaction prompts, notices, and objective progress.
 - Interactables highlight when you are close enough to use them.
 - Atmosphere pass: global ashy tint, drifting ash/dust, warmer Railhome safety glow, cyan scanner/echo glow, flickering mast signal, loot glints, Hollow hit sparks/death fade, and subtle camera shake on scanner reveal, echo recovery, and Hollow death.
+- Feel pass (Visual + Audio Pass 9): the player and each Hollow now have soft contact shadows so they sit on the ground; the Hollow reads as a pale, shimmering "forgotten" silhouette instead of a red blockout; story notices linger in proportion to their length; and lightweight in-engine sound effects play for pickups, scanner pulses, echo reveal/recovery, Hollow hits/dispersal, base upgrades, resting, and the ending hook.
 - Imported art (Asset Passes 1 & 2): real sprites for loot crates, base furniture (bedroll, storage, lantern, wall map, workbench), the lit Radio Desk, the memory-echo core, world props (car, pumps, vending, phone, signs, backpack, radio, poster), inventory item icons, plus feathered ground decals and a station-sign landmark. See `ASSET_IMPORT_REPORT.md`.
 - `ART_SPEC.md` documents the art requirements; `NEXT_ASSET_REQUESTS.md` lists the exact sprites still needed (top-down player/Hollow sheets, fallen mast, kiosk/shed).
 
 ## Still placeholder
 
-- The **player and Hollow** are still Polygon2D blockout art — the generated character sheets are eye-level concept turnarounds, not top-down frames (see `NEXT_ASSET_REQUESTS.md`). The **fallen mast, roadside kiosk, and maintenance shed** are also still blockout (no matching art yet). Most other props/items now use imported sprites.
+- The **player and Hollow** are still Polygon2D blockout art (now with grounding shadows, and the Hollow reworked into a shimmering pale silhouette for readability) — the generated character sheets are eye-level concept turnarounds, not top-down frames (see `NEXT_ASSET_REQUESTS.md`). The **fallen mast, roadside kiosk, and maintenance shed** are also still blockout (no matching art yet). Most other props/items now use imported sprites.
 - Combat is a basic melee hitbox and simple Hollow chase/contact damage.
 - Storage is a manifest, not a full stash-transfer UI.
 - The Radio Desk build is a payoff milestone only. It hints at the next signal but does not unlock a new quest yet.
-- Audio is still represented by text/visual feedback and TODO-style placeholder comments. There are no real sound assets yet.
+- Audio is now a small set of **procedural placeholder tones** synthesised in-engine by an `AudioManager` autoload (no audio asset files are shipped). There is still no music and no final sound design.
 - There are no NPCs, factions, procedural generation, advanced crafting, or final UI styling.
 
 ## Controls

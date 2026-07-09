@@ -60,5 +60,6 @@ func interact(_player: Node2D) -> void:
 	_visual.modulate = Color(0.42, 0.45, 0.43)
 	if _glint != null:
 		_glint.visible = false
+	AudioManager.play(&"pickup")
 	EventBus.notice_posted.emit(
 		"Supplies recovered: %s. Inventory updated on the left." % ", ".join(parts))

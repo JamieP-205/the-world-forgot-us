@@ -27,6 +27,7 @@ BaseUpgradeSystem="*res://scripts/systems/base_upgrade_system.gd"
 WorldState="*res://scripts/systems/world_state.gd"
 GameManager="*res://scripts/systems/game_manager.gd"
 SaveManager="*res://scripts/systems/save_manager.gd"
+AudioManager="*res://scripts/systems/audio_manager.gd"
 
 [display]
 

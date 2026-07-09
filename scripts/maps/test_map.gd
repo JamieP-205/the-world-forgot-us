@@ -47,6 +47,7 @@ func _maybe_show_ending_hook() -> void:
 	var msg := "A NEW SIGNAL claws in from the north - louder than the last, and wrong somewhere underneath.\n\"...come north... it isn't finished forgetting...\"\nThe next road is out there, and it is already changing."
 	if BaseUpgradeSystem.is_built(&"route_beacon"):
 		msg += "\nBehind you the beacon burns steady. The way home, at least, will keep."
+	AudioManager.play(&"ending")
 	EventBus.notice_posted.emit(msg)
 	EventBus.camera_shake_requested.emit(2.0, 0.16)
 

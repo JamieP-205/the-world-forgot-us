@@ -15,6 +15,7 @@ extends CharacterBody2D
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _hit_spark: Polygon2D = $HitSpark
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
+@onready var _haze: Polygon2D = $ForgottenHaze
 
 var _attack_cd: float = 0.0
 var _dying := false
@@ -32,6 +33,15 @@ func _ready() -> void:
 	add_to_group("enemies")
 	_health.died.connect(_on_died)
 	_hit_spark.visible = false
+	# Cosmetic only: a slow shimmer on the pale haze so the Hollow reads as a
+	# restless, forgotten silhouette rather than a static shape. Does not touch
+	# AI, collision, or balance.
+	if _haze != null:
+		var shimmer := create_tween().set_loops()
+		shimmer.tween_property(_haze, "modulate:a", 0.45, 1.6)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		shimmer.tween_property(_haze, "modulate:a", 1.0, 1.6)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _physics_process(delta: float) -> void:
@@ -71,6 +81,7 @@ func take_damage(amount: float) -> void:
 
 
 func _flash() -> void:
+	AudioManager.play(&"hollow_hit")
 	modulate = Color(1.6, 0.7, 0.7)
 	_hit_spark.visible = true
 	_hit_spark.scale = Vector2(1.6, 1.6)
@@ -85,6 +96,7 @@ func _on_died() -> void:
 	_dying = true
 	WorldState.mark_defeated(persistent_id)
 	_collision_shape.set_deferred("disabled", true)
+	AudioManager.play(&"hollow_death")
 	EventBus.notice_posted.emit("Hollow dispersed.")
 	EventBus.camera_shake_requested.emit(2.2, 0.12)
 	_hit_spark.visible = true

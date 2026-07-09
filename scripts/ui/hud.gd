@@ -124,7 +124,13 @@ func _on_paused_changed(is_paused: bool) -> void:
 ## message stays readable.
 func _on_notice_posted(text: String) -> void:
 	_notice_label.text = text
-	_notice_timer.start()
+	_notice_timer.start(_notice_duration_for(text))
+
+
+## Longer, multi-line story beats (opening, echo recovery, ending hook) linger
+## long enough to read; short toasts clear quickly. Clamped to a sane range.
+func _notice_duration_for(text: String) -> float:
+	return clampf(3.0 + text.length() * 0.045, 4.0, 11.0)
 
 
 func _on_notice_timeout() -> void:

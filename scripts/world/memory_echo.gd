@@ -47,6 +47,7 @@ func interact(_player: Node2D) -> void:
 		InventorySystem.add_item(echo_data.keepsake_item, 1)
 	_scannable.remove_from_group("scannables")
 
+	AudioManager.play(&"echo_recover")
 	var text := echo_data.memory_text if echo_data != null else "You remember."
 	EventBus.notice_posted.emit(
 		"Echo recovered - %s.\n%s\nThe mast glows warm behind you. Carry this home, west, to the Railhome."
