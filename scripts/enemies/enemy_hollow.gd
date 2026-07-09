@@ -16,9 +16,13 @@ extends CharacterBody2D
 @onready var _hit_spark: Polygon2D = $HitSpark
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
 @onready var _haze: Polygon2D = $ForgottenHaze
+@onready var _visual: AnimatedSprite2D = $Visual
 
 var _attack_cd: float = 0.0
 var _dying := false
+## Current sprite facing ("down"/"up"/"left"/"right") and one-shot anim hold.
+var _face := "down"
+var _anim_lock: float = 0.0
 
 
 func _ready() -> void:
@@ -33,6 +37,8 @@ func _ready() -> void:
 	add_to_group("enemies")
 	_health.died.connect(_on_died)
 	_hit_spark.visible = false
+	if _visual != null:
+		_visual.play(&"idle_down")
 	# Cosmetic only: a slow shimmer on the pale haze so the Hollow reads as a
 	# restless, forgotten silhouette rather than a static shape. Does not touch
 	# AI, collision, or balance.
@@ -49,6 +55,7 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 		return
 	_attack_cd = maxf(_attack_cd - delta, 0.0)
+	_anim_lock = maxf(_anim_lock - delta, 0.0)
 
 	var player := get_tree().get_first_node_in_group("player")
 	if player == null:
@@ -69,6 +76,32 @@ func _physics_process(delta: float) -> void:
 		velocity = Vector2.ZERO
 
 	move_and_slide()
+	_update_anim()
+
+
+## Cosmetic locomotion: idle vs shamble in the movement direction. Never runs
+## while dying, and yields to a one-shot (hit) animation.
+func _update_anim() -> void:
+	if _dying or _visual == null or _anim_lock > 0.0:
+		return
+	var moving := velocity.length() > 1.0
+	if moving:
+		_face = _dir_from(velocity)
+	var want := StringName(("walk_" if moving else "idle_") + _face)
+	if _visual.animation != want or not _visual.is_playing():
+		_visual.play(want)
+
+
+func _dir_from(v: Vector2) -> String:
+	if absf(v.x) > absf(v.y):
+		return "right" if v.x > 0.0 else "left"
+	return "down" if v.y >= 0.0 else "up"
+
+
+func _play_action(anim: StringName, lock: float) -> void:
+	if _visual != null and _visual.sprite_frames != null and _visual.sprite_frames.has_animation(anim):
+		_visual.play(anim)
+		_anim_lock = lock
 
 
 ## Damage entry point, called by the player's melee hitbox.
@@ -82,6 +115,7 @@ func take_damage(amount: float) -> void:
 
 func _flash() -> void:
 	AudioManager.play(&"hollow_hit")
+	_play_action(StringName("hit_" + _face), 0.2)
 	modulate = Color(1.6, 0.7, 0.7)
 	_hit_spark.visible = true
 	_hit_spark.scale = Vector2(1.6, 1.6)
@@ -94,6 +128,8 @@ func _flash() -> void:
 
 func _on_died() -> void:
 	_dying = true
+	if _visual != null and _visual.sprite_frames != null and _visual.sprite_frames.has_animation(StringName("death_" + _face)):
+		_visual.play(StringName("death_" + _face))
 	WorldState.mark_defeated(persistent_id)
 	_collision_shape.set_deferred("disabled", true)
 	AudioManager.play(&"hollow_death")

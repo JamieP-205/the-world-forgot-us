@@ -26,7 +26,7 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 
 ## Still placeholder
 
-- The **player and Hollow** are still Polygon2D blockout art (now with grounding shadows, and the Hollow reworked into a shimmering pale silhouette for readability) — the generated character sheets are eye-level concept turnarounds, not top-down frames (see `NEXT_ASSET_REQUESTS.md`). The **fallen mast, roadside kiosk, and maintenance shed** are also still blockout (no matching art yet). Most other props/items now use imported sprites.
+- The **player and Hollow** now use animated top-down **placeholder sprite sheets** (directional idle/walk/attack + hurt/hit/death) driven by `AnimatedSprite2D` — a functional blockout stand-in, still not final art (the original polygon visuals are kept as hidden `PlaceholderVisual` fallbacks). Real painterly character art is still pending (see `CHARACTER_ASSET_PROMPTS_PASS_11.md` / `NEXT_ASSET_REQUESTS.md`). The **fallen mast, roadside kiosk, and maintenance shed** are also still blockout (no matching art yet). Most other props/items use imported sprites.
 - Combat is a basic melee hitbox and simple Hollow chase/contact damage.
 - Storage is a manifest, not a full stash-transfer UI.
 - The Radio Desk build is a payoff milestone only. It hints at the next signal but does not unlock a new quest yet.
