@@ -97,3 +97,20 @@ shareable tester package lives in `dist/TheWorldForgotUs_Demo_Windows/`
 `dist/TheWorldForgotUs_Demo_Windows.zip`. All exported binaries and the ZIP under
 `builds/` and `dist/` are git-ignored. See `BUILD_NOTES.md` and the latest build
 report for details.
+
+**Current shareable ZIP** (as of 2026-07-09):
+
+- Path: `dist/TheWorldForgotUs_Demo_Windows.zip`
+- Size: 67,291,497 bytes
+- SHA-256: `8A40B90FFE4121CB4EAFEABF12D15D8C0601398FA593C07826343A405625FBE1`
+
+**To run the packaged build** (what a tester does): unzip it, keep
+`TheWorldForgotUs_Demo.exe` and `TheWorldForgotUs_Demo.pck` together in the same
+folder, and double-click the `.exe`. Windows SmartScreen may warn because the
+build is unsigned — choose *More info → Run anyway*.
+
+### Sharing with testers
+Handoff docs for sending the demo to real testers:
+`TESTER_SEND_MESSAGE.md` (copy-paste message), `TESTER_FEEDBACK_TEMPLATE.md`
+(short feedback form), and `KNOWN_ISSUES_FOR_TESTERS.md` (what's expected vs. a
+real bug). The ZIP itself also carries `README_TESTER.txt` + `BUILD_NOTES.md`.
