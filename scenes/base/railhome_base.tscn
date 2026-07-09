@@ -44,26 +44,26 @@ size = Vector2(56, 40)
 
 [node name="Atmosphere" type="Node2D" parent="."]
 z_index = 90
-modulate = Color(1, 1, 1, 0.4)
+modulate = Color(1, 1, 1, 0.25)
 script = ExtResource("14_ash")
-particle_count = 34
+particle_count = 24
 area = Vector2(840, 340)
 drift = Vector2(-7, 4)
 
 [node name="Floor" type="Polygon2D" parent="."]
-color = Color(0.18, 0.16, 0.15, 1)
+color = Color(0.14, 0.12, 0.105, 1)
 polygon = PackedVector2Array(-400, -160, 400, -160, 400, 160, -400, 160)
 
 [node name="Runner" type="Polygon2D" parent="."]
-color = Color(0.24, 0.19, 0.16, 1)
+color = Color(0.30, 0.20, 0.13, 1)
 polygon = PackedVector2Array(-380, -34, 380, -34, 380, 34, -380, 34)
 
 [node name="ColdInteriorTint" type="Polygon2D" parent="."]
-color = Color(0.08, 0.14, 0.16, 0.24)
+color = Color(0.06, 0.10, 0.11, 0.10)
 polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
 
 [node name="Bunks" type="Polygon2D" parent="."]
-color = Color(0.16, 0.18, 0.18, 1)
+color = Color(0.13, 0.14, 0.13, 1)
 polygon = PackedVector2Array(-374, -134, -250, -134, -250, -104, -374, -104)
 
 [node name="FloorDecals" type="Node2D" parent="."]
@@ -84,19 +84,19 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="TopVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.26, 0.22, 0.2, 1)
+color = Color(0.25, 0.19, 0.15, 1)
 polygon = PackedVector2Array(-400, -160, 400, -160, 400, -136, -400, -136)
 
 [node name="BottomVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.26, 0.22, 0.2, 1)
+color = Color(0.25, 0.19, 0.15, 1)
 polygon = PackedVector2Array(-400, 136, 400, 136, 400, 160, -400, 160)
 
 [node name="LeftVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.26, 0.22, 0.2, 1)
+color = Color(0.25, 0.19, 0.15, 1)
 polygon = PackedVector2Array(-400, -160, -376, -160, -376, 160, -400, 160)
 
 [node name="RightVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.26, 0.22, 0.2, 1)
+color = Color(0.25, 0.19, 0.15, 1)
 polygon = PackedVector2Array(376, -160, 400, -160, 400, 160, 376, 160)
 
 [node name="TopShape" type="CollisionShape2D" parent="Walls"]
@@ -124,7 +124,7 @@ script = ExtResource("2_save")
 prompt = "Rest at bedroll"
 
 [node name="SafeGlow" type="Polygon2D" parent="Bedroll"]
-color = Color(1, 0.76, 0.42, 0.22)
+color = Color(1, 0.70, 0.34, 0.34)
 polygon = PackedVector2Array(-58, -32, 52, -32, 62, 28, -52, 34)
 
 [node name="Visual" type="Sprite2D" parent="Bedroll"]
@@ -173,7 +173,7 @@ scale = Vector2(0.16, 0.16)
 texture = ExtResource("10_workbench")
 
 [node name="LanternGlow" type="Polygon2D" parent="."]
-color = Color(1, 0.74, 0.36, 0.16)
+color = Color(1, 0.66, 0.30, 0.30)
 polygon = PackedVector2Array(210, -150, 300, -150, 320, -60, 190, -60)
 
 [node name="Lantern" type="Sprite2D" parent="."]
@@ -192,7 +192,7 @@ position = Vector2(280, 0)
 
 [node name="WarmOverlay" type="Polygon2D" parent="."]
 visible = false
-color = Color(1, 0.72, 0.34, 0.13)
+color = Color(1, 0.66, 0.30, 0.22)
 polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
 
 [node name="ScannerCoilBench" type="Area2D" parent="."]
@@ -206,11 +206,11 @@ upgrade_data = ExtResource("17_coil")
 payoff_notice = "Scanner Coil built. Wider Mnemoscope pulses that recharge faster."
 
 [node name="Visual" type="Polygon2D" parent="ScannerCoilBench"]
-color = Color(0.2, 0.26, 0.28, 1)
+color = Color(0.13, 0.19, 0.20, 1)
 polygon = PackedVector2Array(-16, -13, 16, -13, 16, 12, -16, 12)
 
 [node name="Coil" type="Polygon2D" parent="ScannerCoilBench/Visual"]
-color = Color(0.4, 0.85, 0.92, 0.9)
+color = Color(0.34, 0.82, 0.88, 0.9)
 polygon = PackedVector2Array(-9, -6, 9, -6, 9, 5, -9, 5)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="ScannerCoilBench"]
@@ -228,11 +228,11 @@ payoff_notice = "Signal Lantern lit. The carriage glows warm - the base feels aw
 reveal_on_build = NodePath("../WarmOverlay")
 
 [node name="Visual" type="Polygon2D" parent="SignalLantern"]
-color = Color(0.42, 0.34, 0.2, 1)
+color = Color(0.36, 0.25, 0.14, 1)
 polygon = PackedVector2Array(-12, -13, 12, -13, 12, 12, -12, 12)
 
 [node name="Bulb" type="Polygon2D" parent="SignalLantern/Visual"]
-color = Color(1, 0.82, 0.42, 0.95)
+color = Color(1, 0.72, 0.34, 0.95)
 polygon = PackedVector2Array(-6, -7, 6, -7, 6, 4, -6, 4)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="SignalLantern"]
@@ -247,19 +247,19 @@ script = ExtResource("16_shelf")
 prompt = "Tend the memory shelf"
 
 [node name="Visual" type="Polygon2D" parent="KeepsakeShelf"]
-color = Color(0.34, 0.29, 0.24, 1)
+color = Color(0.28, 0.22, 0.17, 1)
 polygon = PackedVector2Array(-24, -11, 24, -11, 24, 10, -24, 10)
 
 [node name="Ledge" type="Polygon2D" parent="KeepsakeShelf/Visual"]
-color = Color(0.5, 0.42, 0.3, 1)
+color = Color(0.56, 0.39, 0.22, 1)
 polygon = PackedVector2Array(-24, -3, 24, -3, 24, 0, -24, 0)
 
 [node name="Keepsake1" type="Polygon2D" parent="KeepsakeShelf/Visual"]
-color = Color(0.86, 0.62, 0.22, 0.9)
+color = Color(0.74, 0.48, 0.18, 0.9)
 polygon = PackedVector2Array(-16, -9, -9, -9, -9, -4, -16, -4)
 
 [node name="Keepsake2" type="Polygon2D" parent="KeepsakeShelf/Visual"]
-color = Color(0.7, 0.55, 0.3, 0.9)
+color = Color(0.66, 0.45, 0.22, 0.9)
 polygon = PackedVector2Array(6, -9, 13, -9, 13, -4, 6, -4)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="KeepsakeShelf"]

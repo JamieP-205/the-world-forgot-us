@@ -31,10 +31,10 @@
 [ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="29_ash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
-size = Vector2(1840, 44)
+size = Vector2(1540, 44)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
-size = Vector2(44, 1120)
+size = Vector2(44, 900)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_car"]
 size = Vector2(110, 48)
@@ -69,148 +69,160 @@ script = ExtResource("6_map")
 [node name="Atmosphere" type="Node2D" parent="."]
 z_index = 90
 script = ExtResource("29_ash")
-particle_count = 130
-area = Vector2(1900, 1160)
-drift = Vector2(-11, 6)
+particle_count = 120
+area = Vector2(1540, 900)
+drift = Vector2(-9, 5)
 
 [node name="Ground" type="Polygon2D" parent="."]
-color = Color(0.21, 0.19, 0.16, 1)
-polygon = PackedVector2Array(-900, -540, 900, -540, 900, 540, -900, 540)
+color = Color(0.13, 0.14, 0.13, 1)
+polygon = PackedVector2Array(-760, -430, 720, -430, 720, 410, -760, 410)
+
+[node name="ColdAshBandNorth" type="Polygon2D" parent="."]
+color = Color(0.17, 0.18, 0.16, 1)
+polygon = PackedVector2Array(-740, -410, 700, -410, 700, -330, 480, -350, 210, -320, -40, -360, -300, -334, -740, -370)
+
+[node name="ColdAshBandSouth" type="Polygon2D" parent="."]
+color = Color(0.17, 0.16, 0.14, 1)
+polygon = PackedVector2Array(-740, 335, -520, 300, -260, 342, -30, 312, 240, 348, 510, 314, 700, 340, 700, 400, -740, 400)
 
 [node name="Road" type="Polygon2D" parent="."]
-color = Color(0.095, 0.1, 0.105, 1)
-polygon = PackedVector2Array(-900, 250, -760, 170, -440, 115, -120, 40, 250, -70, 720, -210, 900, -220, 900, -80, 420, 30, 120, 120, -260, 210, -650, 290, -900, 350)
+color = Color(0.07, 0.08, 0.08, 1)
+polygon = PackedVector2Array(-760, 300, -650, 220, -520, 196, -380, 140, -225, 90, -90, 24, 80, -34, 260, -108, 458, -220, 665, -250, 715, -164, 500, -115, 318, -32, 120, 40, -60, 110, -248, 178, -465, 245, -660, 328, -760, 360)
+
+[node name="RoadShoulder" type="Polygon2D" parent="."]
+color = Color(0.20, 0.18, 0.14, 0.72)
+polygon = PackedVector2Array(-715, 350, -510, 270, -255, 204, -52, 136, 136, 66, 336, -10, 528, -92, 700, -130, 700, -92, 520, -50, 332, 36, 140, 106, -48, 176, -248, 246, -506, 312, -718, 392)
 
 [node name="RoadLine1" type="Polygon2D" parent="."]
-color = Color(0.62, 0.56, 0.42, 0.55)
-polygon = PackedVector2Array(-760, 238, -520, 178, -512, 188, -752, 248)
+color = Color(0.74, 0.62, 0.38, 0.42)
+polygon = PackedVector2Array(-610, 260, -500, 218, -494, 230, -604, 272)
 
 [node name="RoadLine2" type="Polygon2D" parent="."]
-color = Color(0.62, 0.56, 0.42, 0.55)
-polygon = PackedVector2Array(-330, 153, -80, 90, -72, 100, -322, 163)
+color = Color(0.74, 0.62, 0.38, 0.38)
+polygon = PackedVector2Array(-250, 145, -120, 92, -114, 104, -244, 157)
 
 [node name="RoadLine3" type="Polygon2D" parent="."]
-color = Color(0.62, 0.56, 0.42, 0.55)
-polygon = PackedVector2Array(100, 48, 350, -28, 358, -18, 108, 58)
+color = Color(0.74, 0.62, 0.38, 0.36)
+polygon = PackedVector2Array(120, 8, 266, -54, 272, -42, 126, 20)
 
-[node name="Dunes" type="Node2D" parent="."]
-
-[node name="DuneNorth" type="Polygon2D" parent="Dunes"]
-color = Color(0.27, 0.24, 0.19, 1)
-polygon = PackedVector2Array(-860, -500, 850, -500, 850, -430, 600, -450, 300, -420, -40, -465, -420, -430, -860, -460)
-
-[node name="DuneSouth" type="Polygon2D" parent="Dunes"]
-color = Color(0.28, 0.25, 0.2, 1)
-polygon = PackedVector2Array(-870, 460, -500, 420, -180, 475, 180, 430, 520, 480, 870, 430, 870, 520, -870, 520)
+[node name="RoadLine4" type="Polygon2D" parent="."]
+color = Color(0.74, 0.62, 0.38, 0.32)
+polygon = PackedVector2Array(390, -126, 522, -178, 528, -166, 396, -114)
 
 [node name="GroundDecals" type="Node2D" parent="."]
-modulate = Color(1, 1, 1, 0.72)
+modulate = Color(0.82, 0.86, 0.78, 0.58)
 
-[node name="CrackA" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(-360, 150)
-scale = Vector2(0.5, 0.5)
+[node name="CrackStart" type="Sprite2D" parent="GroundDecals"]
+position = Vector2(-476, 212)
+scale = Vector2(0.42, 0.42)
 texture = ExtResource("19_dcrack")
 
-[node name="CrackB" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(250, -55)
-scale = Vector2(0.5, 0.5)
+[node name="CrackStation" type="Sprite2D" parent="GroundDecals"]
+position = Vector2(0, -26)
+scale = Vector2(0.5, 0.45)
 texture = ExtResource("19_dcrack")
 
 [node name="Forecourt" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(120, -150)
-scale = Vector2(0.62, 0.62)
+position = Vector2(58, -104)
+scale = Vector2(0.68, 0.62)
 texture = ExtResource("20_dconc")
 
-[node name="DirtKiosk" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(-560, 205)
-scale = Vector2(0.5, 0.5)
+[node name="KioskDirt" type="Sprite2D" parent="GroundDecals"]
+position = Vector2(-396, -20)
+scale = Vector2(0.46, 0.46)
 texture = ExtResource("21_ddirt")
 
-[node name="RubbleMast" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(330, -255)
-scale = Vector2(0.5, 0.5)
-texture = ExtResource("22_dgrav")
-
-[node name="DirtShed" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(505, 120)
+[node name="ShedGravel" type="Sprite2D" parent="GroundDecals"]
+position = Vector2(226, 52)
 scale = Vector2(0.5, 0.5)
 texture = ExtResource("23_ddgrav")
 
-[node name="RubbleKiosk" type="Sprite2D" parent="GroundDecals"]
-position = Vector2(-590, -85)
-scale = Vector2(0.45, 0.45)
+[node name="MastRubble" type="Sprite2D" parent="GroundDecals"]
+position = Vector2(438, -214)
+scale = Vector2(0.58, 0.58)
+texture = ExtResource("22_dgrav")
+
+[node name="CacheRubble" type="Sprite2D" parent="GroundDecals"]
+position = Vector2(205, 288)
+scale = Vector2(0.46, 0.46)
 texture = ExtResource("24_drub")
 
 [node name="StationSignLandmark" type="Sprite2D" parent="."]
-position = Vector2(360, -150)
-scale = Vector2(0.22, 0.22)
+position = Vector2(238, -104)
+scale = Vector2(0.19, 0.19)
+modulate = Color(0.78, 0.74, 0.62, 0.86)
 texture = ExtResource("25_sign")
 
 [node name="NorthSignal" type="Node2D" parent="."]
 visible = false
-position = Vector2(150, -470)
+position = Vector2(586, -360)
 
 [node name="Halo" type="Polygon2D" parent="NorthSignal"]
-color = Color(0.4, 0.85, 0.95, 0.36)
-polygon = PackedVector2Array(-150, -30, 150, -30, 180, 40, -180, 46)
+color = Color(0.34, 0.82, 0.9, 0.40)
+polygon = PackedVector2Array(-120, -24, 120, -24, 150, 34, -150, 40)
 
 [node name="Beam" type="Polygon2D" parent="NorthSignal"]
-color = Color(1, 0.86, 0.42, 0.24)
-polygon = PackedVector2Array(-18, -44, 18, -44, 52, 80, -52, 80)
+color = Color(1, 0.76, 0.36, 0.30)
+polygon = PackedVector2Array(-16, -42, 16, -42, 46, 82, -46, 82)
 
 [node name="Core" type="Polygon2D" parent="NorthSignal"]
-color = Color(0.75, 0.97, 1, 0.95)
-polygon = PackedVector2Array(-15, -20, 15, -20, 20, 15, -20, 15)
+color = Color(0.68, 0.94, 0.98, 0.95)
+polygon = PackedVector2Array(-14, -18, 14, -18, 20, 14, -20, 14)
 
 [node name="WastelandBounds" type="StaticBody2D" parent="."]
 collision_layer = 1
 collision_mask = 0
 
 [node name="NorthShape" type="CollisionShape2D" parent="WastelandBounds"]
-position = Vector2(0, -530)
+position = Vector2(-20, -430)
 shape = SubResource("RectangleShape2D_wall_h")
 
 [node name="SouthShape" type="CollisionShape2D" parent="WastelandBounds"]
-position = Vector2(0, 530)
+position = Vector2(-20, 410)
 shape = SubResource("RectangleShape2D_wall_h")
 
 [node name="WestShape" type="CollisionShape2D" parent="WastelandBounds"]
-position = Vector2(-890, 0)
+position = Vector2(-760, -10)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="EastShape" type="CollisionShape2D" parent="WastelandBounds"]
-position = Vector2(890, 0)
+position = Vector2(720, -10)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="BaseDoor" parent="." instance=ExtResource("2_exit")]
-position = Vector2(-790, 320)
+position = Vector2(-690, 284)
 prompt = "Return to the Railhome"
 target_scene_path = "res://scenes/base/railhome_base.tscn"
 target_spawn = &"from_world"
 
 [node name="from_base" type="Marker2D" parent="." groups=["spawn_points"]]
-position = Vector2(-720, 300)
-
-[node name="StartRoadArrow" type="Polygon2D" parent="."]
-color = Color(1, 0.88, 0.45, 0.78)
-polygon = PackedVector2Array(-690, 246, -604, 224, -608, 205, -548, 234, -592, 285, -598, 262, -680, 286)
-
-[node name="RoadArrowToCrates" type="Polygon2D" parent="."]
-color = Color(1, 0.88, 0.45, 0.52)
-polygon = PackedVector2Array(-505, 175, -418, 151, -423, 132, -362, 161, -407, 212, -411, 190, -494, 212)
+position = Vector2(-626, 246)
 
 [node name="RailhomeExitGlow" type="Polygon2D" parent="."]
-color = Color(1, 0.92, 0.45, 0.45)
-polygon = PackedVector2Array(-832, 260, -748, 260, -716, 320, -748, 380, -832, 380, -864, 320)
+color = Color(1, 0.78, 0.35, 0.36)
+polygon = PackedVector2Array(-732, 226, -646, 222, -608, 286, -646, 350, -732, 352, -764, 286)
+
+[node name="StartRoadArrow" type="Polygon2D" parent="."]
+color = Color(1, 0.74, 0.32, 0.72)
+polygon = PackedVector2Array(-624, 218, -540, 202, -545, 184, -486, 212, -532, 260, -536, 238, -614, 258)
+
+[node name="StationArrow" type="Polygon2D" parent="."]
+color = Color(1, 0.74, 0.32, 0.46)
+polygon = PackedVector2Array(-314, 118, -230, 88, -236, 70, -174, 94, -216, 146, -222, 124, -304, 156)
+
+[node name="MastArrow" type="Polygon2D" parent="."]
+color = Color(0.42, 0.9, 0.95, 0.34)
+polygon = PackedVector2Array(286, -90, 370, -142, 356, -158, 430, -150, 388, -84, 378, -106, 304, -62)
 
 [node name="BrokenCar" type="StaticBody2D" parent="."]
-position = Vector2(-260, 128)
+position = Vector2(-304, 126)
 collision_layer = 1
 collision_mask = 0
 
 [node name="CarVisual" type="Sprite2D" parent="BrokenCar"]
 position = Vector2(0, -8)
-scale = Vector2(0.26, 0.26)
+scale = Vector2(0.25, 0.25)
+modulate = Color(0.72, 0.72, 0.64, 0.92)
 texture = ExtResource("9_car")
 
 [node name="CarShape" type="CollisionShape2D" parent="BrokenCar"]
@@ -221,87 +233,125 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="StationFloor" type="Polygon2D" parent="PetrolStation"]
-color = Color(0.18, 0.18, 0.17, 1)
-polygon = PackedVector2Array(-95, -230, 290, -230, 320, 10, -90, 25)
+color = Color(0.13, 0.13, 0.12, 1)
+polygon = PackedVector2Array(-96, -180, 292, -186, 310, 10, -105, 26)
+
+[node name="FloorEdge" type="Polygon2D" parent="PetrolStation"]
+color = Color(0.32, 0.25, 0.18, 0.86)
+polygon = PackedVector2Array(-96, 6, 310, -10, 310, 12, -105, 28)
 
 [node name="Office" type="Polygon2D" parent="PetrolStation"]
-color = Color(0.28, 0.24, 0.2, 1)
-polygon = PackedVector2Array(45, -275, 305, -275, 305, -195, 45, -195)
+color = Color(0.24, 0.22, 0.18, 1)
+polygon = PackedVector2Array(44, -232, 304, -232, 304, -152, 44, -152)
 
 [node name="OfficeRoof" type="Polygon2D" parent="PetrolStation"]
-color = Color(0.31, 0.16, 0.13, 1)
-polygon = PackedVector2Array(30, -300, 320, -300, 305, -275, 45, -275)
+color = Color(0.25, 0.13, 0.10, 1)
+polygon = PackedVector2Array(28, -258, 322, -258, 304, -232, 44, -232)
+
+[node name="OfficePanelA" type="Polygon2D" parent="PetrolStation"]
+color = Color(0.12, 0.13, 0.12, 0.65)
+polygon = PackedVector2Array(70, -216, 136, -216, 136, -178, 70, -178)
+
+[node name="OfficePanelB" type="Polygon2D" parent="PetrolStation"]
+color = Color(0.38, 0.3, 0.2, 0.55)
+polygon = PackedVector2Array(164, -214, 284, -214, 284, -204, 164, -204)
 
 [node name="Canopy" type="Polygon2D" parent="PetrolStation"]
-color = Color(0.27, 0.14, 0.12, 1)
-polygon = PackedVector2Array(-85, -170, 165, -190, 185, -150, -70, -130)
+color = Color(0.22, 0.12, 0.10, 1)
+polygon = PackedVector2Array(-82, -122, 164, -146, 188, -106, -66, -86)
+
+[node name="CanopyStripe" type="Polygon2D" parent="PetrolStation"]
+color = Color(0.72, 0.53, 0.28, 0.28)
+polygon = PackedVector2Array(-62, -112, 144, -132, 150, -122, -56, -102)
+
+[node name="CanopyStrutA" type="Polygon2D" parent="PetrolStation"]
+color = Color(0.09, 0.10, 0.10, 1)
+polygon = PackedVector2Array(-30, -104, -20, -104, -20, -36, -30, -36)
+
+[node name="CanopyStrutB" type="Polygon2D" parent="PetrolStation"]
+color = Color(0.09, 0.10, 0.10, 1)
+polygon = PackedVector2Array(86, -116, 96, -116, 96, -48, 86, -48)
 
 [node name="PumpA" type="Sprite2D" parent="PetrolStation"]
-position = Vector2(-26, -104)
+position = Vector2(-22, -58)
 scale = Vector2(0.12, 0.12)
+modulate = Color(0.82, 0.76, 0.64, 0.9)
 texture = ExtResource("15_pump")
 
 [node name="PumpB" type="Sprite2D" parent="PetrolStation"]
-position = Vector2(62, -116)
+position = Vector2(70, -70)
 scale = Vector2(0.12, 0.12)
+modulate = Color(0.82, 0.76, 0.64, 0.9)
 texture = ExtResource("15_pump")
 
 [node name="OfficeShape" type="CollisionShape2D" parent="PetrolStation"]
-position = Vector2(175, -235)
+position = Vector2(174, -192)
 shape = SubResource("RectangleShape2D_station")
 
 [node name="CanopyShape" type="CollisionShape2D" parent="PetrolStation"]
-position = Vector2(45, -160)
+position = Vector2(46, -116)
 shape = SubResource("RectangleShape2D_canopy")
 
 [node name="PumpAShape" type="CollisionShape2D" parent="PetrolStation"]
-position = Vector2(-26, -109)
+position = Vector2(-22, -63)
 shape = SubResource("RectangleShape2D_pump")
 
 [node name="PumpBShape" type="CollisionShape2D" parent="PetrolStation"]
-position = Vector2(62, -121)
+position = Vector2(70, -75)
 shape = SubResource("RectangleShape2D_pump")
 
 [node name="ForecourtOilStain" type="Polygon2D" parent="."]
-color = Color(0.04, 0.045, 0.04, 0.65)
-polygon = PackedVector2Array(-72, -64, 8, -78, 80, -50, 58, -8, -20, 0, -92, -26)
+color = Color(0.035, 0.04, 0.035, 0.70)
+polygon = PackedVector2Array(-62, -22, 10, -40, 92, -20, 64, 28, -28, 36, -96, 10)
 
 [node name="RoadsideKiosk" type="StaticBody2D" parent="."]
-position = Vector2(-610, -116)
+position = Vector2(-405, -10)
 collision_layer = 1
 collision_mask = 0
 
 [node name="KioskWall" type="Polygon2D" parent="RoadsideKiosk"]
-color = Color(0.29, 0.25, 0.2, 1)
+color = Color(0.24, 0.21, 0.17, 1)
 polygon = PackedVector2Array(-75, -34, 75, -34, 75, 34, -75, 34)
 
 [node name="KioskRoof" type="Polygon2D" parent="RoadsideKiosk"]
-color = Color(0.31, 0.17, 0.13, 1)
+color = Color(0.24, 0.13, 0.10, 1)
 polygon = PackedVector2Array(-88, -52, 88, -52, 75, -34, -75, -34)
 
 [node name="KioskWindow" type="Polygon2D" parent="RoadsideKiosk"]
-color = Color(0.08, 0.1, 0.105, 1)
+color = Color(0.06, 0.08, 0.08, 1)
 polygon = PackedVector2Array(-54, -20, 16, -20, 16, 10, -54, 10)
+
+[node name="KioskBoards" type="Polygon2D" parent="RoadsideKiosk"]
+color = Color(0.50, 0.36, 0.22, 0.50)
+polygon = PackedVector2Array(24, -20, 62, -18, 62, -10, 24, -12)
 
 [node name="KioskShape" type="CollisionShape2D" parent="RoadsideKiosk"]
 shape = SubResource("RectangleShape2D_kiosk")
 
 [node name="MaintenanceShed" type="StaticBody2D" parent="."]
-position = Vector2(520, 96)
+position = Vector2(224, 48)
 collision_layer = 1
 collision_mask = 0
 
 [node name="ShedWall" type="Polygon2D" parent="MaintenanceShed"]
-color = Color(0.22, 0.24, 0.22, 1)
+color = Color(0.19, 0.21, 0.18, 1)
 polygon = PackedVector2Array(-76, -32, 58, -32, 70, 28, -82, 36)
 
 [node name="ShedRoof" type="Polygon2D" parent="MaintenanceShed"]
-color = Color(0.36, 0.33, 0.25, 1)
+color = Color(0.28, 0.24, 0.16, 1)
 polygon = PackedVector2Array(-94, -56, 72, -46, 58, -32, -76, -32)
 
 [node name="ShedGap" type="Polygon2D" parent="MaintenanceShed"]
-color = Color(0.07, 0.08, 0.075, 1)
+color = Color(0.05, 0.06, 0.055, 1)
 polygon = PackedVector2Array(-18, -22, 30, -22, 38, 24, -14, 28)
+
+[node name="ShedPlankA" type="Polygon2D" parent="MaintenanceShed"]
+color = Color(0.52, 0.38, 0.22, 0.45)
+polygon = PackedVector2Array(-62, -22, 52, -22, 54, -17, -64, -17)
+
+[node name="ShedPlankB" type="Polygon2D" parent="MaintenanceShed"]
+color = Color(0.52, 0.38, 0.22, 0.36)
+polygon = PackedVector2Array(-70, 14, 62, 8, 64, 13, -72, 21)
 
 [node name="ShedShape" type="CollisionShape2D" parent="MaintenanceShed"]
 shape = SubResource("RectangleShape2D_shed")
@@ -311,37 +361,41 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="RubbleVisual1" type="Polygon2D" parent="Rubble"]
-color = Color(0.25, 0.23, 0.2, 1)
-polygon = PackedVector2Array(-620, -40, -500, -70, -470, -20, -590, 20)
+color = Color(0.20, 0.19, 0.16, 1)
+polygon = PackedVector2Array(-452, 58, -330, 30, -302, 78, -424, 116)
 
 [node name="RubbleShape1" type="CollisionShape2D" parent="Rubble"]
-position = Vector2(-545, -26)
+position = Vector2(-378, 72)
 shape = SubResource("RectangleShape2D_rubble")
 
 [node name="RubbleVisual2" type="Polygon2D" parent="Rubble"]
-color = Color(0.25, 0.23, 0.2, 1)
-polygon = PackedVector2Array(510, 190, 650, 160, 675, 220, 540, 248)
+color = Color(0.20, 0.19, 0.16, 1)
+polygon = PackedVector2Array(110, 270, 250, 242, 278, 304, 138, 334)
 
 [node name="RubbleShape2" type="CollisionShape2D" parent="Rubble"]
-position = Vector2(595, 205)
+position = Vector2(190, 288)
 shape = SubResource("RectangleShape2D_rubble")
 
 [node name="RadioMast" type="StaticBody2D" parent="."]
-position = Vector2(330, -310)
+position = Vector2(438, -226)
 collision_layer = 1
 collision_mask = 0
 
+[node name="MastPool" type="Polygon2D" parent="RadioMast"]
+color = Color(0.12, 0.25, 0.27, 0.42)
+polygon = PackedVector2Array(-150, -78, 140, -92, 166, 38, -126, 64)
+
 [node name="MastPole" type="Polygon2D" parent="RadioMast"]
-color = Color(0.5, 0.52, 0.46, 1)
+color = Color(0.36, 0.38, 0.34, 1)
 polygon = PackedVector2Array(-72, 12, 70, -18, 76, -8, -68, 24)
 
 [node name="MastDish" type="Polygon2D" parent="RadioMast"]
-color = Color(0.38, 0.44, 0.43, 1)
+color = Color(0.28, 0.36, 0.35, 1)
 polygon = PackedVector2Array(56, -42, 100, -28, 84, 2, 52, -8)
 
 [node name="RecoveredGlow" type="Polygon2D" parent="RadioMast"]
 visible = false
-color = Color(1, 0.86, 0.42, 0.28)
+color = Color(1, 0.76, 0.34, 0.32)
 polygon = PackedVector2Array(-138, -72, 128, -92, 150, 34, -118, 56)
 
 [node name="MastShape" type="CollisionShape2D" parent="RadioMast"]
@@ -349,132 +403,122 @@ shape = SubResource("RectangleShape2D_mast")
 rotation = -0.22
 
 [node name="StaticSparkA" type="Polygon2D" parent="RadioMast"]
-color = Color(0.45, 0.95, 0.98, 0.5)
+color = Color(0.38, 0.9, 0.94, 0.56)
 polygon = PackedVector2Array(-105, -24, -92, -34, -80, -22, -94, -12)
 
 [node name="StaticSparkB" type="Polygon2D" parent="RadioMast"]
-color = Color(0.45, 0.95, 0.98, 0.4)
+color = Color(0.38, 0.9, 0.94, 0.46)
 polygon = PackedVector2Array(20, -54, 34, -66, 48, -52, 32, -38)
 
 [node name="StaticSparkC" type="Polygon2D" parent="RadioMast"]
-color = Color(0.45, 0.95, 0.98, 0.35)
+color = Color(0.38, 0.9, 0.94, 0.38)
 polygon = PackedVector2Array(112, -10, 126, -22, 138, -8, 122, 4)
 
 [node name="FadedRoadSign" type="Area2D" parent="."]
-position = Vector2(-720, 98)
+position = Vector2(-560, 120)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_lore")
 prompt = "Read faded road sign"
-notice = "NORTH ROAD CLOSED. Someone crossed out CLOSED and wrote HOME."
+notice = "NORTH ROAD CLOSED. Someone crossed out CLOSED and wrote HOME. The amber arrows point east first."
 
 [node name="Visual" type="Sprite2D" parent="FadedRoadSign"]
 position = Vector2(0, -6)
 scale = Vector2(0.12, 0.12)
+modulate = Color(0.82, 0.78, 0.62, 0.86)
 texture = ExtResource("10_roadsign")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="FadedRoadSign"]
 shape = SubResource("RectangleShape2D_lore")
 
 [node name="AbandonedBackpack" type="Area2D" parent="."]
-position = Vector2(-432, 124)
+position = Vector2(-452, 176)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_lore")
 prompt = "Check backpack"
-notice = "The pack is empty except for sand and a school timetable."
+notice = "Empty. Whoever owned it took the important things and left the weight behind."
 
 [node name="Visual" type="Sprite2D" parent="AbandonedBackpack"]
 scale = Vector2(0.11, 0.11)
+modulate = Color(0.78, 0.74, 0.62, 0.88)
 texture = ExtResource("11_backpack")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="AbandonedBackpack"]
 shape = SubResource("RectangleShape2D_lore")
 
-[node name="BrokenRadioProp" type="Area2D" parent="."]
-position = Vector2(198, -156)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Inspect broken radio"
-notice = "It clicks once, then whispers your own breathing back."
-
-[node name="Visual" type="Sprite2D" parent="BrokenRadioProp"]
-scale = Vector2(0.11, 0.11)
-texture = ExtResource("12_radio")
-
-[node name="TriggerShape" type="CollisionShape2D" parent="BrokenRadioProp"]
-shape = SubResource("RectangleShape2D_lore")
-
 [node name="MissingPoster" type="Area2D" parent="."]
-position = Vector2(-628, -80)
+position = Vector2(-436, -52)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_lore")
 prompt = "Read missing poster"
-notice = "MISSING: ELLIE, 8. The ink has run where someone touched the name."
+notice = "MISSING: ELLIE, 8. The same small sun is scratched onto the corner of the poster."
 
 [node name="Visual" type="Sprite2D" parent="MissingPoster"]
 scale = Vector2(0.13, 0.13)
+modulate = Color(0.88, 0.80, 0.62, 0.9)
 texture = ExtResource("13_poster")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="MissingPoster"]
 shape = SubResource("RectangleShape2D_lore")
 
-[node name="FamilyPhotoWall" type="Area2D" parent="."]
-position = Vector2(282, -216)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Look at photo"
-notice = "A family smiles beside pump two. The smallest face is scratched away."
-
-[node name="Visual" type="Sprite2D" parent="FamilyPhotoWall"]
-scale = Vector2(0.11, 0.11)
-texture = ExtResource("18_photo")
-
-[node name="TriggerShape" type="CollisionShape2D" parent="FamilyPhotoWall"]
-shape = SubResource("RectangleShape2D_lore")
-
 [node name="EmergencyBoard" type="Area2D" parent="."]
-position = Vector2(58, -236)
+position = Vector2(84, -164)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_lore")
 prompt = "Read warning board"
-notice = "EVACUATION ROUTE: RAIL LINE. The arrows point both ways."
+notice = "EVACUATION ROUTE: RAIL LINE. The printed arrows end at the fallen mast."
 
 [node name="Visual" type="Sprite2D" parent="EmergencyBoard"]
 scale = Vector2(0.13, 0.13)
+modulate = Color(0.82, 0.72, 0.56, 0.86)
 texture = ExtResource("14_warnboard")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="EmergencyBoard"]
 shape = SubResource("RectangleShape2D_lore")
 
+[node name="BrokenRadioProp" type="Area2D" parent="."]
+position = Vector2(352, -160)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_lore")
+prompt = "Inspect broken radio"
+notice = "The speaker clicks in time with the cyan sparks. The Mnemoscope will need a stronger coil to hold this signal."
+
+[node name="Visual" type="Sprite2D" parent="BrokenRadioProp"]
+scale = Vector2(0.11, 0.11)
+modulate = Color(0.78, 0.82, 0.74, 0.88)
+texture = ExtResource("12_radio")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="BrokenRadioProp"]
+shape = SubResource("RectangleShape2D_lore")
+
 [node name="DeadVendingMachine" type="Area2D" parent="."]
-position = Vector2(-548, -86)
+position = Vector2(-458, 22)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("7_lore")
 prompt = "Inspect vending machine"
-notice = "Every slot is empty. One button still says MILK."
+notice = "Every slot is empty except one: CANNED FOOD. Food is not treasure, but it keeps you standing."
 
 [node name="Visual" type="Sprite2D" parent="DeadVendingMachine"]
 scale = Vector2(0.13, 0.13)
+modulate = Color(0.82, 0.72, 0.58, 0.82)
 texture = ExtResource("16_vending")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="DeadVendingMachine"]
 shape = SubResource("RectangleShape2D_lore")
 
 [node name="CrackedPublicPhone" type="Area2D" parent="."]
-position = Vector2(424, 104)
+position = Vector2(196, -6)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -484,53 +528,44 @@ notice = "No tone. Just a distant number being dialed forever."
 
 [node name="Visual" type="Sprite2D" parent="CrackedPublicPhone"]
 scale = Vector2(0.12, 0.12)
+modulate = Color(0.76, 0.78, 0.68, 0.86)
 texture = ExtResource("17_phone")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="CrackedPublicPhone"]
 shape = SubResource("RectangleShape2D_lore")
 
 [node name="RoadsideCrate" parent="." instance=ExtResource("1_crate")]
-position = Vector2(-555, 218)
-prompt = "Search roadside crate"
-loot = {"canned_food": 1, "scrap": 2}
+position = Vector2(-518, 214)
+prompt = "Search first supply crate"
+loot = {"canned_food": 1, "scrap": 1}
 
 [node name="CarBoot" parent="." instance=ExtResource("1_crate")]
-position = Vector2(-195, 92)
+position = Vector2(-250, 102)
 prompt = "Search car boot"
-loot = {"battery": 1, "scrap": 2}
-
-[node name="PumpLocker" parent="." instance=ExtResource("1_crate")]
-position = Vector2(-65, -185)
-prompt = "Search pump locker"
 loot = {"battery": 1, "scrap": 1}
 
-[node name="OfficeCrate" parent="." instance=ExtResource("1_crate")]
-position = Vector2(250, -170)
-prompt = "Search office crate"
-loot = {"canned_food": 2, "scrap": 3}
-
-[node name="MastToolbox" parent="." instance=ExtResource("1_crate")]
-position = Vector2(410, -338)
-prompt = "Search repair toolbox"
-loot = {"scrap": 2}
-
-[node name="SideCache" parent="." instance=ExtResource("1_crate")]
-position = Vector2(585, 315)
-prompt = "Search side cache"
-loot = {"canned_food": 1, "scrap": 4}
+[node name="PumpLocker" parent="." instance=ExtResource("1_crate")]
+position = Vector2(-44, -112)
+prompt = "Search pump locker"
+loot = {"scrap": 1}
 
 [node name="KioskDrawer" parent="." instance=ExtResource("1_crate")]
-position = Vector2(-654, -58)
+position = Vector2(-446, 34)
 prompt = "Search kiosk drawer"
 loot = {"canned_food": 1, "scrap": 1}
 
 [node name="ShedLocker" parent="." instance=ExtResource("1_crate")]
-position = Vector2(562, 42)
+position = Vector2(282, 42)
 prompt = "Search shed locker"
 loot = {"battery": 1, "scrap": 2}
 
+[node name="RelayCache" parent="." instance=ExtResource("1_crate")]
+position = Vector2(230, 304)
+prompt = "Search guarded relay cache"
+loot = {"battery": 1, "canned_food": 1, "scrap": 3}
+
 [node name="ChildLunchbox" type="Area2D" parent="."]
-position = Vector2(-8, -72)
+position = Vector2(-374, 60)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -540,216 +575,32 @@ empty_prompt = "Lunchbox taken"
 loot = {"child_lunchbox": 1}
 
 [node name="Visual" type="Polygon2D" parent="ChildLunchbox"]
-color = Color(0.86, 0.62, 0.22, 1)
+color = Color(0.62, 0.42, 0.18, 1)
 polygon = PackedVector2Array(-20, -10, 20, -10, 20, 14, -20, 14)
 
 [node name="Handle" type="Polygon2D" parent="ChildLunchbox/Visual"]
-color = Color(0.48, 0.3, 0.12, 1)
+color = Color(0.28, 0.20, 0.12, 1)
 polygon = PackedVector2Array(-9, -18, 9, -18, 13, -10, 7, -10, 5, -14, -5, -14, -7, -10, -13, -10)
 
 [node name="SunScratch" type="Polygon2D" parent="ChildLunchbox/Visual"]
-color = Color(1.0, 0.9, 0.45, 1)
+color = Color(0.88, 0.68, 0.30, 0.9)
 polygon = PackedVector2Array(-4, -2, 4, -2, 8, 4, 0, 10, -8, 4)
 
 [node name="Glint" type="Polygon2D" parent="ChildLunchbox"]
-color = Color(1, 0.9, 0.45, 0.85)
+color = Color(1, 0.78, 0.34, 0.72)
 polygon = PackedVector2Array(16, -18, 20, -8, 30, -4, 20, 0, 16, 10, 12, 0, 2, -4, 12, -8)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="ChildLunchbox"]
 shape = SubResource("RectangleShape2D_lore")
 
 [node name="RoadHollow" parent="." instance=ExtResource("3_hollow")]
-position = Vector2(20, 20)
-
-[node name="AvoidableHollow" parent="." instance=ExtResource("3_hollow")]
-position = Vector2(610, 255)
-
-[node name="MemoryEcho" parent="." instance=ExtResource("4_echo")]
-position = Vector2(350, -282)
-echo_data = ExtResource("5_echodata")
-
-[node name="RouteBeacon" parent="." instance=ExtResource("26_beacon")]
-position = Vector2(-322, 92)
-upgrade_data = ExtResource("27_beacondata")
-
-[node name="ChildDrawing" type="Area2D" parent="."]
-position = Vector2(34, -46)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Look at the crayon drawing"
-notice = "Three stick figures under a yellow sun. Only two are coloured in. The third has been scribbled out, hard, again and again."
-
-[node name="Visual" type="Polygon2D" parent="ChildDrawing"]
-color = Color(0.78, 0.74, 0.55, 1)
-polygon = PackedVector2Array(-11, -13, 11, -13, 11, 13, -11, 13)
-
-[node name="Mark" type="Polygon2D" parent="ChildDrawing/Visual"]
-color = Color(0.85, 0.68, 0.2, 1)
-polygon = PackedVector2Array(2, -8, 8, -8, 8, -2, 2, -2)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="ChildDrawing"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="EvacNotice" type="Area2D" parent="."]
-position = Vector2(-108, -172)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Read the evacuation notice"
-notice = "EVAC BUS 3 - DEPART 06:00 SHARP. Underneath, in a shakier hand: the bus came at 05:40 and did not stop."
-
-[node name="Visual" type="Polygon2D" parent="EvacNotice"]
-color = Color(0.72, 0.7, 0.6, 1)
-polygon = PackedVector2Array(-12, -14, 12, -14, 12, 14, -12, 14)
-
-[node name="Line" type="Polygon2D" parent="EvacNotice/Visual"]
-color = Color(0.5, 0.22, 0.16, 1)
-polygon = PackedVector2Array(-9, 2, 9, 2, 9, 5, -9, 5)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="EvacNotice"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="RouteTag" type="Area2D" parent="."]
-position = Vector2(-458, 78)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Check the route tag"
-notice = "A metal route tag, cut off and rewelded backwards. It swears the sea lies east. There has never been a sea east of here."
-
-[node name="Visual" type="Polygon2D" parent="RouteTag"]
-color = Color(0.55, 0.58, 0.5, 1)
-polygon = PackedVector2Array(-12, -10, 12, -10, 12, 10, -12, 10)
-
-[node name="Arrow" type="Polygon2D" parent="RouteTag/Visual"]
-color = Color(0.2, 0.22, 0.2, 1)
-polygon = PackedVector2Array(-8, -2, 4, -2, 4, -6, 10, 0, 4, 6, 4, 2, -8, 2)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="RouteTag"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="HollowChalk" type="Area2D" parent="."]
-position = Vector2(-92, 58)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Read the chalk scrawl"
-notice = "Chalk on the tarmac, half worn away: DON'T RUN. THEY HEAR RUNNING. WALK LIKE YOU BELONG HERE."
-
-[node name="Visual" type="Polygon2D" parent="HollowChalk"]
-color = Color(0.66, 0.66, 0.62, 0.85)
-polygon = PackedVector2Array(-13, -9, 13, -9, 13, 9, -13, 9)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="HollowChalk"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="MastNote" type="Area2D" parent="."]
-position = Vector2(244, -298)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("7_lore")
-prompt = "Read the note taped to the mast"
-notice = "Taped to the mast, laminated against the ash: IF YOU HEAR THE TONE, DO NOT ANSWER IT. It already knows your name."
-
-[node name="Visual" type="Polygon2D" parent="MastNote"]
-color = Color(0.74, 0.72, 0.6, 1)
-polygon = PackedVector2Array(-10, -13, 10, -13, 10, 13, -10, 13)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="MastNote"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="ChoiceKiosk" type="Node2D" parent="."]
-position = Vector2(-702, 24)
-
-[node name="Supplies" type="Area2D" parent="ChoiceKiosk"]
-position = Vector2(-27, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("28_choice")
-take_prompt = "Take the salvage (1 battery, 2 scrap)"
-loot = {
-"battery": 1,
-"scrap": 2
-}
-take_notice = "You strip the panel for salvage. The little tin box gets left in the dust."
-
-[node name="Visual" type="Polygon2D" parent="ChoiceKiosk/Supplies"]
-color = Color(0.52, 0.54, 0.52, 1)
-polygon = PackedVector2Array(-13, -11, 13, -11, 13, 11, -13, 11)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="ChoiceKiosk/Supplies"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="Keepsake" type="Area2D" parent="ChoiceKiosk"]
-position = Vector2(27, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("28_choice")
-take_prompt = "Take the tin locket"
-keepsake_item = &"tin_locket"
-take_notice = "You leave the salvage and take the locket instead. It rattles, small and patient."
-
-[node name="Visual" type="Polygon2D" parent="ChoiceKiosk/Keepsake"]
-color = Color(0.7, 0.55, 0.3, 1)
-polygon = PackedVector2Array(-11, -10, 11, -10, 11, 10, -11, 10)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="ChoiceKiosk/Keepsake"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="ChoiceForecourt" type="Node2D" parent="."]
-position = Vector2(150, -58)
-
-[node name="Wiring" type="Area2D" parent="ChoiceForecourt"]
-position = Vector2(-27, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("28_choice")
-take_prompt = "Strip the wiring (3 scrap)"
-loot = {
-"scrap": 3
-}
-take_notice = "You tear the wiring free for scrap. The photograph tucked behind it flutters away into the ash."
-
-[node name="Visual" type="Polygon2D" parent="ChoiceForecourt/Wiring"]
-color = Color(0.52, 0.54, 0.52, 1)
-polygon = PackedVector2Array(-13, -11, 13, -11, 13, 11, -13, 11)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="ChoiceForecourt/Wiring"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="Photo" type="Area2D" parent="ChoiceForecourt"]
-position = Vector2(27, 0)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("28_choice")
-take_prompt = "Take the folded photograph"
-keepsake_item = &"old_photo"
-take_notice = "You leave the wiring and pocket the photograph. A face you almost recognise."
-
-[node name="Visual" type="Polygon2D" parent="ChoiceForecourt/Photo"]
-color = Color(0.7, 0.55, 0.3, 1)
-polygon = PackedVector2Array(-11, -10, 11, -10, 11, 10, -11, 10)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="ChoiceForecourt/Photo"]
-shape = SubResource("RectangleShape2D_lore")
-
-[node name="RelayCache" parent="." instance=ExtResource("1_crate")]
-position = Vector2(-770, -292)
-prompt = "Search the relay cache"
-loot = {
-"battery": 1,
-"scrap": 2
-}
+position = Vector2(46, 64)
 
 [node name="RelayHollow" parent="." instance=ExtResource("3_hollow")]
-position = Vector2(-712, -246)
+position = Vector2(170, 250)
+
+[node name="MemoryEcho" parent="." instance=ExtResource("4_echo")]
+position = Vector2(458, -218)
+echo_data = ExtResource("5_echodata")
+required_upgrade_id = &"scanner_coil"
+required_upgrade_notice = "The signal is here, but the Mnemoscope cannot hold it. Build the Scanner Coil in the Railhome, then scan again."

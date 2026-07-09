@@ -46,7 +46,6 @@ func _process(_delta: float) -> void:
 	_update_compass()
 
 
-## Aims the HUD compass arrow at the current objective's node in the live level.
 func _update_compass() -> void:
 	if _compass == null:
 		return
@@ -58,7 +57,6 @@ func _update_compass() -> void:
 		_compass.set_aim(true, target.global_position - player.global_position)
 
 
-## The world node the player should head toward right now, or null.
 func _current_objective_target() -> Node2D:
 	var main := get_tree().get_first_node_in_group("main")
 	if main == null or not main.has_method("get_current_level"):
@@ -66,30 +64,52 @@ func _current_objective_target() -> Node2D:
 	var level: Node = main.get_current_level()
 	if level == null:
 		return null
+
 	var at_base := _current_level_path() == GameManager.BASE_SCENE_PATH
 	var has_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
+	var has_coil := BaseUpgradeSystem.is_built(&"scanner_coil")
 	var radio_built := BaseUpgradeSystem.is_built(&"radio_desk")
 	var rested := SaveManager.has_save()
-
 	var target_name := ""
-	if not has_broadcast:
-		target_name = "Outside" if at_base else "MemoryEcho"
-	elif not radio_built:
-		target_name = "RadioDeskStation" if at_base else "BaseDoor"
-	elif not rested:
-		target_name = "Bedroll" if at_base else "BaseDoor"
+
+	if at_base:
+		if not has_broadcast:
+			target_name = "Outside" if has_coil else "ScannerCoilBench"
+		elif not radio_built:
+			target_name = "RadioDeskStation"
+		elif not rested:
+			target_name = "Bedroll"
+		else:
+			target_name = "Outside"
 	else:
-		target_name = "Outside" if at_base else "NorthSignal"
+		if not has_broadcast:
+			if has_coil:
+				target_name = "MemoryEcho"
+			elif _has_coil_materials():
+				target_name = "BaseDoor"
+			elif InventorySystem.get_total_count() == 0:
+				target_name = "RoadsideCrate"
+			else:
+				target_name = "ShedLocker"
+		elif not radio_built or not rested:
+			target_name = "BaseDoor"
+		else:
+			target_name = "NorthSignal"
 
 	return level.find_child(target_name, true, false) as Node2D
 
 
-## Rebuilds the inventory readout: a header total plus one icon+label row
-## per item type. Icons come from ItemData.icon (sliced item sprites).
+func _has_coil_materials() -> bool:
+	return InventorySystem.get_count(&"battery") >= 1 and InventorySystem.get_count(&"scrap") >= 2
+
+
+func _has_radio_materials() -> bool:
+	return InventorySystem.get_count(&"battery") >= 1 and InventorySystem.get_count(&"scrap") >= 3
+
+
 func _refresh_inventory() -> void:
 	_inv_header.text = "Items: %d" % InventorySystem.get_total_count()
 
-	# Clear the previous rows (rebuilds only on inventory changes, not per frame).
 	while _inv_list.get_child_count() > 0:
 		var old := _inv_list.get_child(0)
 		_inv_list.remove_child(old)
@@ -106,13 +126,11 @@ func _refresh_inventory() -> void:
 	_refresh_objectives()
 
 
-## One inventory row: a 26px icon (if any) beside the name x count.
 func _make_item_row(icon: Texture2D, text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 
 	var tex := TextureRect.new()
-	# Ignore the source texture's (large) size so the row stays 26px tall.
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tex.custom_minimum_size = Vector2(26, 26)
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -157,21 +175,16 @@ func _on_pause_main_menu() -> void:
 
 func _on_paused_changed(is_paused: bool) -> void:
 	_pause_overlay.visible = is_paused
-	# Always reopen the pause menu on its main options, not the sub-panel.
 	if not is_paused:
 		_pause_controls.visible = false
 		_pause_box.visible = true
 
 
-## Shows a transient notice, restarting the timer each time so the latest
-## message stays readable.
 func _on_notice_posted(text: String) -> void:
 	_notice_label.text = text
 	_notice_timer.start(_notice_duration_for(text))
 
 
-## Longer, multi-line story beats (opening, echo recovery, ending hook) linger
-## long enough to read; short toasts clear quickly. Clamped to a sane range.
 func _notice_duration_for(text: String) -> float:
 	return clampf(3.0 + text.length() * 0.045, 4.0, 11.0)
 
@@ -212,31 +225,32 @@ func _refresh_archive() -> void:
 func _refresh_objectives() -> void:
 	var has_supplies := InventorySystem.get_total_count() > 0
 	var has_last_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
+	var has_coil := BaseUpgradeSystem.is_built(&"scanner_coil")
 	var at_base := _current_level_path() == GameManager.BASE_SCENE_PATH
 	var radio_built := BaseUpgradeSystem.is_built(&"radio_desk")
 	var rested := SaveManager.has_save()
-
-	var has_lunchbox := InventorySystem.get_count(&"child_lunchbox") > 0
-	var has_choice_keepsake := InventorySystem.get_count(&"tin_locket") > 0
-	var beacon_lit := BaseUpgradeSystem.is_built(&"route_beacon")
+	var shelf_used := WorldState.is_opened(&"keepsake_shelf_used")
+	var relay_clear := WorldState.is_defeated(&"RelayHollow") or WorldState.is_opened(&"RelayCache")
+	var lantern_lit := BaseUpgradeSystem.is_built(&"base_lantern")
 
 	var lines: Array[String] = [
-		"Demo Goal",
+		"Core Signal",
 		"Next: %s" % _next_objective_text(
-			has_supplies, has_last_broadcast, at_base, radio_built, rested),
+			has_supplies, has_coil, has_last_broadcast, at_base, radio_built, rested),
 		"",
 	]
-	lines.append(_objective_line(has_supplies, "Search supplies"))
-	lines.append(_objective_line(_scanned_echo or has_last_broadcast, "Scan for an echo"))
+	lines.append(_objective_line(has_supplies, "Search first supplies"))
+	lines.append(_objective_line(has_coil, "Build Scanner Coil"))
+	lines.append(_objective_line(_scanned_echo or has_last_broadcast, "Reveal the mast echo"))
 	lines.append(_objective_line(has_last_broadcast, "Recover The Last Broadcast"))
 	lines.append(_objective_line(at_base or radio_built or rested, "Return to the Railhome"))
 	lines.append(_objective_line(radio_built, "Build the Radio Desk"))
-	lines.append(_objective_line(rested, "Rest at the bedroll"))
+	lines.append(_objective_line(rested, "Rest and save"))
 	lines.append("")
-	lines.append("Optional")
-	lines.append(_objective_line(has_lunchbox, "Find who left the lunchbox"))
-	lines.append(_objective_line(has_choice_keepsake, "Choose the tin locket over salvage"))
-	lines.append(_objective_line(beacon_lit, "Power the roadside beacon"))
+	lines.append("Useful extras")
+	lines.append(_objective_line(shelf_used, "Tend keepsakes at Memory Shelf"))
+	lines.append(_objective_line(relay_clear, "Clear guarded relay cache"))
+	lines.append(_objective_line(lantern_lit, "Wire the Signal Lantern"))
 	_objective_label.text = "\n".join(lines)
 
 
@@ -246,28 +260,39 @@ func _objective_line(done: bool, text: String) -> String:
 
 func _next_objective_text(
 		has_supplies: bool,
+		has_coil: bool,
 		has_last_broadcast: bool,
 		at_base: bool,
 		radio_built: bool,
 		rested: bool) -> String:
 	if not has_supplies:
-		return "Follow the cracked road east. Search the glinting roadside crate."
-	if not (_scanned_echo or has_last_broadcast):
-		return "Keep following the cracked road to the fallen mast. Press Q near the cyan static."
+		return "Follow the amber road east. Search the first glowing crate."
+	if not has_coil:
+		if at_base:
+			return "Build the Scanner Coil so the Mnemoscope can hold the mast signal."
+		if _has_coil_materials():
+			return "You have coil parts. Return west to the Railhome and build it."
+		return "Find battery and scrap in the car, kiosk, and shed. Food heals with F."
 	if not has_last_broadcast:
-		return "Interact with the revealed echo beside the fallen mast"
+		if at_base:
+			return "Scanner Coil built. Step outside and return to the fallen mast."
+		if not _scanned_echo:
+			return "Go to the fallen mast and press Q to scan the signal."
+		return "Interact with the revealed echo beside the fallen mast."
 	if not at_base and not radio_built and not rested:
-		return "Return west to the bright Railhome doorway"
+		return "Carry the memory west to the Railhome."
 	if not radio_built:
-		return "At the Railhome, build the Radio Desk"
+		if _has_radio_materials():
+			return "Build the Radio Desk from the recovered memory and supplies."
+		return "Find enough battery and scrap for the Radio Desk. The relay cache can help."
 	if not rested:
-		return "Radio Desk built - rest at the bedroll to save."
-	return "Demo endpoint reached. The north signal is a hook for the next area (not playable yet). Optional: build the Scanner Coil / Lantern, store keepsakes at the Memory Shelf, power the roadside beacon, or clear the relay cache."
+		return "Radio Desk online. Rest at the bedroll to save and finish the slice."
+	return "Demo endpoint reached. The north signal is an ending hook, not a playable next zone."
 
 
 func _show_opening_hint() -> void:
 	if InventorySystem.get_total_count() == 0 and _current_level_path() != GameManager.BASE_SCENE_PATH:
-		_on_notice_posted("You wake alone on the dead road. The Railhome is at your back; everything the world forgot lies east.\nFollow the amber arrows and search the glinting crates (E).")
+		_on_notice_posted("You wake on the dead road with the Railhome behind you.\nFollow the amber road, search supplies with E, and keep food for healing with F.")
 
 
 func _current_level_path() -> String:

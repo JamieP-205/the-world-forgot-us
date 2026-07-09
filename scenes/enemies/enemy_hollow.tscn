@@ -14,12 +14,12 @@ motion_mode = 1
 script = ExtResource("1_hollow")
 
 [node name="ContactShadow" type="Polygon2D" parent="."]
-color = Color(0.03, 0.04, 0.05, 0.34)
+color = Color(0.015, 0.02, 0.025, 0.42)
 polygon = PackedVector2Array(-22, 24, -14, 20, 14, 20, 22, 24, 14, 30, -14, 30)
 
 [node name="ForgottenHaze" type="Polygon2D" parent="."]
-color = Color(0.56, 0.7, 0.72, 0.12)
-polygon = PackedVector2Array(-40, -26, 40, -26, 50, 20, 26, 46, -26, 46, -50, 20)
+color = Color(0.28, 0.56, 0.58, 0.18)
+polygon = PackedVector2Array(-42, -28, 42, -28, 52, 20, 26, 48, -26, 48, -52, 20)
 
 [node name="PlaceholderVisual" type="Polygon2D" parent="."]
 visible = false
@@ -47,13 +47,18 @@ color = Color(0.1, 0.12, 0.13, 1)
 polygon = PackedVector2Array(-4, -1, 4, -1, 6, 10, -6, 10)
 
 [node name="Visual" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.58, 0.78, 0.72, 0.84)
 sprite_frames = ExtResource("3_hframes")
 animation = &"idle_down"
 offset = Vector2(0, -8)
 
+[node name="HollowAsh" type="Polygon2D" parent="."]
+color = Color(0.02, 0.06, 0.06, 0.18)
+polygon = PackedVector2Array(-14, -20, 14, -20, 18, 12, 10, 28, -10, 28, -18, 12)
+
 [node name="HitSpark" type="Polygon2D" parent="."]
 visible = false
-color = Color(0.8, 1, 0.92, 0.85)
+color = Color(0.68, 0.96, 0.9, 0.85)
 polygon = PackedVector2Array(0, -18, 5, -5, 18, 0, 5, 5, 0, 18, -5, 5, -18, 0, -5, -5)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]

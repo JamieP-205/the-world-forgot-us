@@ -97,7 +97,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.5, 0.52, 0.5, 1)
 theme_override_font_sizes/font_size = 14
-text = "Godot 4.7 prototype - placeholder art, no audio yet"
+text = "Godot 4.7 prototype - cohesive placeholder art + procedural audio"
 horizontal_alignment = 1
 
 [node name="ControlsPanel" parent="." instance=ExtResource("2_ctl")]

@@ -4,20 +4,12 @@ extends Node2D
 ##
 ## Main owns the things that must survive travel between locations -- the
 ## Player, the camera (a child of the Player), and the HUD -- and holds a
-## single swappable "level" underneath LevelHolder. Levels (the world map,
-## the base) are therefore pure environment scenes with no player or UI in
-## them, which keeps them small and reusable.
-##
-## Travel is driven entirely through EventBus.travel_requested, so nothing
-## needs a direct reference to Main.
+## single swappable "level" underneath LevelHolder.
 
-## Level loaded on startup (the world map for now).
 @export var start_level: PackedScene
-
-## Spawn point to use for the start level. &"" keeps the player where
-## this scene's Player node is authored.
 @export var start_spawn: StringName = &""
 
+@onready var _world_tint: CanvasModulate = $WorldTint
 @onready var _level_holder: Node2D = $LevelHolder
 @onready var _player: Player = $Player
 
@@ -35,22 +27,18 @@ func _ready() -> void:
 
 
 func _on_travel_requested(scene: PackedScene, spawn: StringName) -> void:
-	# Defer: the request originates from inside the current level (a
-	# SceneExit.interact() call is still on the stack), so we must let that
-	# unwind before freeing the level it belongs to.
 	_load_level.call_deferred(scene, spawn)
 
 
 func _load_level(scene: PackedScene, spawn: StringName) -> void:
 	if _current_level != null:
-		# Immediate free (safe now the input stack has unwound) so the old
-		# level's spawn markers can't collide with the new level's.
 		_current_level.free()
 		_current_level = null
 
 	_current_level = scene.instantiate()
 	_current_level_path = scene.resource_path
 	_level_holder.add_child(_current_level)
+	_apply_level_tint()
 	_place_player(spawn)
 	EventBus.level_loaded.emit()
 
@@ -59,13 +47,19 @@ func get_current_level_path() -> String:
 	return _current_level_path
 
 
-## The live level node under LevelHolder (for the HUD compass to locate the
-## current objective target). May be null between travels.
 func get_current_level() -> Node:
 	return _current_level
 
 
-## Moves the player onto the named spawn marker in the freshly loaded level.
+func _apply_level_tint() -> void:
+	if _world_tint == null:
+		return
+	if _current_level_path == GameManager.BASE_SCENE_PATH:
+		_world_tint.color = Color(0.92, 0.82, 0.66, 1.0)
+	else:
+		_world_tint.color = Color(0.64, 0.72, 0.72, 1.0)
+
+
 func _place_player(spawn: StringName) -> void:
 	if spawn == &"":
 		return
