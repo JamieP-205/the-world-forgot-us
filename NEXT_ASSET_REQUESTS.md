@@ -17,12 +17,20 @@ Delivery format for all of the below:
 
 ---
 
+> **Detailed specs & ready-to-use generation prompts now exist for the two
+> characters** — see `CHARACTER_SPRITE_SPEC.md` (exact cell sizes, grid layout,
+> directions, frame counts, pivots), `CHARACTER_ASSET_PROMPTS_PASS_11.md`
+> (copy-paste image prompts), and `CHARACTER_ART_INTEGRATION_CHECKLIST.md` (how
+> to wire them in safely). The summaries below stay as a quick index; the spec
+> files are authoritative.
+
 ## 1. Player — top-down character sheet (highest priority)
 
-The current `player_4dir_concept.png` is a 4-view standing **turnaround** at
-eye level. In a top-down game where the body rotates to face movement/aim, a
-front-facing figure that never turns reads wrong, so the player is still the
-placeholder capsule. Needed instead:
+See `CHARACTER_SPRITE_SPEC.md` §2 + `CHARACTER_ASSET_PROMPTS_PASS_11.md` §1/§3
+for the strict version. In short: the current `player_4dir_concept.png` is a
+4-view standing **turnaround** at eye level. In a top-down game where the body
+rotates to face movement/aim, a front-facing figure that never turns reads wrong,
+so the player is still the placeholder capsule. Needed instead:
 
 - **Directions:** 4-direction (down / up / left / right) minimum; 8-direction
   preferred. Right can be a mirror of left.
@@ -40,7 +48,9 @@ placeholder capsule. Needed instead:
 
 ## 2. Hollow enemy — top-down sheet (high priority)
 
-`hollow_concept_sheet.png` is 5 eye-level side poses — same problem. Needed:
+See `CHARACTER_SPRITE_SPEC.md` §3 + `CHARACTER_ASSET_PROMPTS_PASS_11.md` §2/§4/§7
+for the strict version. In short: `hollow_concept_sheet.png` is 5 eye-level side
+poses — same problem. Needed:
 
 - **Directions:** 4-direction (down/up/left/right), or at least down + up +
   side (mirror for the 4th).

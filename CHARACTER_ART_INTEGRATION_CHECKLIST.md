@@ -1,0 +1,117 @@
+# Character Art Integration Checklist
+
+Follow this **when the real sprite sheets arrive** (a later pass). It keeps the
+placeholder working until the new art is proven, and protects every gameplay
+system that touches the player/Hollow. Sizes/layout come from
+`CHARACTER_SPRITE_SPEC.md`.
+
+> This pass (11) does **not** integrate anything. This file is the recipe for
+> later.
+
+## 0. Before you start
+- Work on a branch or checkpoint commit first; the demo/build must stay stable.
+- A sheet must pass the acceptance checklist in `CHARACTER_SPRITE_SPEC.md` before
+  it goes anywhere near a scene.
+
+## 1. Where to place imported sprites
+- Raw generator output → `assets/source/generated/characters/player/` and
+  `.../hollow/`.
+- Keyed/ready PNGs (real alpha) → **`assets/processed/player_topdown/`** and
+  **`assets/processed/hollow_topdown/`** (new folders; mirrors the existing
+  `assets/processed/<pack>/` convention).
+- Reference sprites in scenes exactly like the current art, e.g.
+  `path="res://assets/processed/player_topdown/player_walk.png"`.
+
+## 2. Preserve the placeholder until the replacement is verified
+The player script uses `$Visual` (hurt-flash modulate) and `$FacingIndicator`
+(rotation); the Hollow script uses `$HealthComponent`, `$HitSpark`,
+`$CollisionShape2D`, `$ForgottenHaze`. To swap art with **zero script changes**
+at first:
+
+- **Rename** the current polygon `Visual` (and its child polygons) to
+  `PlaceholderVisual`, set `visible = false`. Do **not** delete it — it's the
+  fallback and the readability baseline.
+- **Add** a new node named exactly **`Visual`** of type `AnimatedSprite2D`
+  (preferred) or `Sprite2D`, as a sibling in the same position. Because it keeps
+  the name `Visual`, the existing hurt-flash `modulate` still targets the visible
+  sprite with no code change.
+- Keep `FacingIndicator`, `Shadow`/`ContactShadow`, `SwingVisual`, `HitSpark`,
+  `ForgottenHaze` **present** (you may set `FacingIndicator.visible = false` once
+  the sprite shows facing) so every `$NodePath` in the scripts still resolves.
+- Only after the new sprite is verified in-engine should you consider removing the
+  placeholder — and even then, prefer leaving it hidden.
+
+## 3. Build the SpriteFrames
+- For an `AnimatedSprite2D`, create a `SpriteFrames` resource.
+- Slice each sheet on its **96×96** grid (rows = down/up/left/right, cols =
+  frames). Use the editor's *Add frames from sprite sheet* (set H/V frame counts)
+  or `AtlasTexture` regions.
+- Name animations `<anim>_<dir>` exactly: `idle_down`, `walk_left`, `attack_up`,
+  `hurt_right`, and Hollow `death` (no direction). Set `walk_*` to loop, `attack_*`
+  / `hurt_*` / `death` to non-loop.
+- If `right` was delivered as a mirror, create it by flipping `left` (set
+  `flip_h` per-direction in code, or bake mirrored frames).
+
+## 4. Godot import settings (per PNG)
+- Importer: **Texture2D** (default). Keep **`compress/mode = 0` (Lossless)** to
+  match existing `assets/processed` art.
+- **Mipmaps: off** (2D sprites), **Fix Alpha Border: on** (clean edges after
+  keying).
+- Filtering: pick one and be consistent —
+  - crisp/pixel look → node `texture_filter = Nearest`;
+  - soft/painterly downscale → `Linear`.
+  Match whatever the rest of the game uses so the character doesn't clash.
+- Re-import, then confirm `.godot/imported/` regenerates (do not commit that
+  folder — it's ignored).
+
+## 5. Scale & readability test
+- Target on-screen height ~**32–40 px** (camera `zoom = 1.9`).
+- If a 96 px cell holds a ~72 px figure, start the `AnimatedSprite2D` `scale`
+  around **40 / 72 ≈ 0.55** and nudge until the figure's body matches the
+  collision box (player **18×22**, Hollow **22×30**).
+- **Feet-to-collision:** position the sprite so its ground-contact point sits at
+  the bottom of the collision box (offset the sprite up by roughly half the
+  figure height). Verify the character doesn't "float" or "sink."
+- Compare player vs Hollow side by side — the Hollow should read slightly
+  taller/thinner and clearly different.
+- Take a screenshot at zoom 1.9 and check silhouette readability against the ash
+  ground.
+
+## 6. Hook animations (small script change, later pass)
+- Add a helper that maps the continuous `facing` vector to one of 4 dirs:
+  choose by the dominant axis (`abs(x) > abs(y)` → left/right else up/down).
+- On movement: play `walk_<dir>` when `velocity != 0`, else `idle_<dir>`.
+- On attack (`_try_attack`): play `attack_<dir>` for the swing; keep the existing
+  `SwingVisual`/`AttackArea` timing untouched (or fade `SwingVisual` out once the
+  attack frames sell it).
+- Hollow: keep the whole-node `modulate` red flash (hurt) and cyan alpha→0 death
+  fade; optionally also play `hurt`/`death` animations. The death `queue_free`
+  timing and defeated-persistence must stay as-is.
+- Keep `FacingIndicator` logic harmless (hidden) or remove its rotation line only
+  once the sprite fully conveys facing.
+
+## 7. What NOT to touch
+- Collision shapes/sizes (player `18×22`, Hollow `22×30`), `collision_layer` /
+  `collision_mask`, `motion_mode`.
+- `HealthComponent` (and `max_health` 100 / 60), `AttackArea`, `InteractionArea`,
+  `ScannerComponent`, `Camera2D` (zoom/smoothing), `SwingTimer` timing.
+- Save format, `WorldState` flag names, persistent IDs, enemy speeds/damage,
+  objective order, menu/pause flow.
+- The verified release ZIP and the export preset. **Do not rebuild the export**
+  as part of art integration unless a build pass explicitly calls for it.
+- `Shadow`/`ContactShadow`, `ForgottenHaze`, `HitSpark` (they're the grounding &
+  feedback layer added in Pass 9).
+
+## 8. Validation checklist (after wiring art)
+- [ ] Godot 4.7 headless, 120 frames → exit 0, **no errors/warnings**.
+- [ ] World-load smoke: player + Hollow spawn; new `Visual` shows; placeholder
+      hidden; `$FacingIndicator`/`$ForgottenHaze`/`$HitSpark` still resolve.
+- [ ] Move in all 4 directions → correct facing animation.
+- [ ] Attack plays and still damages a Hollow; interaction (E) and scan (Q) work.
+- [ ] Hurt flash still visible on the new sprite; Hollow death still fades cyan
+      and frees; defeated Hollow stays gone across travel/reload (persistence).
+- [ ] Scale/feet look right at zoom 1.9; player and Hollow read distinct.
+- [ ] `git diff --check` clean; only source/scene/art files staged (no
+      `builds/`, `dist/`, exe, pck, zip, temp, quarantine).
+- [ ] If a build is later cut, that's a separate build pass with its own ZIP
+      verification — not part of this integration.
