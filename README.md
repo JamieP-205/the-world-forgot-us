@@ -83,8 +83,17 @@ F6) to skip the menu — it auto-continues from a save or starts the world.
 - The save lives at `user://savegame.json`.
 
 ### Export / build status
-No Windows build is produced yet: Godot's 4.7 **export templates are not installed**
-on this machine. To build a test `.exe` later, install the export templates (Editor →
-Manage Export Templates), add a Windows Desktop preset pointing at `builds/`, and
-export. See `TEST_BUILD_PASS_7_REPORT.md` for exact steps. Exported binaries under
-`builds/` and `dist/` are git-ignored.
+A Windows test build **is** produced. With the Godot 4.7 export templates
+installed and the `Windows Desktop` preset (machine-local `export_presets.cfg`),
+export headless with:
+
+```powershell
+& "...\Godot_v4.7-stable_win64_console.exe" --headless --path "<project>" --export-release "Windows Desktop"
+```
+
+This writes `builds/windows-test/TheWorldForgotUs_Demo.exe` + `.pck`. The
+shareable tester package lives in `dist/TheWorldForgotUs_Demo_Windows/`
+(`.exe`, `.pck`, `README_TESTER.txt`, `BUILD_NOTES.md`) and is zipped to
+`dist/TheWorldForgotUs_Demo_Windows.zip`. All exported binaries and the ZIP under
+`builds/` and `dist/` are git-ignored. See `BUILD_NOTES.md` and the latest build
+report for details.
