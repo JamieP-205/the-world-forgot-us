@@ -2,9 +2,8 @@
 
 - **Build name:** The World Forgot Us Demo
 - **Build type:** First playable test demo (vertical-slice prototype, not the full game)
-- **Commit:** `b6e078c` (Pass 9 visual/audio polish), rebuilt in Source Hygiene +
-  Rebuild Pass 9.1 (branch `master`) after quarantining an inert cloud-sync
-  duplicate script — no gameplay change.
+- **Commit:** `2b655f7` (Pass 12 — animated placeholder character sprites),
+  branch `master`. Repackaged in Build/Repackage Pass 12.1 — no gameplay change.
 - **Date:** 2026-07-09
 - **Engine:** Godot 4.7 stable, GL Compatibility renderer
 - **Platform:** Windows desktop, x86_64
@@ -12,7 +11,10 @@
 
 ## What's new in this build
 
-- Contact shadows on the player and Hollows; the Hollow is now a pale, shimmering
+- The player and Hollow now use **animated top-down placeholder sprites**
+  (directional idle/walk/attack plus hurt/hit/death via `AnimatedSprite2D`),
+  replacing the flat polygon blockouts (kept as hidden fallbacks).
+- Contact shadows on the player and Hollows; the Hollow is a pale, shimmering
   "forgotten" silhouette instead of a red blockout.
 - Lightweight in-engine sound effects for pickups, scanner pulses, echo
   reveal/recovery, Hollow hits/dispersal, base upgrades, resting, and the ending
@@ -48,9 +50,8 @@ Main Menu / Quit).
 
 ## Known limitations
 
-- Player and Hollow enemies are still placeholder/blockout art (now with
-  grounding shadows and a reworked Hollow silhouette); most props/items use
-  imported sprites.
+- Player and Hollow now use animated placeholder sprite sheets — still blockout
+  stand-ins, not final painterly art; most props/items use imported sprites.
 - Audio is lightweight procedural placeholder tones only — no music or final
   sound design.
 - Combat is a simple melee hitbox vs. basic Hollow chase/contact damage.

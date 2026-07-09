@@ -98,11 +98,12 @@ shareable tester package lives in `dist/TheWorldForgotUs_Demo_Windows/`
 `builds/` and `dist/` are git-ignored. See `BUILD_NOTES.md` and the latest build
 report for details.
 
-**Current shareable ZIP** (as of 2026-07-09):
+**Current shareable ZIP** (Pass 12.1 rebuild, commit `2b655f7`, includes the
+animated placeholder character sprites):
 
 - Path: `dist/TheWorldForgotUs_Demo_Windows.zip`
-- Size: 67,291,497 bytes
-- SHA-256: `8A40B90FFE4121CB4EAFEABF12D15D8C0601398FA593C07826343A405625FBE1`
+- Size: 67,641,306 bytes
+- SHA-256: `59F4F29AA23212AE047CF4098958A0E041DE48567D856D18B0CDF2417F603DF4`
 
 **To run the packaged build** (what a tester does): unzip it, keep
 `TheWorldForgotUs_Demo.exe` and `TheWorldForgotUs_Demo.pck` together in the same
