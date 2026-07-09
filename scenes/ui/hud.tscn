@@ -1,7 +1,8 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_panel.tscn" id="2_ctl"]
+[ext_resource type="Script" path="res://scripts/ui/compass.gd" id="3_compass"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0.1, 0.1, 0.12, 0.85)
@@ -125,6 +126,31 @@ autowrap_mode = 3
 [node name="NoticeTimer" type="Timer" parent="."]
 wait_time = 5.0
 one_shot = true
+
+[node name="Compass" type="Control" parent="."]
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -96.0
+offset_top = -96.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("3_compass")
+
+[node name="CompassLabel" type="Label" parent="Compass"]
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 2.0
+offset_bottom = 20.0
+theme_override_colors/font_color = Color(0.7, 0.85, 0.85, 0.85)
+theme_override_font_sizes/font_size = 11
+text = "OBJECTIVE"
+horizontal_alignment = 1
 
 [node name="ArchiveLabel" type="Label" parent="."]
 anchor_top = 1.0

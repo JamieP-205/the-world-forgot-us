@@ -59,6 +59,12 @@ func get_current_level_path() -> String:
 	return _current_level_path
 
 
+## The live level node under LevelHolder (for the HUD compass to locate the
+## current objective target). May be null between travels.
+func get_current_level() -> Node:
+	return _current_level
+
+
 ## Moves the player onto the named spawn marker in the freshly loaded level.
 func _place_player(spawn: StringName) -> void:
 	if spawn == &"":

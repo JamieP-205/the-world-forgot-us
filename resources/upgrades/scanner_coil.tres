@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="BaseUpgradeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/base/base_upgrade_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"scanner_coil"
+title = "Scanner Coil"
+description = "A rewound coil for the Mnemoscope: wider pulses that recharge faster."
+cost = {
+"battery": 1,
+"scrap": 2
+}
+required_echo_id = &""

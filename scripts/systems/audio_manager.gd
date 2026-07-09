@@ -14,12 +14,13 @@ extends Node
 
 const MIX_RATE := 22050
 const POOL_SIZE := 8
-## Global trim so the whole set stays low and non-annoying.
-const MASTER_DB := -13.0
+## Global trim so the whole set stays present but non-annoying.
+const MASTER_DB := -9.0
 
 var _streams: Dictionary = {}          # StringName -> AudioStreamWAV
 var _players: Array[AudioStreamPlayer] = []
 var _next := 0
+var _ambient: AudioStreamPlayer = null
 
 
 func _ready() -> void:
@@ -32,11 +33,43 @@ func _ready() -> void:
 		add_child(p)
 		_players.append(p)
 
+	# Low, continuous wasteland wind so the world never feels dead-silent.
+	_ambient = AudioStreamPlayer.new()
+	_ambient.bus = &"Master"
+	_ambient.stream = _build_wind()
+	_ambient.volume_db = -25.0
+	add_child(_ambient)
+	# Re-arm on finish instead of a server-held loop (cleaner teardown).
+	_ambient.finished.connect(_replay_ambient)
+	# Only run the continuous ambient when there's a real output (windowed game).
+	# Headless has no audio device, so skipping it keeps --headless teardown clean.
+	if DisplayServer.get_name() != "headless":
+		_ambient.play()
+
 	# Event-driven hooks (systems that already emit a signal for the moment).
 	EventBus.scanner_pulsed.connect(_on_scanner_pulsed)
 	EventBus.echo_revealed.connect(_on_echo_revealed)
 	EventBus.game_saved.connect(_on_game_saved)
 	BaseUpgradeSystem.upgrade_built.connect(_on_upgrade_built)
+
+
+func _replay_ambient() -> void:
+	if _ambient != null and is_inside_tree():
+		_ambient.play()
+
+
+## Release every generated stream before teardown so nothing is held by the
+## audio server at exit (avoids leaked-instance warnings on quit).
+func _exit_tree() -> void:
+	if _ambient != null:
+		if _ambient.finished.is_connected(_replay_ambient):
+			_ambient.finished.disconnect(_replay_ambient)
+		_ambient.stop()
+		_ambient.stream = null
+	for p in _players:
+		p.stop()
+		p.stream = null
+	_streams.clear()
 
 
 ## Play a pre-built sound by name. Unknown names are ignored. `volume_db` is an
@@ -98,6 +131,10 @@ func _build_streams() -> void:
 	_streams[&"rest"] = _synth(0.5, 262.0, {"freq2": 349.0, "decay": 4.0, "amp": 0.22})
 	# Low, wrong, ominous tone for the ending hook from the north.
 	_streams[&"ending"] = _synth(0.7, 110.0, {"freq2": 165.0, "wobble": 3.0, "noise": 0.06, "decay": 2.5, "amp": 0.26})
+	# Soft dull "gulp" for eating a ration.
+	_streams[&"eat"] = _synth(0.24, 220.0, {"freq2": 165.0, "noise": 0.12, "decay": 9.0, "amp": 0.24})
+	# Gentle warm chime for storing/recognising a keepsake.
+	_streams[&"keepsake"] = _synth(0.6, 523.0, {"freq2": 784.0, "wobble": 3.0, "decay": 3.0, "amp": 0.2})
 
 
 ## Synthesise one short mono 16-bit tone into an AudioStreamWAV.
@@ -142,6 +179,41 @@ func _synth(dur: float, freq: float, opts: Dictionary) -> AudioStreamWAV:
 	st.format = AudioStreamWAV.FORMAT_16_BITS
 	st.mix_rate = MIX_RATE
 	st.stereo = false
+	st.loop_mode = AudioStreamWAV.LOOP_DISABLED
+	st.data = bytes
+	return st
+
+
+## A seamless low wind bed: low-passed noise with a slow swell. Looped forever
+## by the ambient player. Edges are faded so the loop point doesn't click.
+func _build_wind() -> AudioStreamWAV:
+	var dur := 3.0
+	var n := int(dur * MIX_RATE)
+	var bytes := PackedByteArray()
+	bytes.resize(n * 2)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 9911
+	var lp := 0.0
+	var fade := int(0.12 * MIX_RATE)
+	for i in n:
+		var t := float(i) / MIX_RATE
+		lp = lp * 0.96 + rng.randf_range(-1.0, 1.0) * 0.04  # low-pass -> rumble
+		var swell := 0.6 + 0.4 * sin(TAU * 0.14 * t)
+		var edge := 1.0
+		if i < fade:
+			edge = float(i) / fade
+		elif i > n - fade:
+			edge = float(n - i) / fade
+		var v := clampf(lp * 3.4 * swell * edge, -1.0, 1.0)
+		var iv := int(v * 32767.0)
+		bytes[i * 2] = iv & 0xFF
+		bytes[i * 2 + 1] = (iv >> 8) & 0xFF
+
+	var st := AudioStreamWAV.new()
+	st.format = AudioStreamWAV.FORMAT_16_BITS
+	st.mix_rate = MIX_RATE
+	st.stereo = false
+	# Non-looping: the player re-arms on `finished` so nothing is server-held.
 	st.loop_mode = AudioStreamWAV.LOOP_DISABLED
 	st.data = bytes
 	return st

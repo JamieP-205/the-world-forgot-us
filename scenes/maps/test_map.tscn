@@ -1,4 +1,4 @@
-[gd_scene load_steps=40 format=3]
+[gd_scene load_steps=41 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/loot_container.tscn" id="1_crate"]
 [ext_resource type="PackedScene" path="res://scenes/world/scene_exit.tscn" id="2_exit"]
@@ -28,6 +28,7 @@
 [ext_resource type="PackedScene" path="res://scenes/world/route_beacon.tscn" id="26_beacon"]
 [ext_resource type="Resource" path="res://resources/upgrades/route_beacon.tres" id="27_beacondata"]
 [ext_resource type="Script" path="res://scripts/world/choice_option.gd" id="28_choice"]
+[ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="29_ash"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
 size = Vector2(1840, 44)
@@ -64,6 +65,13 @@ size = Vector2(44, 36)
 
 [node name="TestMap" type="Node2D"]
 script = ExtResource("6_map")
+
+[node name="Atmosphere" type="Node2D" parent="."]
+z_index = 90
+script = ExtResource("29_ash")
+particle_count = 130
+area = Vector2(1900, 1160)
+drift = Vector2(-11, 6)
 
 [node name="Ground" type="Polygon2D" parent="."]
 color = Color(0.21, 0.19, 0.16, 1)
@@ -221,11 +229,11 @@ color = Color(0.28, 0.24, 0.2, 1)
 polygon = PackedVector2Array(45, -275, 305, -275, 305, -195, 45, -195)
 
 [node name="OfficeRoof" type="Polygon2D" parent="PetrolStation"]
-color = Color(0.42, 0.16, 0.12, 1)
+color = Color(0.31, 0.16, 0.13, 1)
 polygon = PackedVector2Array(30, -300, 320, -300, 305, -275, 45, -275)
 
 [node name="Canopy" type="Polygon2D" parent="PetrolStation"]
-color = Color(0.36, 0.12, 0.1, 1)
+color = Color(0.27, 0.14, 0.12, 1)
 polygon = PackedVector2Array(-85, -170, 165, -190, 185, -150, -70, -130)
 
 [node name="PumpA" type="Sprite2D" parent="PetrolStation"]
@@ -268,7 +276,7 @@ color = Color(0.29, 0.25, 0.2, 1)
 polygon = PackedVector2Array(-75, -34, 75, -34, 75, 34, -75, 34)
 
 [node name="KioskRoof" type="Polygon2D" parent="RoadsideKiosk"]
-color = Color(0.43, 0.18, 0.13, 1)
+color = Color(0.31, 0.17, 0.13, 1)
 polygon = PackedVector2Array(-88, -52, 88, -52, 75, -34, -75, -34)
 
 [node name="KioskWindow" type="Polygon2D" parent="RoadsideKiosk"]

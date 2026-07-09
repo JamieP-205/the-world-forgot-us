@@ -1,6 +1,11 @@
-[gd_scene load_steps=20 format=3]
+[gd_scene load_steps=26 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/scene_exit.tscn" id="1_exit"]
+[ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="14_ash"]
+[ext_resource type="Script" path="res://scripts/base/base_upgrade_bench.gd" id="15_bench"]
+[ext_resource type="Script" path="res://scripts/base/keepsake_shelf.gd" id="16_shelf"]
+[ext_resource type="Resource" path="res://resources/upgrades/scanner_coil.tres" id="17_coil"]
+[ext_resource type="Resource" path="res://resources/upgrades/base_lantern.tres" id="18_lantern"]
 [ext_resource type="Script" path="res://scripts/world/lore_prop.gd" id="13_lore"]
 [ext_resource type="Script" path="res://scripts/base/save_point.gd" id="2_save"]
 [ext_resource type="PackedScene" path="res://scenes/base/base_upgrade_station.tscn" id="3_station"]
@@ -32,7 +37,18 @@ size = Vector2(90, 42)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lore"]
 size = Vector2(40, 32)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_bench"]
+size = Vector2(56, 40)
+
 [node name="RailhomeBase" type="Node2D"]
+
+[node name="Atmosphere" type="Node2D" parent="."]
+z_index = 90
+modulate = Color(1, 1, 1, 0.4)
+script = ExtResource("14_ash")
+particle_count = 34
+area = Vector2(840, 340)
+drift = Vector2(-7, 4)
 
 [node name="Floor" type="Polygon2D" parent="."]
 color = Color(0.18, 0.16, 0.15, 1)
@@ -173,6 +189,81 @@ target_spawn = &"from_base"
 
 [node name="from_world" type="Marker2D" parent="." groups=["spawn_points"]]
 position = Vector2(280, 0)
+
+[node name="WarmOverlay" type="Polygon2D" parent="."]
+visible = false
+color = Color(1, 0.72, 0.34, 0.13)
+polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
+
+[node name="ScannerCoilBench" type="Area2D" parent="."]
+position = Vector2(60, -92)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("15_bench")
+prompt = "Build Scanner Coil"
+upgrade_data = ExtResource("17_coil")
+payoff_notice = "Scanner Coil built. Wider Mnemoscope pulses that recharge faster."
+
+[node name="Visual" type="Polygon2D" parent="ScannerCoilBench"]
+color = Color(0.2, 0.26, 0.28, 1)
+polygon = PackedVector2Array(-16, -13, 16, -13, 16, 12, -16, 12)
+
+[node name="Coil" type="Polygon2D" parent="ScannerCoilBench/Visual"]
+color = Color(0.4, 0.85, 0.92, 0.9)
+polygon = PackedVector2Array(-9, -6, 9, -6, 9, 5, -9, 5)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="ScannerCoilBench"]
+shape = SubResource("RectangleShape2D_bench")
+
+[node name="SignalLantern" type="Area2D" parent="."]
+position = Vector2(256, -62)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("15_bench")
+prompt = "Wire the signal lantern"
+upgrade_data = ExtResource("18_lantern")
+payoff_notice = "Signal Lantern lit. The carriage glows warm - the base feels awake."
+reveal_on_build = NodePath("../WarmOverlay")
+
+[node name="Visual" type="Polygon2D" parent="SignalLantern"]
+color = Color(0.42, 0.34, 0.2, 1)
+polygon = PackedVector2Array(-12, -13, 12, -13, 12, 12, -12, 12)
+
+[node name="Bulb" type="Polygon2D" parent="SignalLantern/Visual"]
+color = Color(1, 0.82, 0.42, 0.95)
+polygon = PackedVector2Array(-6, -7, 6, -7, 6, 4, -6, 4)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="SignalLantern"]
+shape = SubResource("RectangleShape2D_bench")
+
+[node name="KeepsakeShelf" type="Area2D" parent="."]
+position = Vector2(150, -118)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("16_shelf")
+prompt = "Tend the memory shelf"
+
+[node name="Visual" type="Polygon2D" parent="KeepsakeShelf"]
+color = Color(0.34, 0.29, 0.24, 1)
+polygon = PackedVector2Array(-24, -11, 24, -11, 24, 10, -24, 10)
+
+[node name="Ledge" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+color = Color(0.5, 0.42, 0.3, 1)
+polygon = PackedVector2Array(-24, -3, 24, -3, 24, 0, -24, 0)
+
+[node name="Keepsake1" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+color = Color(0.86, 0.62, 0.22, 0.9)
+polygon = PackedVector2Array(-16, -9, -9, -9, -9, -4, -16, -4)
+
+[node name="Keepsake2" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+color = Color(0.7, 0.55, 0.3, 0.9)
+polygon = PackedVector2Array(6, -9, 13, -9, 13, -4, 6, -4)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="KeepsakeShelf"]
+shape = SubResource("RectangleShape2D_bench")
 
 [node name="CarvedInitials" type="Area2D" parent="."]
 position = Vector2(300, -122)

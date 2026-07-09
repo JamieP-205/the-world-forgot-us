@@ -14,6 +14,7 @@ extends CanvasLayer
 @onready var _scanner_bar: ProgressBar = $ScannerBar
 @onready var _archive_label: Label = $ArchiveLabel
 @onready var _objective_label: Label = $ObjectiveLabel
+@onready var _compass = $Compass
 
 var _scanned_echo := false
 
@@ -39,6 +40,48 @@ func _ready() -> void:
 	_refresh_archive()
 	_refresh_objectives()
 	call_deferred("_show_opening_hint")
+
+
+func _process(_delta: float) -> void:
+	_update_compass()
+
+
+## Aims the HUD compass arrow at the current objective's node in the live level.
+func _update_compass() -> void:
+	if _compass == null:
+		return
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	var target := _current_objective_target()
+	if player == null or target == null:
+		_compass.set_aim(false, Vector2.ZERO)
+	else:
+		_compass.set_aim(true, target.global_position - player.global_position)
+
+
+## The world node the player should head toward right now, or null.
+func _current_objective_target() -> Node2D:
+	var main := get_tree().get_first_node_in_group("main")
+	if main == null or not main.has_method("get_current_level"):
+		return null
+	var level: Node = main.get_current_level()
+	if level == null:
+		return null
+	var at_base := _current_level_path() == GameManager.BASE_SCENE_PATH
+	var has_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
+	var radio_built := BaseUpgradeSystem.is_built(&"radio_desk")
+	var rested := SaveManager.has_save()
+
+	var target_name := ""
+	if not has_broadcast:
+		target_name = "Outside" if at_base else "MemoryEcho"
+	elif not radio_built:
+		target_name = "RadioDeskStation" if at_base else "BaseDoor"
+	elif not rested:
+		target_name = "Bedroll" if at_base else "BaseDoor"
+	else:
+		target_name = "Outside" if at_base else "NorthSignal"
+
+	return level.find_child(target_name, true, false) as Node2D
 
 
 ## Rebuilds the inventory readout: a header total plus one icon+label row
@@ -219,7 +262,7 @@ func _next_objective_text(
 		return "At the Railhome, build the Radio Desk"
 	if not rested:
 		return "Radio Desk built - rest at the bedroll to save."
-	return "Demo complete. Next signal detected north."
+	return "Demo endpoint reached. The north signal is a hook for the next area (not playable yet). Optional: build the Scanner Coil / Lantern, store keepsakes at the Memory Shelf, power the roadside beacon, or clear the relay cache."
 
 
 func _show_opening_hint() -> void:

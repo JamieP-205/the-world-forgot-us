@@ -18,11 +18,35 @@ extends Node2D
 @export var pulse_scene: PackedScene
 
 var _energy: float
+var _base_radius: float
+var _base_recharge: float
+var _coil := false
 
 
 func _ready() -> void:
+	_base_radius = pulse_radius
+	_base_recharge = recharge_rate
+	_apply_upgrades()
 	_energy = max_energy
 	EventBus.scanner_energy_changed.emit(_energy, max_energy)
+	BaseUpgradeSystem.upgrade_built.connect(_on_upgrade_built)
+
+
+## Applies the Scanner Coil upgrade (wider pulse, faster recharge) if built.
+func _apply_upgrades() -> void:
+	if _coil:
+		return
+	if BaseUpgradeSystem.is_built(&"scanner_coil"):
+		_coil = true
+		pulse_radius = _base_radius * 1.35
+		recharge_rate = _base_recharge * 1.5
+
+
+func _on_upgrade_built(data) -> void:
+	if data != null and data.id == &"scanner_coil" and not _coil:
+		_apply_upgrades()
+		EventBus.notice_posted.emit(
+			"Scanner Coil online. The Mnemoscope reaches farther and recharges faster.")
 
 
 func _process(delta: float) -> void:

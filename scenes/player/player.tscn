@@ -1,17 +1,16 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/player.gd" id="1_player"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
 [ext_resource type="Script" path="res://scripts/scanner/scanner_component.gd" id="3_scanner"]
 [ext_resource type="PackedScene" path="res://scenes/scanner/scanner_pulse.tscn" id="4_pulse"]
-[ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="5_ash"]
 [ext_resource type="SpriteFrames" path="res://resources/spriteframes/player_placeholder_spriteframes.tres" id="6_pframes"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 22)
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_reach"]
-radius = 52.0
+radius = 44.0
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_attack"]
 radius = 22.0
@@ -93,6 +92,3 @@ pulse_scene = ExtResource("4_pulse")
 zoom = Vector2(1.9, 1.9)
 position_smoothing_enabled = true
 position_smoothing_speed = 7.0
-
-[node name="AshDrift" type="Node2D" parent="Camera2D"]
-script = ExtResource("5_ash")

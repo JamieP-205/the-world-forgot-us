@@ -21,6 +21,9 @@ extends CharacterBody2D
 ## Seconds of invulnerability after taking a hit (stops instant multi-hits).
 @export var hurt_invuln_time: float = 0.5
 
+## Health restored by eating one canned ration (F).
+@export var food_heal: float = 45.0
+
 ## The direction the player is currently facing. Drives the melee swing and,
 ## later, the scanner cone and thrown items.
 var facing: Vector2 = Vector2.DOWN
@@ -112,6 +115,22 @@ func _unhandled_input(event: InputEvent) -> void:
 		_update_current_interactable()
 	elif event.is_action_pressed("attack"):
 		_try_attack()
+	elif event.is_action_pressed("consume"):
+		_try_consume_food()
+
+
+## Eats one canned ration to heal in the field (a real use for food loot).
+func _try_consume_food() -> void:
+	if _health.current_health >= _health.max_health:
+		EventBus.notice_posted.emit("Already at full health.")
+		return
+	if InventorySystem.get_count(&"canned_food") <= 0:
+		EventBus.notice_posted.emit("No canned food to eat. (Search crates for rations.)")
+		return
+	InventorySystem.remove_item(&"canned_food", 1)
+	_health.heal(food_heal)
+	AudioManager.play(&"eat")
+	EventBus.notice_posted.emit("You force down a cold ration. +%d health." % int(food_heal))
 
 
 func _handle_movement() -> void:

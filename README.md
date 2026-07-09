@@ -21,6 +21,7 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 - Interactables highlight when you are close enough to use them.
 - Atmosphere pass: global ashy tint, drifting ash/dust, warmer Railhome safety glow, cyan scanner/echo glow, flickering mast signal, loot glints, Hollow hit sparks/death fade, and subtle camera shake on scanner reveal, echo recovery, and Hollow death.
 - Feel pass (Visual + Audio Pass 9): the player and each Hollow now have soft contact shadows so they sit on the ground; the Hollow reads as a pale, shimmering "forgotten" silhouette instead of a red blockout; story notices linger in proportion to their length; and lightweight in-engine sound effects play for pickups, scanner pulses, echo reveal/recovery, Hollow hits/dispersal, base upgrades, resting, and the ending hook.
+- Quality rescue (Pass 13): the drifting ash/dust is now **world atmosphere** (it no longer slides with the camera); the memory echo is a small, readable cyan shard instead of a giant blob; a **HUD compass** points at the current objective; **Canned Food** heals in the field (F); and the Railhome adds three new uses for salvage/keepsakes — a **Scanner Coil** upgrade (wider, faster scanner), a **Signal Lantern** upgrade (warms the base), and a **Memory Shelf** that recognises the keepsakes you carry home. A low ambient wasteland wind plays under everything.
 - Imported art (Asset Passes 1 & 2): real sprites for loot crates, base furniture (bedroll, storage, lantern, wall map, workbench), the lit Radio Desk, the memory-echo core, world props (car, pumps, vending, phone, signs, backpack, radio, poster), inventory item icons, plus feathered ground decals and a station-sign landmark. See `ASSET_IMPORT_REPORT.md`.
 - `ART_SPEC.md` documents the art requirements; `NEXT_ASSET_REQUESTS.md` lists the exact sprites still needed (top-down player/Hollow sheets, fallen mast, kiosk/shed).
 
@@ -41,6 +42,7 @@ A small Godot 4 top-down survival prototype. This is not the full game. It is a 
 | E | Interact |
 | J or Left-click | Melee attack |
 | Q or Right-click | Scanner pulse |
+| F | Eat a ration (heal, uses Canned Food) |
 | Esc | Pause / resume |
 
 ## Demo walkthrough
