@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Play $GODOT_PROJECT_NAME, a hand-crafted post-apocalyptic memory-survival game, directly in your browser.">
+  <meta name="theme-color" content="#071013">
+  <meta name="color-scheme" content="dark">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="$GODOT_PROJECT_NAME">
+  <meta property="og:description" content="Scavenge the ashlands, recover lost memories, and bring the Railhome back to life.">
+  <meta name="twitter:card" content="summary">
+  <title>$GODOT_PROJECT_NAME</title>
+  $GODOT_HEAD_INCLUDE
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f0e7d4;
+      --muted: #a7afa8;
+      --ash: #071013;
+      --panel: rgba(10, 18, 20, 0.82);
+      --line: rgba(220, 185, 117, 0.24);
+      --amber: #d6a95d;
+      --amber-bright: #f1c775;
+      --cyan: #69d4d1;
+      --danger: #e88f7d;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-top: env(safe-area-inset-top, 0px);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-synthesis: none;
+      text-rendering: optimizeLegibility;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--ash);
+    }
+
+    body {
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 72% 28%, rgba(70, 136, 132, 0.14), transparent 34rem),
+        radial-gradient(circle at 18% 78%, rgba(173, 112, 56, 0.12), transparent 30rem),
+        linear-gradient(145deg, #0a1214, #05090a 68%);
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .skip-link {
+      position: fixed;
+      z-index: 30;
+      top: 0.75rem;
+      left: 0.75rem;
+      padding: 0.65rem 0.9rem;
+      color: #081012;
+      background: var(--amber-bright);
+      border-radius: 0.35rem;
+      transform: translateY(-180%);
+      transition: transform 160ms ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .app,
+    .stage,
+    #canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    .app {
+      position: relative;
+      isolation: isolate;
+    }
+
+    .stage {
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(rgba(6, 12, 14, 0.2), rgba(6, 12, 14, 0.64)),
+        repeating-linear-gradient(90deg, transparent 0 79px, rgba(255, 255, 255, 0.012) 80px);
+    }
+
+    #canvas {
+      display: block;
+      border: 0;
+      outline: none;
+      background: #080d0f;
+    }
+
+    #canvas:focus-visible {
+      box-shadow: inset 0 0 0 2px var(--cyan);
+    }
+
+    .chrome {
+      position: absolute;
+      z-index: 8;
+      right: 0;
+      left: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-right: max(1rem, var(--safe-right));
+      padding-left: max(1rem, var(--safe-left));
+      pointer-events: none;
+      transition: opacity 220ms ease;
+    }
+
+    .is-running .chrome {
+      opacity: 0;
+    }
+
+    .topbar {
+      top: 0;
+      min-height: 4.25rem;
+      padding-top: max(0.75rem, var(--safe-top));
+      padding-bottom: 0.75rem;
+      background: linear-gradient(to bottom, rgba(3, 8, 9, 0.88), transparent);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.72rem;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 0.7rem;
+      height: 0.7rem;
+      border: 1px solid var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 0 4px rgba(105, 212, 209, 0.09), 0 0 1.1rem rgba(105, 212, 209, 0.46);
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .brand-name {
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(1rem, 2vw, 1.25rem);
+      font-weight: 600;
+      letter-spacing: 0.055em;
+      line-height: 1.1;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .edition {
+      margin: 0.22rem 0 0;
+      color: var(--muted);
+      font-size: 0.66rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.42rem 0.68rem;
+      color: var(--muted);
+      background: rgba(5, 11, 12, 0.56);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      backdrop-filter: blur(10px);
+    }
+
+    .status-dot {
+      width: 0.42rem;
+      height: 0.42rem;
+      background: var(--amber);
+      border-radius: 50%;
+      box-shadow: 0 0 0.7rem rgba(214, 169, 93, 0.55);
+    }
+
+    .is-running .status-dot {
+      background: var(--cyan);
+      box-shadow: 0 0 0.7rem rgba(105, 212, 209, 0.55);
+    }
+
+    .bottombar {
+      bottom: 0;
+      min-height: 3.4rem;
+      padding-top: 0.65rem;
+      padding-bottom: max(0.75rem, var(--safe-bottom));
+      background: linear-gradient(to top, rgba(3, 8, 9, 0.9), transparent);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.42rem 0.9rem;
+      margin: 0;
+      padding: 0;
+      color: var(--muted);
+      font-size: 0.7rem;
+      list-style: none;
+    }
+
+    .controls kbd {
+      min-width: 1.5rem;
+      margin-right: 0.25rem;
+      padding: 0.13rem 0.32rem;
+      color: var(--ink);
+      background: rgba(235, 222, 191, 0.08);
+      border: 1px solid rgba(235, 222, 191, 0.19);
+      border-radius: 0.25rem;
+      box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06);
+      font: inherit;
+      text-align: center;
+    }
+
+    .copyright {
+      flex: 0 0 auto;
+      color: rgba(213, 218, 208, 0.56);
+      font-size: 0.67rem;
+      white-space: nowrap;
+    }
+
+    .overlay {
+      position: absolute;
+      z-index: 6;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 5.25rem 1.25rem 4.5rem;
+      background: rgba(3, 8, 9, 0.36);
+      transition: opacity 240ms ease, visibility 240ms ease;
+    }
+
+    .overlay[hidden] {
+      display: none;
+    }
+
+    .card {
+      width: min(32rem, 100%);
+      padding: clamp(1.4rem, 4vw, 2.35rem);
+      background:
+        linear-gradient(145deg, rgba(18, 29, 31, 0.94), rgba(7, 13, 15, 0.92)),
+        var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 0.7rem;
+      box-shadow: 0 1.5rem 5rem rgba(0, 0, 0, 0.54);
+      text-align: center;
+      backdrop-filter: blur(18px);
+    }
+
+    .eyebrow {
+      margin: 0 0 0.8rem;
+      color: var(--cyan);
+      font-size: 0.69rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .card h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 7vw, 3.45rem);
+      font-weight: 500;
+      letter-spacing: -0.035em;
+      line-height: 0.96;
+    }
+
+    .lede {
+      max-width: 27rem;
+      margin: 1rem auto 1.35rem;
+      color: var(--muted);
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      line-height: 1.65;
+    }
+
+    .play-button {
+      min-width: 11rem;
+      padding: 0.78rem 1.25rem;
+      color: #10100c;
+      background: linear-gradient(180deg, var(--amber-bright), var(--amber));
+      border: 1px solid rgba(255, 236, 187, 0.58);
+      border-radius: 0.38rem;
+      box-shadow: 0 0.8rem 2rem rgba(151, 103, 38, 0.23);
+      cursor: pointer;
+      font-weight: 750;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: filter 140ms ease, transform 140ms ease;
+    }
+
+    .play-button:hover:not(:disabled) {
+      filter: brightness(1.08);
+      transform: translateY(-1px);
+    }
+
+    .play-button:focus-visible {
+      outline: 2px solid var(--cyan);
+      outline-offset: 4px;
+    }
+
+    .play-button:disabled {
+      cursor: wait;
+      filter: saturate(0.35);
+      opacity: 0.7;
+    }
+
+    .storage-note {
+      margin: 1rem 0 0;
+      color: rgba(198, 205, 197, 0.63);
+      font-size: 0.7rem;
+      line-height: 1.45;
+    }
+
+    .loader {
+      width: min(26rem, 100%);
+      text-align: center;
+    }
+
+    .signal {
+      width: 3.25rem;
+      height: 3.25rem;
+      margin: 0 auto 1rem;
+      border: 1px solid rgba(105, 212, 209, 0.24);
+      border-top-color: var(--cyan);
+      border-radius: 50%;
+      box-shadow: 0 0 2rem rgba(105, 212, 209, 0.12);
+      animation: spin 1.15s linear infinite;
+    }
+
+    .loader-label {
+      margin: 0 0 0.85rem;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 1.15rem;
+      letter-spacing: 0.045em;
+    }
+
+    .loader-detail {
+      min-height: 1.2rem;
+      margin: 0.65rem 0 0;
+      color: var(--muted);
+      font-size: 0.75rem;
+    }
+
+    progress {
+      display: block;
+      width: 100%;
+      height: 0.35rem;
+      overflow: hidden;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 0;
+      border-radius: 999px;
+    }
+
+    progress::-webkit-progress-bar {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    progress::-webkit-progress-value {
+      background: linear-gradient(90deg, #4caaa9, var(--cyan));
+      border-radius: 999px;
+    }
+
+    progress::-moz-progress-bar {
+      background: linear-gradient(90deg, #4caaa9, var(--cyan));
+      border-radius: 999px;
+    }
+
+    .error-card {
+      border-color: rgba(232, 143, 125, 0.38);
+    }
+
+    .error-card .eyebrow {
+      color: var(--danger);
+    }
+
+    .error-message {
+      margin-bottom: 0;
+      color: #d9c6bf;
+      font-size: 0.85rem;
+      line-height: 1.55;
+      overflow-wrap: anywhere;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(1turn);
+      }
+    }
+
+    @media (max-width: 720px) {
+      .controls {
+        max-width: 75%;
+      }
+
+      .controls li:nth-child(n + 5) {
+        display: none;
+      }
+
+      .copyright {
+        font-size: 0;
+      }
+
+      .copyright::after {
+        content: "Godot 4.7";
+        font-size: 0.67rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .status-chip {
+        display: none;
+      }
+
+      .controls {
+        max-width: 100%;
+        gap: 0.35rem 0.6rem;
+      }
+
+      .copyright {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .signal {
+        animation-duration: 2.5s;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#launch-button">Skip to launch</a>
+
+  <div class="app" id="app">
+    <header class="chrome topbar" aria-label="Game title">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <div class="brand-copy">
+          <p class="brand-name">$GODOT_PROJECT_NAME</p>
+          <p class="edition">Browser edition</p>
+        </div>
+      </div>
+      <span class="status-chip" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="runtime-status">Ready to launch</span>
+      </span>
+    </header>
+
+    <main class="stage" id="game">
+      <canvas id="canvas" tabindex="0" aria-label="$GODOT_PROJECT_NAME game canvas">
+        Your browser does not support the canvas element required to run this game.
+      </canvas>
+
+      <section class="overlay" id="launch-overlay" aria-labelledby="launch-title">
+        <div class="card">
+          <p class="eyebrow">A signal survives</p>
+          <h1 id="launch-title">$GODOT_PROJECT_NAME</h1>
+          <p class="lede">
+            Cross the ashlands, recover the voices the world left behind,
+            and rebuild a home from memory.
+          </p>
+          <button class="play-button" id="launch-button" type="button">
+            Enter the wasteland
+          </button>
+          <p class="storage-note">
+            Progress is saved in this browser. Private browsing may prevent saves from persisting.
+          </p>
+        </div>
+      </section>
+
+      <section class="overlay" id="loading-overlay" aria-live="polite" hidden>
+        <div class="loader">
+          <div class="signal" aria-hidden="true"></div>
+          <p class="loader-label">Tuning the Mnemoscope</p>
+          <progress id="load-progress" max="100"></progress>
+          <p class="loader-detail" id="load-detail">Preparing the signal…</p>
+        </div>
+      </section>
+
+      <section class="overlay" id="error-overlay" role="alert" hidden>
+        <div class="card error-card">
+          <p class="eyebrow">Signal lost</p>
+          <h1>Unable to start</h1>
+          <p class="error-message" id="error-message">
+            This browser could not initialize the game.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="chrome bottombar" aria-label="Controls and credits">
+      <ul class="controls">
+        <li><kbd>WASD</kbd> Move</li>
+        <li><kbd>E</kbd> Interact</li>
+        <li><kbd>J</kbd> Attack</li>
+        <li><kbd>Q</kbd> Scan</li>
+        <li><kbd>Space</kbd> Dodge</li>
+        <li><kbd>R</kbd> Burst</li>
+        <li><kbd>F</kbd> Ration</li>
+        <li><kbd>I</kbd> Archive</li>
+        <li><kbd>Esc</kbd> Pause</li>
+      </ul>
+      <span class="copyright">© 2026 Jamie Parr · Built with Godot 4.7</span>
+    </footer>
+  </div>
+
+  <noscript>
+    This game requires JavaScript and WebAssembly. Enable JavaScript, then reload the page.
+  </noscript>
+
+  <script src="$GODOT_URL"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      const app = document.getElementById("app");
+      const canvas = document.getElementById("canvas");
+      const launchButton = document.getElementById("launch-button");
+      const launchOverlay = document.getElementById("launch-overlay");
+      const loadingOverlay = document.getElementById("loading-overlay");
+      const errorOverlay = document.getElementById("error-overlay");
+      const errorMessage = document.getElementById("error-message");
+      const progress = document.getElementById("load-progress");
+      const loadDetail = document.getElementById("load-detail");
+      const runtimeStatus = document.getElementById("runtime-status");
+
+      let starting = false;
+      let started = false;
+
+      const formatBytes = (bytes) => {
+        if (!Number.isFinite(bytes) || bytes <= 0) {
+          return "";
+        }
+        const units = ["B", "KB", "MB", "GB"];
+        const power = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        return `${(bytes / (1024 ** power)).toFixed(power > 1 ? 1 : 0)} ${units[power]}`;
+      };
+
+      const updateProgress = (current, total) => {
+        if (total > 0) {
+          const percent = Math.max(0, Math.min(100, Math.round((current / total) * 100)));
+          progress.value = percent;
+          loadDetail.textContent = `Receiving signal… ${percent}% · ${formatBytes(current)} of ${formatBytes(total)}`;
+        } else {
+          progress.removeAttribute("value");
+          loadDetail.textContent = current > 0
+            ? `Receiving signal… ${formatBytes(current)}`
+            : "Preparing the signal…";
+        }
+      };
+
+      const showError = (message) => {
+        loadingOverlay.hidden = true;
+        launchOverlay.hidden = true;
+        errorMessage.textContent = message;
+        errorOverlay.hidden = false;
+        runtimeStatus.textContent = "Launch failed";
+      };
+
+      const start = async () => {
+        if (starting || started) {
+          return;
+        }
+        if (!Engine.isWebGLAvailable(2)) {
+          showError("WebGL 2 is unavailable. Try a current version of Chrome, Edge, or Firefox with hardware acceleration enabled.");
+          return;
+        }
+
+        starting = true;
+        launchButton.disabled = true;
+        launchButton.textContent = "Opening signal…";
+        launchOverlay.hidden = true;
+        errorOverlay.hidden = true;
+        loadingOverlay.hidden = false;
+        runtimeStatus.textContent = "Loading";
+
+        try {
+          const engine = new Engine($GODOT_CONFIG);
+          await engine.startGame({
+            canvas,
+            onProgress: updateProgress,
+          });
+
+          started = true;
+          loadingOverlay.hidden = true;
+          app.classList.add("is-running");
+          runtimeStatus.textContent = "Signal live";
+          canvas.focus({ preventScroll: true });
+        } catch (error) {
+          console.error("Godot Web launch failed:", error);
+          showError(error instanceof Error ? error.message : String(error));
+        } finally {
+          starting = false;
+          if (!started) {
+            launchButton.disabled = false;
+            launchButton.textContent = "Retry";
+          }
+        }
+      };
+
+      launchButton.addEventListener("click", start);
+    })();
+  </script>
+</body>
+</html>

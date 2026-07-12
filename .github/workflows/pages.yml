@@ -1,0 +1,121 @@
+name: Build and deploy Godot Web
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  GODOT_VERSION: "4.7"
+  GODOT_RELEASE: "4.7-stable"
+  GODOT_TEMPLATE_VERSION: "4.7.stable"
+  GODOT_EDITOR_ARCHIVE: "Godot_v4.7-stable_linux.x86_64.zip"
+  GODOT_EDITOR_URL: "https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip"
+  GODOT_TEMPLATES_URL: "https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz"
+  GODOT_CHECKSUMS_URL: "https://github.com/godotengine/godot-builds/releases/download/4.7-stable/SHA512-SUMS.txt"
+
+jobs:
+  build:
+    name: Export Web build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v7
+
+      - name: Install Godot 4.7 editor
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          install_dir="$RUNNER_TEMP/godot"
+          archive="$RUNNER_TEMP/$GODOT_EDITOR_ARCHIVE"
+          checksums="$RUNNER_TEMP/SHA512-SUMS.txt"
+          mkdir -p "$install_dir"
+
+          curl --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 "$GODOT_EDITOR_URL" --output "$archive"
+          curl --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 "$GODOT_CHECKSUMS_URL" --output "$checksums"
+
+          expected_line="$(grep "  $GODOT_EDITOR_ARCHIVE$" "$checksums")"
+          test -n "$expected_line"
+          printf '%s\n' "$expected_line" | (cd "$RUNNER_TEMP" && sha512sum --check --strict -)
+
+          unzip -q "$archive" -d "$install_dir"
+          godot_bin="$(find "$install_dir" -type f -name 'Godot_v4.7-stable_linux.x86_64' -print -quit)"
+          test -n "$godot_bin"
+          chmod +x "$godot_bin"
+          echo "GODOT_BIN=$godot_bin" >> "$GITHUB_ENV"
+
+      - name: Install single-threaded Web template
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          template_dir="$HOME/.local/share/godot/export_templates/$GODOT_TEMPLATE_VERSION"
+          python3 web/install_godot_web_template.py --archive-url "$GODOT_TEMPLATES_URL" --output-dir "$template_dir" --template web_nothreads_debug.zip --template web_nothreads_release.zip
+
+          test -s "$template_dir/web_nothreads_debug.zip"
+          test -s "$template_dir/web_nothreads_release.zip"
+
+      - name: Import project resources
+        shell: bash
+        run: |
+          set -euo pipefail
+          "$GODOT_BIN" --headless --path . --import
+
+      - name: Export release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mkdir -p builds/web
+          "$GODOT_BIN" --headless --path . --export-release "Web" "builds/web/index.html"
+
+      - name: Verify Web artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -s builds/web/index.html
+          find builds/web -maxdepth 1 -type f -name '*.wasm' -print -quit | grep -q .
+          find builds/web -maxdepth 1 -type f -name '*.pck' -print -quit | grep -q .
+          find builds/web -maxdepth 1 -type f -name '*.js' -print -quit | grep -q .
+
+          if grep -Eq '\$GODOT_[A-Z_]+' builds/web/index.html; then
+            echo "Godot shell placeholders were not expanded." >&2
+            exit 1
+          fi
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: builds/web
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v5

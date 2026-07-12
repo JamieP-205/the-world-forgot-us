@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible gameplay, save, visual, audio, or Web issue.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Start a New Game
+        2. Travel to...
+        3. Press...
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - GitHub Pages / browser
+        - Local Web build
+        - Windows export
+        - Godot editor
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Browser or Godot version
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, video, or logs
+  - type: checkboxes
+    id: save
+    attributes:
+      label: Save impact
+      options:
+        - label: This issue appears to damage or block save progress.

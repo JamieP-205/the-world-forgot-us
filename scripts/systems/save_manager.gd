@@ -8,7 +8,7 @@ extends Node
 const SAVE_PATH := "user://savegame.json"
 ## Bumped when the save schema changes. Missing/older values are read with
 ## safe defaults, so pre-version saves still load (just without world flags).
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
 
 ## Player state waiting to be applied once the loaded level is ready.
 var _pending_player: Dictionary = {}

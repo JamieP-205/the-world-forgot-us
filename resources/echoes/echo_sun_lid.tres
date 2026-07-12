@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1_echo"]
+
+[resource]
+script = ExtResource("1_echo")
+id = &"echo_sun_lid"
+title = "The Sun on the Lid"
+category = "Personal Memories"
+quality = "Restored Memory"
+hint = "A child's bright mark refuses to fade, even after the name beside it has gone."
+memory_text = "A woman presses a dented lunchbox into small hands. 'Ellie Venn. Eight years old. Keep the sun where you can see it, and follow the rail line if the road forgets us.' The child turns. For one impossible second, you remember turning with her."
+keepsake_item = &""

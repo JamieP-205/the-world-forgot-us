@@ -1,0 +1,31 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_static_wraith.gd" id="1_wraith"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
+[ext_resource type="SpriteFrames" path="res://resources/spriteframes/hollow_placeholder_spriteframes.tres" id="3_frames"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(20, 28)
+
+[node name="StaticWraith" type="CharacterBody2D" groups=["enemies", "scannables"]]
+collision_layer = 8
+collision_mask = 1
+motion_mode = 1
+script = ExtResource("1_wraith")
+
+[node name="ContactShadow" type="Polygon2D" parent="."]
+color = Color(0.02, 0.14, 0.17, 0.16)
+polygon = PackedVector2Array(-21, 20, -12, 17, 12, 17, 21, 20, 13, 27, -13, 27)
+
+[node name="Visual" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.35, 0.9, 1, 0.075)
+sprite_frames = ExtResource("3_frames")
+animation = &"idle_down"
+offset = Vector2(0, -8)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+max_health = 100.0

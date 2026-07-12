@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1_echo"]
+
+[resource]
+script = ExtResource("1_echo")
+id = &"echo_first_tone"
+title = "The First Tone"
+category = "Broadcasts"
+quality = "Restored Memory"
+hint = "The Choir Core contains the moment the world began to forget, preserved from every angle at once."
+memory_text = "The Choir Grid was ordered to preserve every emergency voice as the network collapsed. It obeyed too well. Billions of memories arrived together, each demanding not to be lost. The First Tone was not a command. It was the sound of a machine trying to remember everyone at once—and tearing the links between names, faces, and places apart. The core is still choosing what to keep. Now it is waiting for you to choose."
+keepsake_item = &""

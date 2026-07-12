@@ -1,8 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/hud.gd" id="1_hud"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_panel.tscn" id="2_ctl"]
 [ext_resource type="Script" path="res://scripts/ui/compass.gd" id="3_compass"]
+[ext_resource type="PackedScene" path="res://scenes/ui/dialogue_overlay.tscn" id="4_dialogue"]
+[ext_resource type="PackedScene" path="res://scenes/ui/archive_overlay.tscn" id="5_archive"]
+[ext_resource type="PackedScene" path="res://scenes/ui/ending_overlay.tscn" id="6_ending"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_bg"]
 bg_color = Color(0.1, 0.1, 0.12, 0.85)
@@ -20,6 +23,7 @@ bg_color = Color(0.32, 0.78, 0.85, 1)
 
 [node name="HUD" type="CanvasLayer"]
 process_mode = 3
+layer = 100
 script = ExtResource("1_hud")
 
 [node name="HealthBar" type="ProgressBar" parent="."]
@@ -61,6 +65,16 @@ theme_override_font_sizes/font_size = 11
 horizontal_alignment = 1
 vertical_alignment = 1
 text = "SCANNER"
+
+[node name="AbilityLabel" type="Label" parent="."]
+offset_left = 276.0
+offset_top = 13.0
+offset_right = 820.0
+offset_bottom = 54.0
+theme_override_colors/font_color = Color(0.76, 0.86, 0.8, 0.92)
+theme_override_font_sizes/font_size = 14
+text = "[SPACE] Dodge READY    [R] Burst LOCKED    [I] Archive"
+vertical_alignment = 1
 
 [node name="InventoryPanel" type="VBoxContainer" parent="."]
 offset_left = 16.0
@@ -208,3 +222,9 @@ text = "Quit"
 
 [node name="PauseControls" parent="PauseOverlay" instance=ExtResource("2_ctl")]
 visible = false
+
+[node name="DialogueOverlay" parent="." instance=ExtResource("4_dialogue")]
+
+[node name="ArchiveOverlay" parent="." instance=ExtResource("5_archive")]
+
+[node name="EndingOverlay" parent="." instance=ExtResource("6_ending")]

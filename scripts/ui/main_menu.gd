@@ -27,7 +27,10 @@ func _ready() -> void:
 	_continue_btn.pressed.connect(_on_continue)
 	$Box/NewGame.pressed.connect(_on_new_game)
 	$Box/Controls.pressed.connect(_on_controls)
-	$Box/Quit.pressed.connect(func() -> void: get_tree().quit())
+	$Box/Credits.pressed.connect(func() -> void: $CreditsDialog.popup_centered())
+	$Box/Quit.pressed.connect(_on_quit_or_fullscreen)
+	if OS.has_feature("web"):
+		$Box/Quit.text = "Fullscreen"
 
 	_controls_panel.visible = false
 	_controls_panel.closed.connect(_on_controls_closed)
@@ -37,6 +40,12 @@ func _ready() -> void:
 		_continue_btn.grab_focus()
 	else:
 		$Box/NewGame.grab_focus()
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey or event is InputEventMouseButton:
+		if event.pressed:
+			AudioManager.unlock_audio()
 
 
 func _on_continue() -> void:
@@ -68,3 +77,16 @@ func _on_controls() -> void:
 func _on_controls_closed() -> void:
 	_controls_panel.visible = false
 	_box.visible = true
+
+
+func _on_quit_or_fullscreen() -> void:
+	AudioManager.unlock_audio()
+	if OS.has_feature("web"):
+		var mode := DisplayServer.window_get_mode()
+		DisplayServer.window_set_mode(
+			DisplayServer.WINDOW_MODE_WINDOWED
+			if mode == DisplayServer.WINDOW_MODE_FULLSCREEN
+			else DisplayServer.WINDOW_MODE_FULLSCREEN
+		)
+	else:
+		get_tree().quit()

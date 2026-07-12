@@ -51,3 +51,19 @@ signal camera_shake_requested(strength: float, duration: float)
 
 ## Emitted by Scannable whenever a scanner pulse actually finds something.
 signal scannable_pinged(position: Vector2)
+
+## A campaign conversation should be shown by the persistent HUD. Payloads
+## contain an id, title, lines, optional choices, and an accent colour.
+signal dialogue_requested(payload: Dictionary)
+
+## The dialogue overlay reports its final choice (or -1 for no choice).
+signal dialogue_finished(story_id: StringName, choice_index: int)
+
+## Quest state changed; HUD objectives and level props refresh from this.
+signal campaign_progress_changed
+
+## The player released the unlocked radial memory burst.
+signal signal_burst_used(origin: Vector2, radius: float)
+
+## A complete ending has been reached and should replace the game HUD.
+signal ending_requested(payload: Dictionary)

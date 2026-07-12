@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/maps/campaign_level_builder.gd" id="1_builder"]
+
+[node name="BroadcastFields" type="Node2D"]
+script = ExtResource("1_builder")
+campaign_id = "broadcast_fields"

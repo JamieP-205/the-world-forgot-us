@@ -30,6 +30,13 @@ var _idle_tween: Tween = null
 
 
 func _ready() -> void:
+	# Re-instanced levels must not re-grant keepsakes for an echo already in
+	# the Archive. Hide and disable the consumed interaction immediately.
+	if echo_data != null and ArchiveSystem.has_echo(echo_data.id):
+		monitoring = false
+		visible = false
+		set_process(false)
+		return
 	_scannable.scanned.connect(_on_revealed)
 	_visual.scale = BASE_SCALE
 	_visual.modulate = Color(0.4, 0.85, 0.9, hidden_alpha)

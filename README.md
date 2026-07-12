@@ -1,99 +1,136 @@
 # The World Forgot Us
 
-A small Godot 4 top-down survival prototype. This is not the full game. The current source is a focused 5-8 minute vertical slice: scavenge a compact road/station loop, strengthen the Mnemoscope, recover one memory echo, return to the Railhome, build the Radio Desk, and rest/save.
+[![Godot 4.7](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godot-engine&logoColor=white)](https://godotengine.org/)
+[![Deploy to GitHub Pages](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml/badge.svg)](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml)
+[![MIT License](https://img.shields.io/badge/license-MIT-d6a95d.svg)](LICENSE)
 
-## What works now
+> In this world, survival is not enough. Someone has to remember.
 
-- Player movement, facing, melee attack, health, death, and wake-at-base respawn.
-- A compact hand-built wasteland route: Railhome start, road supplies, petrol station/kiosk/shed material loop, fallen mast memory moment, one guarded relay cache, and return to Railhome.
-- Searchable supplies grant real inventory items and show pickup notices. Canned Food heals in the field with **F**.
-- Scrap and batteries now serve a clearer loop: build the Scanner Coil first, then recover the mast echo, then build the Radio Desk.
-- The Mnemoscope scanner sends a visible pulse, spends/recharges energy, and reveals the hidden echo only after the Scanner Coil is built.
-- The Last Broadcast has a stronger reveal/recovery beat, a multi-line recovery notice, and changes the fallen mast area after recovery.
-- The HUD shows health, scanner energy, item icons, recovered echo count, interaction prompts, notices, objective progress, and a fixed objective compass.
-- The compact map uses one temporary style: dark ash ground, rust-brown structures, muted amber safe-zone light, cyan memory tech, and low-saturation placeholder shapes where sprites are missing.
-- Returning to the Railhome works through scene exits.
-- The Radio Desk can be built if you have recovered The Last Broadcast and have the required materials. When built, it lights up and plays a short placeholder signal message.
-- The Memory Shelf recognizes keepsakes carried home, including the Child's Lunchbox and the echo photograph.
-- The Signal Lantern remains an optional Railhome upgrade for extra salvage.
-- The bedroll heals the player and saves progress with: `Rested. Progress saved.`
-- Progress is stable across travel and save/load: inventory, recovered echoes, built upgrades, current level, player position/health, searched containers, resolved world flags, and defeated hand-placed Hollows persist. See `PERSISTENCE_PASS_6_REPORT.md`.
-- Atmosphere now includes world-space ash, colder wasteland tint, warmer Railhome tint, cyan echo glow, amber safe lights, procedural wind, and a low procedural drone/music bed.
-- Imported art remains in use for loot crates, base furniture, the lit Radio Desk, the memory-echo core, world props, inventory item icons, decals, and station signage. See `ASSET_IMPORT_REPORT.md`.
+**The World Forgot Us** is a complete compact 2D memory-survival game created by Jamie Parr. Explore an ash-covered Britain, fight signal-corrupted enemies, recover memories the world has erased, rebuild the Railhome, and decide what humanity should do with the machine that caused the Forgetting.
 
-## Still placeholder
+[Play in your browser](https://jamiep-205.github.io/the-world-forgot-us/) · [Read the design bible](master-design-bible.md) · [Report a bug](https://github.com/JamieP-205/the-world-forgot-us/issues)
 
-- The player and Hollow still use animated top-down placeholder sprite sheets, now tinted/veiled to sit closer to the world palette. They are not final painterly art.
-- The fallen mast, roadside kiosk, maintenance shed, and some structure details are still stylized Polygon2D blockout, though no longer bright debug colors.
-- Combat is a basic melee hitbox and simple Hollow chase/contact damage.
-- Storage is a manifest, not a full stash-transfer UI.
-- The Radio Desk build is a payoff milestone only. It hints at the next signal but does not unlock a new quest yet.
-- Audio is procedural placeholder sound and drone only; there is no final music composition or final sound design.
-- There are no NPCs, factions, procedural generation, advanced crafting, or final UI styling.
+![The World Forgot Us art direction](assets/source/generated/style/style_board.png)
+
+## The game
+
+This repository contains the full source and browser build pipeline for a handcrafted 35-50 minute narrative campaign:
+
+- **Act I - Rustway:** scavenge a ruined petrol-station road, build the Scanner Coil, recover The Last Broadcast, and bring the Radio Desk online.
+- **Act II - Ashmere Verge:** answer Mara Venn's delayed signal and uncover why the missing posters know the protagonist's name.
+- **Act III - Broadcast Fields:** restore three memory relays while fighting Hollows, scan-dependent Static Wraiths, and the shielded Relay Husk.
+- **Finale - Choir Core:** survive the Choir Warden and choose the Archive, Silence, or secret Choir ending.
+
+Progress saves between sessions. Optional echoes, keepsakes, and the Memory Shelf determine whether the third ending is available.
+
+## Highlights
+
+- Four authored regions with backtracking, route landmarks, loot loops, environmental storytelling, optional discoveries, and boss arenas.
+- Responsive top-down combat with directional melee, invulnerable dodge, healing rations, scanner reveals, boss shield breaks, and the unlockable Memory Burst.
+- Three enemy archetypes: Hollow, Static Wraith, and the phased Relay Husk / Choir Warden boss.
+- Five recoverable memory echoes, a readable in-game Archive, staged dialogue, explicit objectives, compass guidance, save/load, death recovery, and three endings.
+- Railhome upgrades including the Scanner Coil, Radio Desk, Signal Lantern, Memory Shelf, storage, and rest/save point.
+- Real-time Godot 2D lighting with normal-mapped sprites, dynamic PointLight2D sources, scanner flashes, geometry-derived LightOccluder2D shadows, and chapter-specific colour palettes.
+- A custom memory-lantern chiaroscuro grade: cold ash shadows, warm survivor light, cyan echo illumination, restrained grain, vignette, and memory-only chromatic fracture.
+- Procedural sound design and atmospheric drone generated in-engine, with distinct cues for combat, scanning, dialogue, relays, memories, building, and endings.
+- Mouse and keyboard support, visible telegraphs, objective guidance, fullscreen Web mode, and a custom accessible browser launch shell.
 
 ## Controls
 
-| Input | Action |
+| Action | Input |
 | --- | --- |
-| W A S D | Move |
-| E | Interact |
-| J or Left-click | Melee attack |
-| Q or Right-click | Scanner pulse |
-| F | Eat a ration (heal, uses Canned Food) |
-| Esc | Pause / resume |
+| Move | WASD or Arrow keys |
+| Interact / advance dialogue | E |
+| Melee attack | J or Left-click |
+| Mnemoscope scan | Q or Right-click |
+| Dodge | Space |
+| Memory Burst | R, unlocked in Act II |
+| Eat a ration | F |
+| Open Archive | I |
+| Pause | Esc |
 
-## Demo walkthrough
+Scanner pulses reveal memory echoes and Static Wraiths. They also disable boss shields for a short damage window.
 
-0. On launch you land on the **main menu**: **Continue** (loads your save, if any), **New Game** (clears the save and starts fresh, confirmed first if a save exists), **Controls**, **Quit**. Press Esc in-game for the pause menu.
-1. Start in the wasteland at the Railhome door. Follow the amber road and search the first supply crate.
-2. Scavenge the compact road/station loop: car boot, kiosk drawer, pump locker, and shed locker. Food heals with **F** if a Hollow hurts you.
-3. Visit the fallen mast and scan with **Q**. The signal is present, but too weak until the Scanner Coil is built.
-4. Return west to the Railhome once you have enough battery/scrap and build the Scanner Coil.
-5. Go back to the mast, scan again, step into the cyan echo, and press **E** to recover The Last Broadcast.
-6. Optional: take the Child's Lunchbox near the kiosk and/or clear the guarded relay cache for extra salvage.
-7. Return to the Railhome and build the Radio Desk.
-8. Use the Memory Shelf if you carried a keepsake home.
-9. Optional: wire the Signal Lantern if you have surplus salvage.
-10. Rest at the bedroll to heal/save. Step outside afterward to see the north signal ending hook. The next zone is not playable yet.
+## Run locally
 
-## Run
+Requirements:
 
-Open `project.godot` in Godot 4.7 and press F5. The game boots to the **main menu** (`res://scenes/ui/main_menu.tscn`).
+- [Godot 4.7](https://github.com/godotengine/godot-builds/releases/tag/4.7-stable)
 
-From PowerShell on this machine:
+Open [project.godot](project.godot) in Godot and press **F6**, or run:
 
 ```powershell
-& "C:\Users\Jamie Parr\Downloads\Godot_v4.7-stable_win64.exe\Godot_v4.7-stable_win64_console.exe" --path "C:\Users\Jamie Parr\Documents\Projects\the-world-forgot-us\the-world-forgot-us"
+& "C:\path\to\Godot_v4.7-stable_win64_console.exe" --path .
 ```
 
-During development you can still run the game scene directly (`res://scenes/main.tscn`, F6) to skip the menu. It auto-continues from a save or starts the world.
+The project starts at the title screen. Saves live in Godot's per-user `user://savegame.json` location.
 
-### Starting / resetting your save
+## Build and serve the Web edition
 
-- **Continue** loads the current save (also auto-continued if you run the game scene directly).
-- **New Game** wipes the save and all run state (inventory, world flags, echoes, upgrades) and starts fresh; it asks to confirm if a save already exists.
-- The save lives at `user://savegame.json`.
+The committed `Web` export preset is single-threaded, so a normal static host works without cross-origin isolation headers.
 
-### Export / build status
-
-A Windows test build exists, but **Pass 14 was not exported or zipped**. The shareable ZIP below is still the prior Pass 13.1 package and does not include this vertical-slice rebuild.
-
-With the Godot 4.7 export templates installed and the `Windows Desktop` preset (machine-local `export_presets.cfg`), export headless with:
+Install only the official Web template from Godot's release archive:
 
 ```powershell
-& "...\Godot_v4.7-stable_win64_console.exe" --headless --path "<project>" --export-release "Windows Desktop"
+python web/install_godot_web_template.py `
+  --archive-url "https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz" `
+  --output-dir "$env:APPDATA\Godot\export_templates\4.7.stable" `
+  --template web_nothreads_debug.zip `
+  --template web_nothreads_release.zip
 ```
 
-This writes `builds/windows-test/TheWorldForgotUs_Demo.exe` + `.pck`. The tester package lives in `dist/TheWorldForgotUs_Demo_Windows/` and is zipped to `dist/TheWorldForgotUs_Demo_Windows.zip`. All exported binaries and the ZIP under `builds/` and `dist/` are git-ignored.
+Export and host:
 
-**Current shareable ZIP** (outdated Pass 13.1 rebuild, source commit `787fe114d2e75b9e582643ef8b96d68e6fd08219`; does not include Pass 14):
+```powershell
+New-Item -ItemType Directory -Force builds\web
+& "C:\path\to\Godot_v4.7-stable_win64_console.exe" --headless --path . --export-release "Web" "builds/web/index.html"
+python -m http.server 8060 --bind 127.0.0.1 --directory builds\web
+```
 
-- Path: `dist/TheWorldForgotUs_Demo_Windows.zip`
-- Size: 67,652,404 bytes
-- SHA-256: `9FCA718E42EDD91A3372A644463D8ED4755E8B0D674A28EC45E58CF8AAD47A99`
+Open <http://127.0.0.1:8060/>.
 
-**To run the packaged build**: unzip it, keep `TheWorldForgotUs_Demo.exe` and `TheWorldForgotUs_Demo.pck` together in the same folder, and double-click the `.exe`. Windows SmartScreen may warn because the build is unsigned; choose *More info -> Run anyway* if you trust it.
+## Quality checks
 
-### Sharing with testers
+Run the complete deterministic campaign smoke test with an isolated user-data directory:
 
-Handoff docs for sending the demo to real testers: `TESTER_SEND_MESSAGE.md`, `TESTER_FEEDBACK_TEMPLATE.md`, and `KNOWN_ISSUES_FOR_TESTERS.md`. The ZIP itself also carries `README_TESTER.txt` + `BUILD_NOTES.md`, but those packaged copies are from the previous build until a future export pass.
+```powershell
+$env:APPDATA = "$PWD\.godot\complete_smoke_appdata"
+& "C:\path\to\Godot_v4.7-stable_win64_console.exe" --headless --path . --scene res://tools/complete_game_smoke.tscn
+```
+
+Expected output:
+
+```text
+COMPLETE_GAME_SMOKE: PASS
+```
+
+The test loads every required scene and resource, traverses all four chapters, verifies both bosses and the persistent HUD, checks runtime normal-map pairing plus generated shadow lights/occluders, and resolves a complete ending.
+
+## Project structure
+
+```text
+assets/                 Source and processed game art
+resources/              Items, upgrades, echoes, and animation data
+scenes/                 Maps, player, enemies, world objects, and UI
+scripts/                Modular gameplay, campaign, rendering, and UI code
+shaders/                Memory-lantern screen grade
+tools/                  Asset and end-to-end verification tooling
+web/                    Custom browser shell and template installer
+.github/workflows/      Automated GitHub Pages export and deployment
+```
+
+Key systems are deliberately modular: `CampaignSystem`, `SaveManager`, `WorldState`, `InventorySystem`, `ArchiveSystem`, `BaseUpgradeSystem`, `LightingDirector`, player abilities, enemy AI, and reusable interactables communicate through a small event bus.
+
+## GitHub Pages
+
+Every push to `main` or `master` runs the Pages workflow. It downloads the verified Godot 4.7 editor, extracts only the single-threaded Web template from the official archive, imports the project, exports the custom Web shell, validates the `.wasm`, `.pck`, and JavaScript artifacts, and deploys them to GitHub Pages.
+
+## Contributing and security
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow. Please report security issues privately as described in [SECURITY.md](SECURITY.md).
+
+## Credits
+
+Created by **Jamie Parr**.
+
+Built with [Godot Engine](https://godotengine.org/). Game source and project-owned assets are released under the [MIT License](LICENSE).

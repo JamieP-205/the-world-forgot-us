@@ -1,0 +1,133 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/ending_overlay.gd" id="1_ending"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBox_ending"]
+bg_color = Color(0.035, 0.045, 0.045, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.74, 0.57, 0.28, 0.86)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.75)
+shadow_size = 18
+
+[node name="EndingOverlay" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+script = ExtResource("1_ending")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.012, 0.018, 0.02, 0.98)
+
+[node name="Glow" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -520.0
+offset_top = -300.0
+offset_right = 520.0
+offset_bottom = 300.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.08, 0.18, 0.19, 0.24)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="PanelContainer" parent="Center"]
+custom_minimum_size = Vector2(940, 650)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBox_ending")
+
+[node name="Margin" type="MarginContainer" parent="Center/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 44
+theme_override_constants/margin_top = 34
+theme_override_constants/margin_right = 44
+theme_override_constants/margin_bottom = 30
+
+[node name="Content" type="VBoxContainer" parent="Center/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 13
+
+[node name="Title" type="Label" parent="Center/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.72, 0.34, 1)
+theme_override_font_sizes/font_size = 40
+text = "THE ARCHIVE ENDING"
+horizontal_alignment = 1
+
+[node name="Subtitle" type="Label" parent="Center/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.88, 0.88, 1)
+theme_override_font_sizes/font_size = 20
+text = "No one restored perfectly."
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Divider" type="HSeparator" parent="Center/Panel/Margin/Content"]
+layout_mode = 2
+
+[node name="Body" type="Label" parent="Center/Panel/Margin/Content"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.9, 0.84, 1)
+theme_override_font_sizes/font_size = 19
+text = "Epilogue"
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Stats" type="Label" parent="Center/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.82, 0.82, 1)
+theme_override_font_sizes/font_size = 16
+text = "Echoes recovered"
+horizontal_alignment = 1
+
+[node name="Credits" type="Label" parent="Center/Panel/Margin/Content"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.62, 0.58, 1)
+theme_override_font_sizes/font_size = 14
+text = "THE WORLD FORGOT US\nCreated by Jamie Parr  |  Built with Godot\nStory, design, code, art direction, sound design and production"
+horizontal_alignment = 1
+
+[node name="Buttons" type="HBoxContainer" parent="Center/Panel/Margin/Content"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="Replay" type="Button" parent="Center/Panel/Margin/Content/Buttons"]
+custom_minimum_size = Vector2(230, 46)
+layout_mode = 2
+text = "Begin Again"
+
+[node name="TitleScreen" type="Button" parent="Center/Panel/Margin/Content/Buttons"]
+custom_minimum_size = Vector2(230, 46)
+layout_mode = 2
+text = "Keep This Ending"

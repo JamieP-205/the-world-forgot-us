@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1_echo"]
+
+[resource]
+script = ExtResource("1_echo")
+id = &"echo_mara_repair"
+title = "Mara's Last Repair"
+category = "People"
+quality = "Clear Echo"
+hint = "A field radio remembers the hands that rebuilt it, and the person those hands were waiting for."
+memory_text = "Mara Venn rewinds the Mnemoscope coil by lantern light. 'If Ellie comes back, the scanner will know her before the world does. Railhome is warm. North relay still answers. I will leave every light I can.' The voice on the radio is the same one hidden beneath your oldest dreams."
+keepsake_item = &"tin_locket"

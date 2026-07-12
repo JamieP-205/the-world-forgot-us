@@ -9,6 +9,8 @@ extends Node
 const BASE_SCENE_PATH := "res://scenes/base/railhome_base.tscn"
 
 var is_paused := false
+var dialogue_active := false
+var ending_active := false
 
 
 func _ready() -> void:
@@ -20,14 +22,33 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	# Only pause during actual gameplay (the Main root is in the tree). On the
 	# main menu there is no Main node, so Esc must not freeze the menu.
-	if event.is_action_pressed("pause") and get_tree().get_first_node_in_group("main") != null:
+	if event.is_action_pressed("pause") and not dialogue_active and not ending_active \
+			and get_tree().get_first_node_in_group("main") != null:
 		set_paused(not is_paused)
 
 
 func set_paused(paused: bool) -> void:
 	is_paused = paused
-	get_tree().paused = paused
+	_sync_tree_pause()
 	EventBus.paused_changed.emit(paused)
+
+
+func set_dialogue_active(active: bool) -> void:
+	dialogue_active = active
+	_sync_tree_pause()
+
+
+func set_ending_active(active: bool) -> void:
+	ending_active = active
+	_sync_tree_pause()
+
+
+func is_input_locked() -> bool:
+	return is_paused or dialogue_active or ending_active
+
+
+func _sync_tree_pause() -> void:
+	get_tree().paused = is_paused or dialogue_active or ending_active
 
 
 ## Travels to another level, placing the player at the named spawn point.

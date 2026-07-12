@@ -13,6 +13,7 @@ var _players: Array[AudioStreamPlayer] = []
 var _next := 0
 var _ambient: AudioStreamPlayer = null
 var _drone: AudioStreamPlayer = null
+var _audio_unlocked := false
 
 
 func _ready() -> void:
@@ -43,18 +44,29 @@ func _ready() -> void:
 	BaseUpgradeSystem.upgrade_built.connect(_on_upgrade_built)
 	_update_environment_mix()
 
-	if DisplayServer.get_name() != "headless":
+	# Browsers require a user gesture before audio playback. Desktop starts
+	# immediately; MainMenu calls unlock_audio() on the first press/click.
+	if DisplayServer.get_name() != "headless" and not OS.has_feature("web"):
+		unlock_audio()
+
+
+func unlock_audio() -> void:
+	if _audio_unlocked or DisplayServer.get_name() == "headless":
+		return
+	_audio_unlocked = true
+	if _ambient != null and not _ambient.playing:
 		_ambient.play()
+	if _drone != null and not _drone.playing:
 		_drone.play()
 
 
 func _replay_ambient() -> void:
-	if _ambient != null and is_inside_tree() and DisplayServer.get_name() != "headless":
+	if _ambient != null and is_inside_tree() and _audio_unlocked:
 		_ambient.play()
 
 
 func _replay_drone() -> void:
-	if _drone != null and is_inside_tree() and DisplayServer.get_name() != "headless":
+	if _drone != null and is_inside_tree() and _audio_unlocked:
 		_drone.play()
 
 
@@ -88,6 +100,11 @@ func _exit_tree() -> void:
 
 
 func play(sound: StringName, volume_db: float = 0.0, pitch: float = 1.0) -> void:
+	if DisplayServer.get_name() == "headless":
+		return
+	# A click/key press that triggers a cue is itself a valid Web audio gesture.
+	if not _audio_unlocked and DisplayServer.get_name() != "headless":
+		unlock_audio()
 	var stream: AudioStream = _streams.get(sound)
 	if stream == null:
 		return
@@ -134,6 +151,15 @@ func _build_streams() -> void:
 	_streams[&"ending"] = _synth(0.8, 110.0, {"freq2": 165.0, "wobble": 3.0, "noise": 0.06, "decay": 2.3, "amp": 0.27})
 	_streams[&"eat"] = _synth(0.24, 220.0, {"freq2": 165.0, "noise": 0.12, "decay": 9.0, "amp": 0.24})
 	_streams[&"keepsake"] = _synth(0.68, 523.0, {"freq2": 784.0, "wobble": 3.0, "decay": 2.8, "amp": 0.21})
+	_streams[&"swing"] = _synth(0.14, 205.0, {"sweep": 1.8, "noise": 0.16, "decay": 18.0, "amp": 0.24})
+	_streams[&"dodge"] = _synth(0.22, 280.0, {"sweep": 1.4, "noise": 0.22, "decay": 12.0, "amp": 0.22})
+	_streams[&"memory_burst"] = _synth(0.72, 196.0, {"freq2": 784.0, "sweep": 0.8, "wobble": 2.5, "decay": 3.0, "amp": 0.29})
+	_streams[&"dialogue_open"] = _synth(0.28, 330.0, {"freq2": 495.0, "noise": 0.05, "decay": 7.0, "amp": 0.18})
+	_streams[&"dialogue_tick"] = _synth(0.08, 620.0, {"decay": 24.0, "amp": 0.12})
+	_streams[&"choice"] = _synth(0.38, 440.0, {"freq2": 660.0, "decay": 6.0, "amp": 0.22})
+	_streams[&"archive"] = _synth(0.44, 262.0, {"freq2": 523.0, "wobble": 1.2, "decay": 5.0, "amp": 0.20})
+	_streams[&"relay_restore"] = _synth(0.95, 110.0, {"freq2": 440.0, "sweep": 0.65, "wobble": 2.2, "decay": 2.2, "amp": 0.27})
+	_streams[&"finale"] = _synth(1.65, 130.8, {"freq2": 392.0, "wobble": 1.1, "decay": 1.25, "amp": 0.27})
 
 
 func _synth(dur: float, freq: float, opts: Dictionary) -> AudioStreamWAV:

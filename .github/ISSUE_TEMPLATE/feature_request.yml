@@ -1,0 +1,24 @@
+name: Feature request
+description: Suggest a focused improvement that supports memory, survival, exploration, or rebuilding.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Player need
+      description: What player problem or opportunity does this address?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed experience
+      description: Describe the mechanic or presentation from the player's perspective.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and tradeoffs
+      description: Note campaign, save, performance, accessibility, or Web implications.

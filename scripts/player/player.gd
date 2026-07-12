@@ -24,6 +24,16 @@ extends CharacterBody2D
 ## Health restored by eating one canned ration (F).
 @export var food_heal: float = 45.0
 
+## Fast evasive step with brief invulnerability.
+@export var dodge_speed: float = 560.0
+@export var dodge_duration: float = 0.18
+@export var dodge_cooldown: float = 0.85
+
+## Unlockable scanner-combat ability learned from Mara's recording.
+@export var burst_radius: float = 155.0
+@export var burst_damage: float = 24.0
+@export var burst_cooldown: float = 7.0
+
 ## The direction the player is currently facing. Drives the melee swing and,
 ## later, the scanner cone and thrown items.
 var facing: Vector2 = Vector2.DOWN
@@ -39,6 +49,10 @@ var _last_prompt: String = ""
 
 var _attack_cd: float = 0.0
 var _invuln: float = 0.0
+var _dodge_time: float = 0.0
+var _dodge_cd: float = 0.0
+var _dodge_dir: Vector2 = Vector2.DOWN
+var _burst_cd: float = 0.0
 var _shake_time: float = 0.0
 var _shake_duration: float = 0.0
 var _shake_strength: float = 0.0
@@ -77,9 +91,12 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	_attack_cd = maxf(_attack_cd - delta, 0.0)
 	_invuln = maxf(_invuln - delta, 0.0)
+	_dodge_time = maxf(_dodge_time - delta, 0.0)
+	_dodge_cd = maxf(_dodge_cd - delta, 0.0)
+	_burst_cd = maxf(_burst_cd - delta, 0.0)
 	_anim_lock = maxf(_anim_lock - delta, 0.0)
 	_update_camera_shake(delta)
-	_handle_movement()
+	_handle_movement(delta)
 	_update_attack_transform()
 	_update_current_interactable()
 
@@ -109,7 +126,13 @@ func _update_locomotion(moving: bool) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("interact") and _current_interactable != null:
+	if GameManager.is_input_locked():
+		return
+	if event.is_action_pressed("dodge"):
+		_try_dodge()
+	elif event.is_action_pressed("memory_burst"):
+		_try_memory_burst()
+	elif event.is_action_pressed("interact") and _current_interactable != null:
 		_current_interactable.interact(self)
 		# The interactable may have changed state, so refresh immediately.
 		_update_current_interactable()
@@ -133,7 +156,12 @@ func _try_consume_food() -> void:
 	EventBus.notice_posted.emit("You force down a cold ration. +%d health." % int(food_heal))
 
 
-func _handle_movement() -> void:
+func _handle_movement(_delta: float) -> void:
+	if _dodge_time > 0.0:
+		velocity = _dodge_dir * dodge_speed
+		move_and_slide()
+		_update_locomotion(true)
+		return
 	var input_dir: Vector2 = Input.get_vector(
 		"move_left", "move_right", "move_up", "move_down"
 	)
@@ -158,9 +186,10 @@ func _update_attack_transform() -> void:
 
 
 func _try_attack() -> void:
-	if _attack_cd > 0.0:
+	if _attack_cd > 0.0 or _dodge_time > 0.0:
 		return
 	_attack_cd = attack_cooldown
+	AudioManager.play(&"swing", -3.0, randf_range(0.94, 1.06))
 	_swing_visual.visible = true
 	_swing_timer.start()
 	_play_action(StringName("attack_" + _facing_dir()), 0.28)
@@ -168,6 +197,89 @@ func _try_attack() -> void:
 	for body in _attack_area.get_overlapping_bodies():
 		if body.has_method("take_damage"):
 			body.take_damage(attack_damage)
+
+
+func _try_dodge() -> void:
+	if _dodge_cd > 0.0 or _dodge_time > 0.0:
+		return
+	var input_dir := Input.get_vector("move_left", "move_right", "move_up", "move_down")
+	_dodge_dir = input_dir.normalized() if input_dir != Vector2.ZERO else facing.normalized()
+	if _dodge_dir == Vector2.ZERO:
+		_dodge_dir = Vector2.DOWN
+	facing = _dodge_dir
+	_dodge_time = dodge_duration
+	_dodge_cd = dodge_cooldown
+	_invuln = maxf(_invuln, dodge_duration + 0.08)
+	_anim_lock = dodge_duration
+	AudioManager.play(&"dodge", -1.0, randf_range(0.96, 1.04))
+	_spawn_motion_echo()
+	EventBus.camera_shake_requested.emit(0.8, 0.08)
+
+
+func _try_memory_burst() -> void:
+	if not WorldState.has_flag(&"memory_burst_unlocked"):
+		EventBus.notice_posted.emit("Memory Burst is locked. Follow Mara's frequency in Ashmere.")
+		return
+	if _burst_cd > 0.0:
+		EventBus.notice_posted.emit("Memory Burst recharging: %.1fs" % _burst_cd)
+		return
+	_burst_cd = burst_cooldown
+	AudioManager.play(&"memory_burst")
+	EventBus.signal_burst_used.emit(global_position, burst_radius)
+	EventBus.camera_shake_requested.emit(3.0, 0.2)
+	_spawn_burst_visual()
+	var hits := 0
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not enemy is Node2D:
+			continue
+		if global_position.distance_to((enemy as Node2D).global_position) > burst_radius:
+			continue
+		if enemy.has_method("on_signal_burst"):
+			enemy.on_signal_burst(global_position, burst_radius)
+		if enemy.has_method("take_damage"):
+			enemy.take_damage(burst_damage)
+			hits += 1
+	EventBus.notice_posted.emit(
+		"Memory Burst overloads %d signal%s." % [hits, "" if hits == 1 else "s"]
+	)
+
+
+func _spawn_motion_echo() -> void:
+	if _visual.sprite_frames == null:
+		return
+	var texture := _visual.sprite_frames.get_frame_texture(_visual.animation, _visual.frame)
+	if texture == null:
+		return
+	var echo := Sprite2D.new()
+	echo.texture = texture
+	echo.global_position = global_position + _visual.position
+	echo.scale = _visual.scale
+	echo.modulate = Color(0.42, 0.92, 0.96, 0.48)
+	echo.z_index = -1
+	get_parent().add_child(echo)
+	var tween := echo.create_tween().set_parallel(true)
+	tween.tween_property(echo, "global_position", echo.global_position - _dodge_dir * 34.0, 0.24)
+	tween.tween_property(echo, "modulate:a", 0.0, 0.24)
+	tween.tween_property(echo, "scale", echo.scale * 0.82, 0.24)
+	tween.chain().tween_callback(echo.queue_free)
+
+
+func _spawn_burst_visual() -> void:
+	var ring := Line2D.new()
+	ring.name = "MemoryBurstRing"
+	ring.width = 5.0
+	ring.default_color = Color(0.38, 0.92, 0.96, 0.92)
+	ring.closed = true
+	for i in 49:
+		var angle := TAU * float(i) / 48.0
+		ring.add_point(Vector2.from_angle(angle) * 22.0)
+	add_child(ring)
+	ring.scale = Vector2(0.25, 0.25)
+	var target_scale := Vector2.ONE * (burst_radius / 22.0)
+	var tween := ring.create_tween().set_parallel(true)
+	tween.tween_property(ring, "scale", target_scale, 0.38).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_property(ring, "modulate:a", 0.0, 0.42)
+	tween.chain().tween_callback(ring.queue_free)
 
 
 ## Damage entry point so attackers never touch the HealthComponent directly.
@@ -228,6 +340,14 @@ func set_health(amount: float) -> void:
 func heal_full() -> void:
 	_health.reset()
 	_invuln = 0.0
+
+
+func get_dodge_cooldown_ratio() -> float:
+	return _dodge_cd / maxf(dodge_cooldown, 0.001)
+
+
+func get_burst_cooldown_ratio() -> float:
+	return _burst_cd / maxf(burst_cooldown, 0.001)
 
 
 # --- Interaction ------------------------------------------------------------

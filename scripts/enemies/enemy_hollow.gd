@@ -68,6 +68,7 @@ func _physics_process(delta: float) -> void:
 	if dist <= attack_range:
 		velocity = Vector2.ZERO
 		if _attack_cd <= 0.0 and player.has_method("take_damage"):
+			_play_action(StringName("attack_" + _face), 0.34)
 			player.take_damage(contact_damage)
 			_attack_cd = attack_cooldown
 	elif dist <= detection_radius:

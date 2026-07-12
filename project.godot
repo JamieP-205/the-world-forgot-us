@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="The World Forgot Us"
-config/description="2D top-down post-apocalyptic survival prototype."
+config/description="A complete 2D memory-survival story across the ashlands."
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.7")
 config/icon="res://icon.svg"
@@ -25,6 +25,7 @@ InventorySystem="*res://scripts/systems/inventory_system.gd"
 ArchiveSystem="*res://scripts/systems/archive_system.gd"
 BaseUpgradeSystem="*res://scripts/systems/base_upgrade_system.gd"
 WorldState="*res://scripts/systems/world_state.gd"
+CampaignSystem="*res://scripts/systems/campaign_system.gd"
 GameManager="*res://scripts/systems/game_manager.gd"
 SaveManager="*res://scripts/systems/save_manager.gd"
 AudioManager="*res://scripts/systems/audio_manager.gd"
@@ -87,6 +88,21 @@ scan={
 consume={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":70,"key_label":0,"unicode":102,"location":0,"echo":false,"script":null)
+]
+}
+dodge={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":32,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
+]
+}
+memory_burst={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":82,"key_label":0,"unicode":114,"location":0,"echo":false,"script":null)
+]
+}
+archive={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":73,"key_label":0,"unicode":105,"location":0,"echo":false,"script":null)
 ]
 }
 

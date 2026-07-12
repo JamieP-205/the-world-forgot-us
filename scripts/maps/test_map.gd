@@ -1,6 +1,8 @@
 extends Node2D
 ## Content pass scene glue for the current hand-built demo map.
 
+const CAMPAIGN_INTERACTABLE := preload("res://scenes/world/campaign_interactable.tscn")
+
 @onready var _mast_glow: Polygon2D = $RadioMast/RecoveredGlow
 @onready var _spark_a: Polygon2D = $RadioMast/StaticSparkA
 @onready var _spark_b: Polygon2D = $RadioMast/StaticSparkB
@@ -18,6 +20,7 @@ func _ready() -> void:
 	# Once the Radio Desk is online, a new signal shows itself in the north.
 	_north_signal.visible = BaseUpgradeSystem.is_built(&"radio_desk")
 	if _north_signal.visible:
+		_add_north_road_interaction()
 		_maybe_show_ending_hook()
 
 
@@ -35,21 +38,35 @@ func _process(delta: float) -> void:
 		_north_signal.modulate.a = 0.6 + sin(_time * 3.0) * 0.32
 
 
-## The demo's ending hook: after the player has built the Radio Desk AND
-## rested/saved, returning to the world reveals a louder, wrong signal from
-## the north -- the promise of the next zone. Shown once per session.
+## Act transition: after the Radio Desk is built and the player explicitly
+## rests, the signal introduces the playable road to Ashmere.
 func _maybe_show_ending_hook() -> void:
 	if WorldState.ending_hook_shown:
 		return
-	if not SaveManager.has_save():
-		return  # only after the safe pause at the bedroll
+	if not WorldState.has_flag(&"rested_after_radio"):
+		return
 	WorldState.ending_hook_shown = true
 	var msg := "A NEW SIGNAL claws in from the north - louder than the last, and wrong somewhere underneath.\n\"...come north... it isn't finished forgetting...\"\nThe next road is out there, and it is already changing."
+	msg = "A NEW SIGNAL claws in from the north - louder than the last, and carrying a name.\nEllie... Ashmere... follow the sun on the lid.\nThe north road is open."
 	if BaseUpgradeSystem.is_built(&"route_beacon"):
 		msg += "\nBehind you the beacon burns steady. The way home, at least, will keep."
 	AudioManager.play(&"ending")
 	EventBus.notice_posted.emit(msg)
 	EventBus.camera_shake_requested.emit(2.0, 0.16)
+
+
+func _add_north_road_interaction() -> void:
+	if _north_signal.has_node("NorthRoad"):
+		return
+	var gate := CAMPAIGN_INTERACTABLE.instantiate() as CampaignInteractable
+	if gate == null:
+		return
+	gate.name = "NorthRoad"
+	gate.story_id = &"north_signal"
+	gate.prompt = "Follow the signal north"
+	gate.accent = Color(1.0, 0.72, 0.34, 1.0)
+	gate.position = Vector2.ZERO
+	_north_signal.add_child(gate)
 
 
 func _on_echo_recorded(data: MemoryEchoData) -> void:

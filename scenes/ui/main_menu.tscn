@@ -52,7 +52,7 @@ offset_bottom = 184.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(0.62, 0.82, 0.82, 1)
 theme_override_font_sizes/font_size = 18
-text = "a first playable demo slice"
+text = "a complete compact memory-survival story"
 horizontal_alignment = 1
 
 [node name="Box" type="VBoxContainer" parent="."]
@@ -61,9 +61,9 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -130.0
-offset_top = -20.0
+offset_top = -48.0
 offset_right = 130.0
-offset_bottom = 210.0
+offset_bottom = 245.0
 grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 12
@@ -79,6 +79,10 @@ text = "New Game"
 [node name="Controls" type="Button" parent="Box"]
 custom_minimum_size = Vector2(260, 44)
 text = "Controls"
+
+[node name="Credits" type="Button" parent="Box"]
+custom_minimum_size = Vector2(260, 44)
+text = "Credits"
 
 [node name="Quit" type="Button" parent="Box"]
 custom_minimum_size = Vector2(260, 44)
@@ -97,7 +101,7 @@ grow_horizontal = 2
 grow_vertical = 0
 theme_override_colors/font_color = Color(0.5, 0.52, 0.5, 1)
 theme_override_font_sizes/font_size = 14
-text = "Godot 4.7 prototype - cohesive placeholder art + procedural audio"
+text = "Created by Jamie Parr  |  Godot 4.7  |  Best with headphones"
 horizontal_alignment = 1
 
 [node name="ControlsPanel" parent="." instance=ExtResource("2_ctl")]
@@ -107,3 +111,7 @@ visible = false
 title = "New Game"
 ok_button_text = "New Game"
 dialog_text = "Erase your saved progress and start a new run?"
+
+[node name="CreditsDialog" type="AcceptDialog" parent="."]
+title = "Credits"
+dialog_text = "THE WORLD FORGOT US\n\nCreated by Jamie Parr\nStory, game design, code, level design, art direction, sound design and production\n\nBuilt with Godot Engine 4.7\n\nIn this world, survival is not enough. Someone has to remember."

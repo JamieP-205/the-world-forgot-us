@@ -15,6 +15,7 @@ extends CanvasLayer
 @onready var _archive_label: Label = $ArchiveLabel
 @onready var _objective_label: Label = $ObjectiveLabel
 @onready var _compass = $Compass
+@onready var _ability_label: Label = $AbilityLabel
 
 var _scanned_echo := false
 
@@ -29,6 +30,7 @@ func _ready() -> void:
 	EventBus.level_loaded.connect(_refresh_objectives)
 	EventBus.echo_revealed.connect(_on_echo_revealed)
 	EventBus.game_saved.connect(_refresh_objectives)
+	EventBus.campaign_progress_changed.connect(_refresh_objectives)
 	ArchiveSystem.echo_recorded.connect(_on_echo_recorded)
 	BaseUpgradeSystem.upgrade_built.connect(_on_upgrade_built)
 	_notice_timer.timeout.connect(_on_notice_timeout)
@@ -44,6 +46,7 @@ func _ready() -> void:
 
 func _process(_delta: float) -> void:
 	_update_compass()
+	_update_ability_label()
 
 
 func _update_compass() -> void:
@@ -64,6 +67,24 @@ func _current_objective_target() -> Node2D:
 	var level: Node = main.get_current_level()
 	if level == null:
 		return null
+
+	# CampaignSystem is the one source of truth for both the text and arrow.
+	var objective := CampaignSystem.get_objective()
+	var target_key := String(objective.get("target", ""))
+	if target_key.is_empty():
+		return null
+	var named := level.find_child(target_key, true, false) as Node2D
+	if named != null:
+		return named
+	for candidate in get_tree().get_nodes_in_group("objective_targets"):
+		if not candidate is Node2D or not level.is_ancestor_of(candidate):
+			continue
+		var candidate_story := String(candidate.get("story_id"))
+		if candidate_story.is_empty() and candidate.has_meta("story_id"):
+			candidate_story = String(candidate.get_meta("story_id"))
+		if candidate_story == target_key or candidate.name == target_key:
+			return candidate as Node2D
+	return null
 
 	var at_base := _current_level_path() == GameManager.BASE_SCENE_PATH
 	var has_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
@@ -153,7 +174,10 @@ func _wire_pause_menu() -> void:
 	_pause_box.get_node("Resume").pressed.connect(func() -> void: GameManager.set_paused(false))
 	_pause_box.get_node("Controls").pressed.connect(_on_pause_controls)
 	_pause_box.get_node("MainMenu").pressed.connect(_on_pause_main_menu)
-	_pause_box.get_node("Quit").pressed.connect(func() -> void: get_tree().quit())
+	var quit_button := _pause_box.get_node("Quit") as Button
+	quit_button.pressed.connect(_on_pause_quit)
+	if OS.has_feature("web"):
+		quit_button.text = "Fullscreen"
 	_pause_controls.closed.connect(_on_pause_controls_closed)
 	_pause_controls.visible = false
 
@@ -171,6 +195,18 @@ func _on_pause_controls_closed() -> void:
 func _on_pause_main_menu() -> void:
 	GameManager.set_paused(false)
 	get_tree().change_scene_to_file("res://scenes/ui/main_menu.tscn")
+
+
+func _on_pause_quit() -> void:
+	if OS.has_feature("web"):
+		var mode := DisplayServer.window_get_mode()
+		DisplayServer.window_set_mode(
+			DisplayServer.WINDOW_MODE_WINDOWED
+			if mode == DisplayServer.WINDOW_MODE_FULLSCREEN
+			else DisplayServer.WINDOW_MODE_FULLSCREEN
+		)
+	else:
+		get_tree().quit()
 
 
 func _on_paused_changed(is_paused: bool) -> void:
@@ -223,6 +259,22 @@ func _refresh_archive() -> void:
 
 
 func _refresh_objectives() -> void:
+	var objective := CampaignSystem.get_objective()
+	var chapter := String(objective.get("chapter", "THE WORLD FORGOT US"))
+	var next := String(objective.get("text", "Find a way forward."))
+	var optional: Array[String] = []
+	if not WorldState.is_opened(&"keepsake_shelf_used"):
+		optional.append("[ ] Preserve a keepsake at the Railhome")
+	if not ArchiveSystem.has_echo(&"echo_names_wall"):
+		optional.append("[ ] Find the optional wall of names")
+	if optional.is_empty():
+		optional.append("[x] Optional memories preserved")
+	_objective_label.text = "%s\n\nNEXT\n%s\n\nOPTIONAL\n%s" % [
+		chapter,
+		next,
+		"\n".join(optional),
+	]
+	return
 	var has_supplies := InventorySystem.get_total_count() > 0
 	var has_last_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
 	var has_coil := BaseUpgradeSystem.is_built(&"scanner_coil")
@@ -293,6 +345,24 @@ func _next_objective_text(
 func _show_opening_hint() -> void:
 	if InventorySystem.get_total_count() == 0 and _current_level_path() != GameManager.BASE_SCENE_PATH:
 		_on_notice_posted("You wake on the dead road with the Railhome behind you.\nFollow the amber road, search supplies with E, and keep food for healing with F.")
+
+
+func _update_ability_label() -> void:
+	var player := get_tree().get_first_node_in_group("player")
+	if player == null:
+		_ability_label.text = "[SPACE] Dodge   [I] Archive"
+		return
+	var dodge_text := "READY"
+	var burst_text := "LOCKED"
+	if player.has_method("get_dodge_cooldown_ratio"):
+		var dodge_ratio := float(player.get_dodge_cooldown_ratio())
+		dodge_text = "READY" if dodge_ratio <= 0.0 else "%d%%" % roundi((1.0 - dodge_ratio) * 100.0)
+	if WorldState.has_flag(&"memory_burst_unlocked"):
+		burst_text = "READY"
+		if player.has_method("get_burst_cooldown_ratio"):
+			var burst_ratio := float(player.get_burst_cooldown_ratio())
+			burst_text = "READY" if burst_ratio <= 0.0 else "%d%%" % roundi((1.0 - burst_ratio) * 100.0)
+	_ability_label.text = "[SPACE] Dodge %s    [R] Burst %s    [I] Archive" % [dodge_text, burst_text]
 
 
 func _current_level_path() -> String:

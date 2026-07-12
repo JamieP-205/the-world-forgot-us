@@ -14,6 +14,7 @@ extends Node
 var _opened: Dictionary = {}     # container id -> true
 var _choices: Dictionary = {}    # choice group id -> chosen option id
 var _defeated: Dictionary = {}   # enemy id -> true
+var _flags: Dictionary = {}      # campaign / quest id -> JSON-safe value
 var ending_hook_shown := false
 
 
@@ -21,6 +22,7 @@ var ending_hook_shown := false
 func mark_opened(id: StringName) -> void:
 	if id != &"":
 		_opened[id] = true
+		EventBus.campaign_progress_changed.emit()
 
 
 func is_opened(id: StringName) -> bool:
@@ -31,6 +33,7 @@ func is_opened(id: StringName) -> bool:
 func mark_choice(group: StringName, option: StringName) -> void:
 	if group != &"":
 		_choices[group] = String(option)
+		EventBus.campaign_progress_changed.emit()
 
 
 func choice_taken(group: StringName) -> bool:
@@ -45,10 +48,33 @@ func chosen_option(group: StringName) -> String:
 func mark_defeated(id: StringName) -> void:
 	if id != &"":
 		_defeated[id] = true
+		EventBus.campaign_progress_changed.emit()
 
 
 func is_defeated(id: StringName) -> bool:
 	return _defeated.get(id, false)
+
+
+# --- Campaign flags ---
+## Small, deliberately generic state store used by the complete campaign.
+## Values must stay JSON-safe because SaveManager persists this dictionary.
+func set_flag(id: StringName, value: Variant = true) -> void:
+	if id == &"":
+		return
+	_flags[id] = value
+	EventBus.campaign_progress_changed.emit()
+
+
+func get_flag(id: StringName, default: Variant = false) -> Variant:
+	return _flags.get(id, default)
+
+
+func has_flag(id: StringName) -> bool:
+	return bool(_flags.get(id, false))
+
+
+func get_flags() -> Dictionary:
+	return _flags.duplicate(true)
 
 
 # --- Save/load snapshot (plain strings, JSON-safe) ---
@@ -62,10 +88,14 @@ func get_state() -> Dictionary:
 	var defeated_ids: Array = []
 	for k in _defeated:
 		defeated_ids.append(String(k))
+	var flags: Dictionary = {}
+	for k in _flags:
+		flags[String(k)] = _flags[k]
 	return {
 		"opened": opened_ids,
 		"choices": choices,
 		"defeated": defeated_ids,
+		"flags": flags,
 		"ending_hook_shown": ending_hook_shown,
 	}
 
@@ -79,6 +109,9 @@ func restore(data: Dictionary) -> void:
 		_choices[StringName(g)] = String(ch[g])
 	for id in data.get("defeated", []):
 		_defeated[StringName(id)] = true
+	var saved_flags: Dictionary = data.get("flags", {})
+	for id in saved_flags:
+		_flags[StringName(id)] = saved_flags[id]
 	ending_hook_shown = bool(data.get("ending_hook_shown", false))
 
 
@@ -86,4 +119,5 @@ func clear() -> void:
 	_opened.clear()
 	_choices.clear()
 	_defeated.clear()
+	_flags.clear()
 	ending_hook_shown = false
