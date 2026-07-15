@@ -18,7 +18,7 @@ The setting also gave me a useful technical problem to work through: campaign st
 
 - Four connected areas, from the service road at Cullbrook to the controls under Tollard Exchange
 - Directional melee, a dodge, healing supplies, Trace Receiver sweeps, an unlockable receiver discharge and a four-direction walk cycle
-- A responsive phone interface with thumb-sized controls, a first-run touch guide, adapted title menu, HUD, dialogue, field guide, pause menu and settings
+- A responsive phone interface with a floating movement field, four permanent road actions, an expandable field-kit tray, a first-run touch guide and adapted title, HUD, dialogue, pause and settings layouts
 - Ten recoverable traces, NPC assignments, a road-record investigation, a signal defence, a circuit rerouting puzzle and three ending routes
 - Hollows, Linesmen, a Custodian, ranged Signal Leeches and ambushing Mimic Stalkers with night and scanner reactions
 - A small base with a shortwave desk, receiver upgrades, lighting and a keepsake shelf
@@ -45,14 +45,15 @@ The project uses an expanded 1280 x 720 canvas. Phone UI is therefore sized from
 | Melee attack | J or left-click | HIT button |
 | Trace Receiver sweep | Q or right-click | SCAN button |
 | Dodge | Space | DODGE button |
-| Receiver discharge | R, after the Ashmere workshop repair | BURST button, after the repair |
-| Use healing supplies | F | HEAL button |
-| Open trace archive | I | LOG button |
-| Open field map | M | MAP button |
-| Pause | Esc | MENU button |
-| Reopen touch explanation | Field Guide menu | HELP button |
+| Open secondary controls | — | KIT button |
+| Receiver discharge | R, after the Ashmere workshop repair | KIT → BURST, after the repair |
+| Use healing supplies | F | KIT → HEAL |
+| Open trace archive | I | KIT → LOG |
+| Open field map | M | KIT → MAP |
+| Pause | Esc | KIT → MENU |
+| Reopen touch explanation | Field Guide menu | KIT → HELP |
 
-The first phone session opens a short three-step guide after the opening cinematic. It pauses the road while it is visible and records completion in the normal settings file. HELP reopens it later. The full Touch Guide remains available from the title and pause menus.
+The first phone session opens a short three-step guide after the opening cinematic. It pauses the road while it is visible and records completion in the normal settings file. HELP reopens it later. The full Touch Guide remains available from the title and pause menus. The field-kit tray closes after an action so the road remains visible during normal play.
 
 The Trace Receiver reveals nearby traces and exposed enemies. Its sweep also interrupts the Linesman and Custodian shields for a short damage window.
 
