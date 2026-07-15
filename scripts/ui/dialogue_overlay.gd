@@ -1,6 +1,6 @@
 class_name DialogueOverlay
 extends Control
-## Persistent, mouse/keyboard friendly story conversation overlay.
+## Persistent story conversation overlay with keyboard, mouse and touch input.
 
 @onready var _speaker: Label = $Panel/Margin/Content/Speaker
 @onready var _body: Label = $Panel/Margin/Content/Body
@@ -15,13 +15,49 @@ var _choice_labels: Array[String] = []
 var _line_index := 0
 var _choices_visible := false
 var _accept_after_msec := 0
+var _touch_ui := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_touch_ui = _is_touch_device()
 	visible = false
 	_continue.pressed.connect(_advance)
 	EventBus.dialogue_requested.connect(_show_dialogue)
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	call_deferred("_apply_responsive_layout")
+
+
+func _is_touch_device() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("web_android") \
+		or OS.has_feature("web_ios") or DisplayServer.is_touchscreen_available()
+
+
+func _apply_responsive_layout() -> void:
+	if not is_node_ready():
+		return
+	if _touch_ui:
+		var window_size := Vector2(DisplayServer.window_get_size())
+		var portrait := window_size.y > window_size.x
+		_panel.anchor_left = 0.0
+		_panel.anchor_top = 1.0
+		_panel.anchor_right = 1.0
+		_panel.anchor_bottom = 1.0
+		_panel.offset_left = 18.0
+		_panel.offset_right = -18.0
+		_panel.offset_top = -430.0 if portrait else -300.0
+		_panel.offset_bottom = -18.0
+		_continue.custom_minimum_size = Vector2(188.0, 52.0)
+	else:
+		_panel.anchor_left = 0.0
+		_panel.anchor_top = 1.0
+		_panel.anchor_right = 1.0
+		_panel.anchor_bottom = 1.0
+		_panel.offset_left = 58.0
+		_panel.offset_right = -280.0
+		_panel.offset_top = -300.0
+		_panel.offset_bottom = -38.0
+		_continue.custom_minimum_size = Vector2(176.0, 36.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -40,6 +76,10 @@ func _unhandled_input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 	elif not _choices_visible and (event.is_action_pressed("ui_accept") \
 			or event.is_action_pressed("interact")):
+		_advance()
+		get_viewport().set_input_as_handled()
+	elif _touch_ui and not _choices_visible and event is InputEventScreenTouch and event.pressed:
+		AudioManager.unlock_audio()
 		_advance()
 		get_viewport().set_input_as_handled()
 
@@ -61,6 +101,7 @@ func _show_dialogue(payload: Dictionary) -> void:
 	_panel.modulate = Color(1, 1, 1, 1)
 	_clear_choices()
 	visible = true
+	_apply_responsive_layout()
 	_show_line()
 	AudioManager.play(&"dialogue_open")
 
@@ -70,7 +111,10 @@ func _show_line() -> void:
 		_finish(-1)
 		return
 	_body.text = _lines[_line_index]
-	_progress.text = "RECORD %02d / %02d     ENTER  /  E" % [_line_index + 1, _lines.size()]
+	_progress.text = (
+		"RECORD %02d / %02d     TAP CONTINUE" if _touch_ui
+		else "RECORD %02d / %02d     ENTER  /  E"
+	) % [_line_index + 1, _lines.size()]
 	_continue.text = "CONTINUE" if _line_index < _lines.size() - 1 else (
 		"CHOOSE" if not _choice_labels.is_empty() else "CLOSE"
 	)
@@ -100,14 +144,14 @@ func _show_choices() -> void:
 	_clear_choices()
 	for i in _choice_labels.size():
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(0, 38)
+		button.custom_minimum_size = Vector2(0, 52 if _touch_ui else 38)
 		button.text = "%02d  /  %s" % [i + 1, _choice_labels[i]]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(_choose.bind(i))
 		_choices.add_child(button)
 	if _choices.get_child_count() > 0:
 		(_choices.get_child(0) as Button).grab_focus()
-	_progress.text = "SELECT WITH MOUSE  /  NUMBER KEY"
+	_progress.text = "TAP A RESPONSE" if _touch_ui else "SELECT WITH MOUSE  /  NUMBER KEY"
 
 
 func _choose(index: int) -> void:
