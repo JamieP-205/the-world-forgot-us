@@ -8,6 +8,6 @@ script = ExtResource("1")
 icon = ExtResource("2")
 id = &"scrap"
 display_name = "Scrap"
-description = "Twisted metal and salvage. The closest thing the wasteland has to currency."
+description = "Wire, brackets, clean bolts, and anything else that can survive a second use."
 stack_size = 99
 category = "material"

@@ -14,6 +14,13 @@ data_*/
 builds/
 dist/
 
+# Python tool caches
+__pycache__/
+*.py[cod]
+
+# Historical working notes are kept locally, not published with the project.
+docs/archive/
+
 # Cloud-sync conflict duplicates (OneDrive/Drive "Name clash" copies).
 # Specific to sync artifacts; does not hide real project files.
 *Name clash*

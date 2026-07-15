@@ -7,4 +7,4 @@ signal closed
 
 
 func _ready() -> void:
-	($Box/Back as Button).pressed.connect(func() -> void: closed.emit())
+	($Card/Margin/Box/Back as Button).pressed.connect(func() -> void: closed.emit())

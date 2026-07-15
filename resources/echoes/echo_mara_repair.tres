@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1_echo"]
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
 
 [resource]
-script = ExtResource("1_echo")
+script = ExtResource("1")
 id = &"echo_mara_repair"
-title = "Mara's Last Repair"
-category = "People"
-quality = "Clear Echo"
-hint = "A field radio remembers the hands that rebuilt it, and the person those hands were waiting for."
-memory_text = "Mara Venn rewinds the Mnemoscope coil by lantern light. 'If Ellie comes back, the scanner will know her before the world does. Railhome is warm. North relay still answers. I will leave every light I can.' The voice on the radio is the same one hidden beneath your oldest dreams."
+title = "Maggie's Service Ledger"
+category = "Ashmere Estate"
+quality = "Analogue record"
+hint = "Greasy fingerprints stop at one job number, written twice."
+memory_text = "WARD, M. Receiver fault at Ashmere workshop. Replaced F3 with a fuse borrowed from the clinic fridge. Wrenfield key moved to two-part check: lunch-tin mark plus job 6142. In the margin: 'Leena - I owe you a fuse, three insulin pens and an apology.'"
 keepsake_item = &"tin_locket"

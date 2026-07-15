@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"radio_desk"
-title = "Radio Desk"
-description = "Signals and quests will surface here."
+title = "Shortwave Desk"
+description = "A patched receiver, tape deck, and county-band transmitter."
 cost = {
 "battery": 1,
 "scrap": 3

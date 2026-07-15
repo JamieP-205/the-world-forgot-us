@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"echo_relay_warning"
+title = "Weather Channel Test"
+category = "Wrenfield Relay Station"
+quality = "Clean recording"
+hint = "An analogue test channel survived because it never asked who was listening."
+memory_text = "RAFI: 'Wind north-east, thirty-two. Ash front at Wrenfield by six.' Maggie asks him to repeat it without names or personal routing. The second transmission is plain, dull and correct. 'There,' she says. 'The old channel still works when nobody tries to be clever.'"
+keepsake_item = &""

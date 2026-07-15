@@ -1,6 +1,6 @@
 class_name EnemyStaticWraith
 extends CharacterBody2D
-## Static Wraith -- an almost invisible ambusher that the Mnemoscope can
+## Static Wraith -- an almost invisible ambusher that the trace receiver can
 ## force into the world. While phase-shrouded it only takes chip damage;
 ## a scanner pulse reveals and stuns it long enough for a focused attack.
 

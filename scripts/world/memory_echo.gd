@@ -1,6 +1,6 @@
 class_name MemoryEcho
 extends Interactable
-## A memory echo: scan to reveal, then interact to recover it into the Archive.
+## A recorded trace: scan to reveal, then file it in the carriage archive.
 
 ## The echo this represents (assign a .tres per instance).
 @export var echo_data: MemoryEchoData
@@ -8,7 +8,7 @@ extends Interactable
 ## Optional upgrade gate. Used in Pass 14 so the main echo gives scavenged
 ## battery/scrap an immediate purpose without adding another crafting system.
 @export var required_upgrade_id: StringName = &""
-@export_multiline var required_upgrade_notice: String = "The signal is too weak. Improve the Mnemoscope, then scan again."
+@export_multiline var required_upgrade_notice: String = "The trace is breaking up. Fit a stronger receiver coil, then try again."
 
 ## Alpha before the echo is revealed (barely perceptible).
 @export var hidden_alpha: float = 0.05
@@ -49,7 +49,7 @@ func is_available() -> bool:
 
 
 func get_prompt() -> String:
-	return "Recover memory: %s" % _echo_title()
+	return "File trace: %s" % _echo_title()
 
 
 func interact(_player: Node2D) -> void:
@@ -63,9 +63,9 @@ func interact(_player: Node2D) -> void:
 	_scannable.remove_from_group("scannables")
 
 	AudioManager.play(&"echo_recover")
-	var text := echo_data.memory_text if echo_data != null else "You remember."
+	var text := echo_data.memory_text if echo_data != null else "The recording is blank."
 	EventBus.notice_posted.emit(
-		"Echo recovered - %s.\n%s\nCarry it west to the Railhome and make the Radio Desk speak."
+		"TRACE FILED — %s\n%s"
 		% [_echo_title(), text])
 	EventBus.camera_shake_requested.emit(3.0, 0.18)
 
@@ -88,7 +88,7 @@ func _on_revealed() -> void:
 	EventBus.echo_revealed.emit(echo_data)
 	EventBus.camera_shake_requested.emit(3.0, 0.16)
 	EventBus.notice_posted.emit(
-		"The strengthened Mnemoscope catches the broadcast. A cyan memory opens above the mast.\nStep into the light and press E to recover it.")
+		"The trace set catches a clean fragment.\nStep into the light and press E to file it.")
 	var tween := create_tween()
 	tween.set_parallel(true)
 	tween.tween_property(_visual, "modulate", Color(0.46, 0.94, 0.96, 0.98), 0.22)
@@ -125,4 +125,4 @@ func _show_blocked_signal() -> void:
 
 
 func _echo_title() -> String:
-	return echo_data.title if echo_data != null else "Unknown echo"
+	return echo_data.title if echo_data != null else "Unknown trace"

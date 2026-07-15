@@ -42,7 +42,7 @@ func interact(_player: Node2D) -> void:
 	if BaseUpgradeSystem.build(upgrade_data):
 		_apply_powered()
 		EventBus.notice_posted.emit(
-			"Roadside Beacon built.\nAmber light points the way back to the Railhome.")
+			"Mile lamp wired.\nThe amber hood faces back toward Carriage 317.")
 		EventBus.camera_shake_requested.emit(1.5, 0.1)
 
 

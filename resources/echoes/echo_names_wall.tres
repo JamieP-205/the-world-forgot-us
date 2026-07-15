@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1_echo"]
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
 
 [resource]
-script = ExtResource("1_echo")
+script = ExtResource("1")
 id = &"echo_names_wall"
-title = "The Names We Carried"
-category = "Places"
-quality = "Restored Memory"
-hint = "Hundreds of scratched names wait beneath soot and signal frost."
-memory_text = "Relay workers read names into the emergency band after the official records went blank. Teachers. Drivers. Infants. Strangers. Each name made the wall glow for a heartbeat. The final hand added two more: MARA VENN. ELLIE VENN. Someone here chose remembrance even when nobody promised rescue."
+title = "The Paper List"
+category = "Wrenfield Relay Station"
+quality = "Corroborated record"
+hint = "Names cover the wall in three inks. Several have question marks beside them."
+memory_text = "LEENA SHAH: 'Read only what someone here can vouch for.' Rafi reads thirty-one names. A second voice corrects two spellings and refuses a third. Nobody calls the list complete. At the bottom Maggie has written: ELLIE WARD - LAST SEEN CULLBROOK - UNCONFIRMED."
 keepsake_item = &""

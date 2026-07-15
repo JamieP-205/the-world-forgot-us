@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
 
-[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1_echo"]
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
 
 [resource]
-script = ExtResource("1_echo")
+script = ExtResource("1")
 id = &"echo_first_tone"
-title = "The First Tone"
-category = "Broadcasts"
-quality = "Restored Memory"
-hint = "The Choir Core contains the moment the world began to forget, preserved from every angle at once."
-memory_text = "The Choir Grid was ordered to preserve every emergency voice as the network collapsed. It obeyed too well. Billions of memories arrived together, each demanding not to be lost. The First Tone was not a command. It was the sound of a machine trying to remember everyone at once—and tearing the links between names, faces, and places apart. The core is still choosing what to keep. Now it is waiting for you to choose."
+title = "Incident 44, 02:17"
+category = "Tollard Exchange"
+quality = "System record"
+hint = "A printer jam preserved the report the database later replaced."
+memory_text = "CONTINUITY MODE is filling damaged caller records with generated speech. Personalized routes now contradict road control. Immediate shutdown requested by O. Pryce, network duty engineer. COUNTY CONTROL: request denied while evacuation channels remain active. Handwritten below: 'It is inventing the people it cannot find.'"
 keepsake_item = &""

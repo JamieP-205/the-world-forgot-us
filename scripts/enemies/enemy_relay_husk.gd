@@ -1,7 +1,7 @@
 class_name EnemyRelayHusk
 extends CharacterBody2D
 ## Relay Husk -- a scanner-gated boss. Its signal shield blocks melee until
-## a Mnemoscope burst overloads it. Health thresholds accelerate the chase,
+## a receiver discharge overloads it. Health thresholds accelerate the chase,
 ## shorten radial telegraphs, and increase the danger radius.
 
 @export var detection_radius: float = 560.0
@@ -140,7 +140,7 @@ func take_damage(amount: float) -> void:
 		if _notice_cd <= 0.0:
 			_notice_cd = 1.0
 			EventBus.notice_posted.emit(
-				"The Relay shield rejects the blow. Break it with the Mnemoscope.")
+				"The insulated suit grounds the blow. Overload it with a receiver sweep.")
 		return
 	_health.take_damage(amount)
 	if not _dying:

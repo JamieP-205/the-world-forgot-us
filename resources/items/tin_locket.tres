@@ -8,6 +8,6 @@ script = ExtResource("1")
 icon = ExtResource("2")
 id = &"tin_locket"
 display_name = "Tin Locket"
-description = "It won't open. Something rattles inside, small and patient."
+description = "The hinge is soldered shut. Something small moves inside when you turn it."
 stack_size = 1
 category = "keepsake"

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"echo_clinic_triage"
+title = "Paper Patients"
+category = "Ashmere Estate"
+quality = "Witness recording"
+hint = "Paper wristbands hang from the clinic rail, each written twice."
+memory_text = "LEENA SHAH: 'Ignore the screen. Ask them their name, then ask whoever came with them.' A porter says the computer has renamed Bed Four for the third time. Leena tears labels from the printer and writes by hand: name, medicine, witness. 'If nobody knows, write unknown. Do not guess.'"
+keepsake_item = &""

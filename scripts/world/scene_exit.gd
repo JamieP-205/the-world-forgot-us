@@ -25,6 +25,6 @@ func interact(_player: Node2D) -> void:
 
 func _post_travel_notice() -> void:
 	if target_scene_path == GameManager.BASE_SCENE_PATH:
-		EventBus.notice_posted.emit("Railhome reached.")
+		EventBus.notice_posted.emit("Carriage 317. Door still locked. Lamp still on.")
 	elif target_scene_path.ends_with("test_map.tscn"):
 		EventBus.notice_posted.emit("Back on the cracked road.")

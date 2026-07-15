@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"route_beacon"
-title = "Roadside Beacon"
-description = "A powered marker on the road home."
+title = "Mile Lamp"
+description = "A shielded carriage lamp wired to mark the safe way back."
 cost = {
 "battery": 1,
 "scrap": 2

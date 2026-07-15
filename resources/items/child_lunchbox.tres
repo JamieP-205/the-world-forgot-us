@@ -7,7 +7,7 @@
 script = ExtResource("1")
 icon = ExtResource("2")
 id = &"child_lunchbox"
-display_name = "Child's Lunchbox"
-description = "Dented tin. Someone scratched a small sun into the lid."
+display_name = "Ellie's Lunchbox"
+description = "Dented yellow tin. A child scratched a sun beside the initials E.W."
 stack_size = 1
 category = "keepsake"

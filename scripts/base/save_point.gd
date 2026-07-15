@@ -11,9 +11,9 @@ func interact(player: Node2D) -> void:
 	if BaseUpgradeSystem.is_built(&"radio_desk"):
 		WorldState.set_flag(&"rested_after_radio")
 	if SaveManager.save_game(""):
-		var msg := "You sleep. For a while, nothing out there is trying to forget you."
+		var msg := "You sleep in your boots. Rain ticks against the carriage roof."
 		if BaseUpgradeSystem.is_built(&"radio_desk"):
-			msg += " The Radio Desk hums warm through the carriage walls."
+			msg += " The shortwave set murmurs through the carriage wall."
 		msg += "\nRested. Progress saved."
 		EventBus.notice_posted.emit(msg)
 	else:
