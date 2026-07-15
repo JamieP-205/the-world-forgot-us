@@ -1,13 +1,15 @@
 class_name DialogueOverlay
 extends Control
 ## Persistent story conversation overlay with keyboard, mouse and touch input.
+## Touch layouts scale the complete card from the real browser window so the
+## story text and choices stay readable through the expanded game viewport.
 
+@onready var _panel: PanelContainer = $Panel
 @onready var _speaker: Label = $Panel/Margin/Content/Speaker
 @onready var _body: Label = $Panel/Margin/Content/Body
 @onready var _progress: Label = $Panel/Margin/Content/Footer/Progress
 @onready var _continue: Button = $Panel/Margin/Content/Footer/Continue
 @onready var _choices: VBoxContainer = $Panel/Margin/Content/Choices
-@onready var _panel: PanelContainer = $Panel
 
 var _story_id: StringName = &""
 var _lines: Array[String] = []
@@ -33,31 +35,46 @@ func _is_touch_device() -> bool:
 		or OS.has_feature("web_ios") or DisplayServer.is_touchscreen_available()
 
 
+func _physical_scale() -> float:
+	var window_size := Vector2(DisplayServer.window_get_size())
+	if window_size.x <= 1.0 or window_size.y <= 1.0 or size.x <= 1.0 or size.y <= 1.0:
+		return 1.0
+	return maxf(0.05, minf(window_size.x / size.x, window_size.y / size.y))
+
+
 func _apply_responsive_layout() -> void:
-	if not is_node_ready():
+	if not is_node_ready() or size.x <= 1.0 or size.y <= 1.0:
 		return
 	if _touch_ui:
 		var window_size := Vector2(DisplayServer.window_get_size())
 		var portrait := window_size.y > window_size.x
-		_panel.anchor_left = 0.0
-		_panel.anchor_top = 1.0
-		_panel.anchor_right = 1.0
-		_panel.anchor_bottom = 1.0
-		_panel.offset_left = 18.0
-		_panel.offset_right = -18.0
-		_panel.offset_top = -430.0 if portrait else -300.0
-		_panel.offset_bottom = -18.0
-		_continue.custom_minimum_size = Vector2(188.0, 52.0)
+		var requested_scale := clampf(0.92 / _physical_scale(), 1.0, 2.85)
+		var base_size := Vector2(460.0, 440.0) if portrait else Vector2(760.0, 300.0)
+		var edge := 16.0 * requested_scale
+		var fit_scale := minf(
+			(size.x - edge * 2.0) / base_size.x,
+			(size.y - edge * 2.0) / base_size.y
+		)
+		var card_scale := maxf(0.72, minf(requested_scale, fit_scale))
+		_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		_panel.pivot_offset = Vector2.ZERO
+		_panel.scale = Vector2.ONE * card_scale
+		_panel.size = base_size
+		_panel.position = Vector2(
+			(size.x - base_size.x * card_scale) * 0.5,
+			size.y - edge - base_size.y * card_scale
+		)
+		_continue.custom_minimum_size = Vector2(188.0, 54.0)
+		_continue.add_theme_font_size_override("font_size", 18)
 	else:
-		_panel.anchor_left = 0.0
-		_panel.anchor_top = 1.0
-		_panel.anchor_right = 1.0
-		_panel.anchor_bottom = 1.0
+		_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+		_panel.scale = Vector2.ONE
 		_panel.offset_left = 58.0
 		_panel.offset_right = -280.0
 		_panel.offset_top = -300.0
 		_panel.offset_bottom = -38.0
 		_continue.custom_minimum_size = Vector2(176.0, 36.0)
+		_continue.add_theme_font_size_override("font_size", 14)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -144,9 +161,10 @@ func _show_choices() -> void:
 	_clear_choices()
 	for i in _choice_labels.size():
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(0, 52 if _touch_ui else 38)
+		button.custom_minimum_size = Vector2(0, 58 if _touch_ui else 38)
 		button.text = "%02d  /  %s" % [i + 1, _choice_labels[i]]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		button.add_theme_font_size_override("font_size", 18 if _touch_ui else 14)
 		button.pressed.connect(_choose.bind(i))
 		_choices.add_child(button)
 	if _choices.get_child_count() > 0:
