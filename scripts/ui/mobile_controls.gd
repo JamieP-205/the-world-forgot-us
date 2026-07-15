@@ -2,16 +2,16 @@ class_name MobileControls
 extends Control
 ## Touch overlay for phone and tablet builds.
 ##
-## A floating left-thumb stick feeds the existing move actions. The right-side
-## buttons emit the same actions as the keyboard, so gameplay code remains the
-## single source of truth for combat, scanning, interaction and menus.
+## A floating left-thumb stick feeds the existing move actions. Four road
+## actions stay available on the right; less frequent actions live in a small
+## field-kit tray so the game remains visible on a phone screen.
 
 @export var force_visible := false
 
 const MOVE_DEADZONE := 0.18
 const PANEL := Color(0.018, 0.027, 0.027, 0.64)
-const PANEL_STRONG := Color(0.018, 0.027, 0.027, 0.88)
-const PANEL_PRESSED := Color(0.09, 0.13, 0.12, 0.9)
+const PANEL_STRONG := Color(0.018, 0.027, 0.027, 0.9)
+const PANEL_PRESSED := Color(0.09, 0.13, 0.12, 0.92)
 const LINE := Color(0.45, 0.78, 0.75, 0.68)
 const AMBER := Color(0.93, 0.67, 0.33, 0.92)
 const CYAN := Color(0.42, 0.84, 0.82, 0.92)
@@ -32,8 +32,11 @@ var _move_radius := 76.0
 var _touch_roles: Dictionary = {}
 var _pressed_visuals: Dictionary = {}
 var _buttons: Dictionary = {}
+var _kit_open := false
+var _kit_toggle_center := Vector2.ZERO
+var _kit_toggle_radius := 30.0
 var _action_backdrop := Rect2()
-var _utility_backdrop := Rect2()
+var _kit_backdrop := Rect2()
 var _tutorial_rect := Rect2()
 var _tutorial_visible := false
 var _tutorial_seen := false
@@ -99,24 +102,19 @@ func _rebuild_layout() -> void:
 	_portrait = size.y > size.x
 	var base_scale := minf(size.y / 720.0, size.x / 1280.0 * 1.35)
 	var physical_boost := clampf(0.9 / _physical_scale(), 0.78, 2.25)
-	_layout_scale = clampf(base_scale * physical_boost * (0.86 if _portrait else 1.0), 0.72, 2.0)
-	_move_radius = 72.0 * _layout_scale
-	var edge := 22.0 * _layout_scale
+	_layout_scale = clampf(base_scale * physical_boost * (0.84 if _portrait else 1.0), 0.72, 2.0)
+	_move_radius = 70.0 * _layout_scale
+	var edge := 20.0 * _layout_scale
 	_move_center = Vector2(edge + _move_radius, size.y - edge - _move_radius)
 	if _move_touch < 0:
 		_move_origin = _move_center
 		_move_knob = _move_origin
 
 	var large := 41.0 * _layout_scale
-	var small := 28.0 * _layout_scale
+	var small := 27.0 * _layout_scale
 	var right := size.x - edge - large
 	var bottom := size.y - edge - large
-	var utility_y := edge + small
-	var utility_gap := small * 2.22
-	var utility_mid := size.x * 0.5
-
 	if _portrait:
-		right = size.x - edge - large
 		bottom = size.y - edge - large * 1.05
 
 	_buttons = {
@@ -125,70 +123,93 @@ func _rebuild_layout() -> void:
 			"radius": large,
 			"label": "USE",
 			"tone": AMBER,
+			"group": "road",
 		},
 		&"attack": {
 			"center": Vector2(right - large * 2.18, bottom + large * 0.08),
 			"radius": large,
 			"label": "HIT",
 			"tone": INK,
+			"group": "road",
 		},
 		&"scan": {
 			"center": Vector2(right, bottom - large * 2.18),
 			"radius": large,
 			"label": "SCAN",
 			"tone": CYAN,
+			"group": "road",
 		},
 		&"dodge": {
 			"center": Vector2(right - large * 2.18, bottom - large * 2.02),
 			"radius": large,
 			"label": "DODGE",
 			"tone": AMBER,
-		},
-		&"consume": {
-			"center": Vector2(right - large * 4.12, bottom + small * 0.15),
-			"radius": small,
-			"label": "HEAL",
-			"tone": INK,
-		},
-		&"memory_burst": {
-			"center": Vector2(right - large * 4.12, bottom - small * 2.25),
-			"radius": small,
-			"label": "BURST",
-			"tone": CYAN,
-		},
-		&"mobile_help": {
-			"center": Vector2(utility_mid - utility_gap * 1.5, utility_y),
-			"radius": small,
-			"label": "HELP",
-			"tone": CYAN,
-		},
-		&"pause": {
-			"center": Vector2(utility_mid - utility_gap * 0.5, utility_y),
-			"radius": small,
-			"label": "MENU",
-			"tone": AMBER,
-		},
-		&"map": {
-			"center": Vector2(utility_mid + utility_gap * 0.5, utility_y),
-			"radius": small,
-			"label": "MAP",
-			"tone": INK,
-		},
-		&"archive": {
-			"center": Vector2(utility_mid + utility_gap * 1.5, utility_y),
-			"radius": small,
-			"label": "LOG",
-			"tone": CYAN,
+			"group": "road",
 		},
 	}
 
+	_kit_toggle_radius = small * 1.08
+	_kit_toggle_center = Vector2(right - large * 4.02, bottom - large * 0.96)
+
+	var tray_gap := small * 2.28
+	var tray_left := maxf(edge + small, right - large * 7.15)
+	var tray_top := bottom - small * 2.72
+	if _portrait:
+		tray_left = maxf(edge + small, right - large * 6.45)
+		tray_top = bottom - small * 3.05
+
+	_buttons.merge({
+		&"consume": {
+			"center": Vector2(tray_left, tray_top),
+			"radius": small,
+			"label": "HEAL",
+			"tone": INK,
+			"group": "kit",
+		},
+		&"memory_burst": {
+			"center": Vector2(tray_left + tray_gap, tray_top),
+			"radius": small,
+			"label": "BURST",
+			"tone": CYAN,
+			"group": "kit",
+		},
+		&"mobile_help": {
+			"center": Vector2(tray_left + tray_gap * 2.0, tray_top),
+			"radius": small,
+			"label": "HELP",
+			"tone": CYAN,
+			"group": "kit",
+		},
+		&"pause": {
+			"center": Vector2(tray_left, tray_top + tray_gap),
+			"radius": small,
+			"label": "MENU",
+			"tone": AMBER,
+			"group": "kit",
+		},
+		&"map": {
+			"center": Vector2(tray_left + tray_gap, tray_top + tray_gap),
+			"radius": small,
+			"label": "MAP",
+			"tone": INK,
+			"group": "kit",
+		},
+		&"archive": {
+			"center": Vector2(tray_left + tray_gap * 2.0, tray_top + tray_gap),
+			"radius": small,
+			"label": "LOG",
+			"tone": CYAN,
+			"group": "kit",
+		},
+	})
+
 	_action_backdrop = Rect2(
-		Vector2(right - large * 5.25, bottom - large * 3.12),
-		Vector2(large * 6.35, large * 4.25)
+		Vector2(right - large * 3.25, bottom - large * 3.12),
+		Vector2(large * 4.35, large * 4.25)
 	)
-	_utility_backdrop = Rect2(
-		Vector2(utility_mid - utility_gap * 2.05, utility_y - small * 1.32),
-		Vector2(utility_gap * 4.1, small * 2.64)
+	_kit_backdrop = Rect2(
+		Vector2(tray_left - small * 1.25, tray_top - small * 1.28),
+		Vector2(tray_gap * 2.0 + small * 2.5, tray_gap + small * 2.56)
 	)
 
 	var tutorial_width := minf(size.x - edge * 2.0, 650.0 * _layout_scale)
@@ -232,16 +253,32 @@ func _begin_touch(identifier: int, position: Vector2) -> bool:
 		_update_move(position)
 		return true
 
+	if position.distance_to(_kit_toggle_center) <= _kit_toggle_radius * 1.2:
+		_kit_open = not _kit_open
+		_pressed_visuals.clear()
+		_pulse(12)
+		queue_redraw()
+		return true
+
 	var action := _button_at(position)
 	if action == &"":
+		if _kit_open:
+			_kit_open = false
+			queue_redraw()
 		return false
 	if action == &"mobile_help":
+		_kit_open = false
+		_pulse(12)
 		_show_tutorial()
 		return true
+
 	_touch_roles[identifier] = action
 	_pressed_visuals[action] = true
 	_emit_action(action, true)
 	_emit_action.call_deferred(action, false)
+	_pulse(18)
+	if _is_kit_action(action):
+		_kit_open = false
 	queue_redraw()
 	return true
 
@@ -321,6 +358,7 @@ func _release_all() -> void:
 	_move_knob = _move_origin
 	_touch_roles.clear()
 	_pressed_visuals.clear()
+	_kit_open = false
 
 
 func _emit_action(action: StringName, pressed: bool) -> void:
@@ -331,9 +369,20 @@ func _emit_action(action: StringName, pressed: bool) -> void:
 	Input.parse_input_event(action_event)
 
 
+func _pulse(duration_msec: int) -> void:
+	Input.vibrate_handheld(duration_msec)
+
+
+func _is_kit_action(action: StringName) -> bool:
+	var data: Dictionary = _buttons.get(action, {})
+	return String(data.get("group", "")) == "kit"
+
+
 func _button_at(position: Vector2) -> StringName:
 	for action in _buttons:
 		var data: Dictionary = _buttons[action]
+		if String(data.get("group", "road")) == "kit" and not _kit_open:
+			continue
 		var center: Vector2 = data["center"]
 		var radius: float = data["radius"]
 		if position.distance_to(center) <= radius * 1.12:
@@ -345,6 +394,7 @@ func _show_tutorial() -> void:
 	if _tutorial_visible:
 		return
 	_tutorial_visible = true
+	_kit_open = false
 	_release_all()
 	if not GameManager.is_input_locked():
 		_tutorial_owns_lock = true
@@ -370,13 +420,14 @@ func _dismiss_tutorial() -> void:
 
 
 func _draw_control_backdrops() -> void:
-	draw_rect(_action_backdrop, Color(PANEL.r, PANEL.g, PANEL.b, 0.34), true)
-	draw_rect(_action_backdrop, Color(LINE.r, LINE.g, LINE.b, 0.28), false, maxf(1.0, _layout_scale))
-	draw_rect(_utility_backdrop, Color(PANEL.r, PANEL.g, PANEL.b, 0.4), true)
-	draw_rect(_utility_backdrop, Color(LINE.r, LINE.g, LINE.b, 0.26), false, maxf(1.0, _layout_scale))
+	draw_rect(_action_backdrop, Color(PANEL.r, PANEL.g, PANEL.b, 0.3), true)
+	draw_rect(_action_backdrop, Color(LINE.r, LINE.g, LINE.b, 0.25), false, maxf(1.0, _layout_scale))
+	if _kit_open:
+		draw_rect(_kit_backdrop, Color(PANEL.r, PANEL.g, PANEL.b, 0.72), true)
+		draw_rect(_kit_backdrop, Color(AMBER.r, AMBER.g, AMBER.b, 0.46), false, maxf(1.0, _layout_scale))
 
 
-func _draw_tutorial(font: Font, label_size: int, primary_size: int) -> void:
+func _draw_tutorial(font: Font, label_size: int, _primary_size: int) -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(0.003, 0.006, 0.006, 0.82), true)
 	draw_rect(_tutorial_rect, PANEL_STRONG, true)
 	draw_rect(_tutorial_rect, CYAN, false, maxf(2.0, _layout_scale * 1.5))
@@ -394,10 +445,10 @@ func _draw_tutorial(font: Font, label_size: int, primary_size: int) -> void:
 	var first_y := top + 78.0 * _layout_scale
 	_draw_tutorial_step(font, Vector2(left, first_y), "01", "MOVE", "Drag lower-left. The stick follows your thumb.", width, body_size)
 	_draw_tutorial_step(font, Vector2(left, first_y + step_gap), "02", "ACT", "Right side: USE, HIT, SCAN and DODGE.", width, body_size)
-	_draw_tutorial_step(font, Vector2(left, first_y + step_gap * 2.0), "03", "TOOLS", "Top: HELP, MENU, MAP and LOG. Side: HEAL and BURST.", width, body_size)
+	_draw_tutorial_step(font, Vector2(left, first_y + step_gap * 2.0), "03", "KIT", "Tap KIT for HEAL, BURST, HELP, MENU, MAP and LOG.", width, body_size)
 
 	var footer_y := _tutorial_rect.end.y - 34.0 * _layout_scale
-	var footer := "TURN THE PHONE SIDEWAYS FOR THE FULL VIEW  /  TAP ANYWHERE TO START"
+	var footer := "HELP REOPENS THIS GUIDE  /  TAP ANYWHERE TO START"
 	if _portrait:
 		footer = "LANDSCAPE RECOMMENDED  /  TAP ANYWHERE TO START"
 	draw_string(font, Vector2(left, footer_y), footer, HORIZONTAL_ALIGNMENT_CENTER, width, label_size, AMBER)
@@ -416,6 +467,27 @@ func _draw_tutorial_step(
 	draw_string(font, position, number, HORIZONTAL_ALIGNMENT_LEFT, number_width, font_size, AMBER)
 	draw_string(font, position + Vector2(number_width, 0.0), heading, HORIZONTAL_ALIGNMENT_LEFT, 82.0 * _layout_scale, font_size, INK)
 	draw_string(font, position + Vector2(number_width + 82.0 * _layout_scale, 0.0), body, HORIZONTAL_ALIGNMENT_LEFT, width - number_width - 82.0 * _layout_scale, font_size, MUTED)
+
+
+func _draw_button(font: Font, action: StringName, label_size: int, primary_size: int) -> void:
+	var data: Dictionary = _buttons[action]
+	var center: Vector2 = data["center"]
+	var radius: float = data["radius"]
+	var label: String = data["label"]
+	var tone: Color = data["tone"]
+	var pressed := _pressed_visuals.has(action)
+	draw_circle(center, radius, PANEL_PRESSED if pressed else PANEL)
+	draw_arc(center, radius, 0.0, TAU, 48, tone, 2.0 * _layout_scale, true)
+	var font_size := primary_size if radius > 36.0 * _layout_scale else label_size
+	draw_string(
+		font,
+		center + Vector2(-radius, font_size * 0.35),
+		label,
+		HORIZONTAL_ALIGNMENT_CENTER,
+		radius * 2.0,
+		font_size,
+		INK
+	)
 
 
 func _draw() -> void:
@@ -442,23 +514,21 @@ func _draw() -> void:
 
 	for action in _buttons:
 		var data: Dictionary = _buttons[action]
-		var center: Vector2 = data["center"]
-		var radius: float = data["radius"]
-		var label: String = data["label"]
-		var tone: Color = data["tone"]
-		var pressed := _pressed_visuals.has(action)
-		draw_circle(center, radius, PANEL_PRESSED if pressed else PANEL)
-		draw_arc(center, radius, 0.0, TAU, 48, tone, 2.0 * _layout_scale, true)
-		var font_size := primary_size if radius > 36.0 * _layout_scale else label_size
-		draw_string(
-			font,
-			center + Vector2(-radius, font_size * 0.35),
-			label,
-			HORIZONTAL_ALIGNMENT_CENTER,
-			radius * 2.0,
-			font_size,
-			INK
-		)
+		if String(data.get("group", "road")) == "kit" and not _kit_open:
+			continue
+		_draw_button(font, action, label_size, primary_size)
+
+	draw_circle(_kit_toggle_center, _kit_toggle_radius, PANEL_PRESSED if _kit_open else PANEL)
+	draw_arc(_kit_toggle_center, _kit_toggle_radius, 0.0, TAU, 48, AMBER, 2.0 * _layout_scale, true)
+	draw_string(
+		font,
+		_kit_toggle_center + Vector2(-_kit_toggle_radius, label_size * 0.35),
+		"CLOSE" if _kit_open else "KIT",
+		HORIZONTAL_ALIGNMENT_CENTER,
+		_kit_toggle_radius * 2.0,
+		label_size,
+		INK
+	)
 
 	if _portrait and not _tutorial_visible:
 		draw_string(

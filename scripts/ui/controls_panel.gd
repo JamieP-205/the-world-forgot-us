@@ -118,15 +118,15 @@ func _apply_touch_copy() -> void:
 	_dismiss_hint.text = "TAP RETURN TO CLOSE"
 	$Card/Margin/Box/Grid/MoveAction.text = "MOVE"
 	$Card/Margin/Box/Grid/MoveKey.text = "DRAG LOWER-LEFT"
-	$Card/Margin/Box/Grid/InteractAction.text = "ACTIONS"
+	$Card/Margin/Box/Grid/InteractAction.text = "ROAD ACTIONS"
 	$Card/Margin/Box/Grid/InteractKey.text = "USE / HIT / SCAN / DODGE"
-	$Card/Margin/Box/Grid/ScanAction.text = "FIELD TOOLS"
-	$Card/Margin/Box/Grid/ScanKey.text = "HEAL / BURST"
-	$Card/Margin/Box/Grid/AttackAction.text = "RECORDS"
-	$Card/Margin/Box/Grid/AttackKey.text = "MAP / LOG"
+	$Card/Margin/Box/Grid/ScanAction.text = "FIELD KIT"
+	$Card/Margin/Box/Grid/ScanKey.text = "TAP KIT TO OPEN"
+	$Card/Margin/Box/Grid/AttackAction.text = "KIT ITEMS"
+	$Card/Margin/Box/Grid/AttackKey.text = "HEAL / BURST / MAP / LOG"
 	$Card/Margin/Box/Grid/DodgeAction.text = "SYSTEM"
 	$Card/Margin/Box/Grid/DodgeKey.text = "HELP / MENU"
-	_callout.text = "TWO-THUMB LAYOUT  /  Drag anywhere in the lower-left field to move. The right cluster handles the road. HELP reopens the quick guide. Dialogue and menus use their own large on-screen buttons."
+	_callout.text = "TWO-THUMB LAYOUT  /  Four road actions stay visible on the right. Tap KIT only when you need healing, the receiver burst, records or a system screen. HELP reopens the quick start guide."
 
 
 func _apply_desktop_copy() -> void:

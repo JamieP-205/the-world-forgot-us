@@ -1,13 +1,16 @@
 extends Node
 ## Repositions and scales the existing HUD for touch devices without changing
-## the desktop scene. Final sizes are based on physical window pixels rather
-## than the expanded 1280 x 720 game canvas, so text remains readable on phones.
+## the desktop scene. Phone layouts prioritise condition, current objective and
+## interaction prompts; secondary field data remains available in landscape.
 
 var _hud: CanvasLayer
 var _interface: Control
 var _status: Control
 var _inventory: Control
 var _objective: Control
+var _objective_task: Label
+var _objective_location: Label
+var _objective_progress: Label
 var _notice: Control
 var _prompt_panel: Control
 var _prompt: Label
@@ -41,6 +44,9 @@ func _bind_hud() -> void:
 	_status = _hud.get_node("Interface/StatusPanel") as Control
 	_inventory = _hud.get_node("Interface/InventoryPanel") as Control
 	_objective = _hud.get_node("Interface/ObjectivePanel") as Control
+	_objective_task = _hud.get_node("Interface/ObjectivePanel/Margin/Note/Task") as Label
+	_objective_location = _hud.get_node("Interface/ObjectivePanel/Margin/Note/Location") as Label
+	_objective_progress = _hud.get_node("Interface/ObjectivePanel/Margin/Note/Progress") as Label
 	_notice = _hud.get_node("Interface/Notice") as Control
 	_prompt_panel = _hud.get_node("Interface/Prompt") as Control
 	_prompt = _hud.get_node("Interface/Prompt/Margin/Label") as Label
@@ -53,8 +59,8 @@ func _bind_hud() -> void:
 
 	EventBus.interaction_prompt_changed.connect(_on_prompt_changed)
 	ArchiveSystem.echo_recorded.connect(func(_data: MemoryEchoData) -> void: _refresh_archive())
-	_field_hint.text = "HELP  /  TOUCH GUIDE     MENU  /  PAUSE"
-	_pause_hint.text = "TAP RETURN TO ROAD  /  MAP AND GUIDE ARE ON SCREEN"
+	_field_hint.text = "KIT  /  TOOLS     MENU  /  PAUSE"
+	_pause_hint.text = "TAP RETURN TO ROAD  /  TOUCH GUIDE EXPLAINS THE CONTROLS"
 	(_hud.get_node("PauseOverlay/Menu/Margin/Items/Guide") as Button).text = "TOUCH GUIDE"
 	_apply_layout()
 	_refresh_archive()
@@ -79,38 +85,38 @@ func _apply_layout() -> void:
 	var ui_scale := clampf(0.92 / physical, 0.95, 2.85)
 	var edge := 14.0 * ui_scale
 
-	_set_scaled_rect(_status, Vector2(edge, edge), Vector2(235.0, 76.0), ui_scale)
-	_set_scaled_rect(
-		_compass,
-		Vector2(view.x - edge - 74.0 * ui_scale, edge),
-		Vector2(74.0, 74.0),
-		ui_scale
-	)
+	_objective_location.visible = not portrait
+	_objective_progress.visible = not portrait
+	_archive_count.visible = not portrait
+	_field_hint.visible = not portrait
+	_objective_task.add_theme_font_size_override("font_size", 16 if portrait else 14)
+	_prompt.add_theme_font_size_override("font_size", 16 if portrait else 14)
 
-	var notice_y := edge + 148.0 * ui_scale
 	if portrait:
-		var objective_y := edge + 90.0 * ui_scale
-		_set_scaled_rect(_objective, Vector2(edge, objective_y), Vector2(352.0, 136.0), ui_scale)
+		_set_scaled_rect(_status, Vector2(edge, edge), Vector2(220.0, 72.0), ui_scale)
 		_set_scaled_rect(
-			_archive_count,
-			Vector2(view.x - edge - 190.0 * ui_scale, edge + 78.0 * ui_scale),
-			Vector2(190.0, 22.0),
+			_compass,
+			Vector2(view.x - edge - 64.0 * ui_scale, edge),
+			Vector2(64.0, 64.0),
 			ui_scale
 		)
-		_set_scaled_rect(
-			_field_hint,
-			Vector2(edge, objective_y + 146.0 * ui_scale),
-			Vector2(330.0, 22.0),
-			ui_scale * 0.9
-		)
+		var objective_y := edge + 82.0 * ui_scale
+		var objective_width := minf(330.0, maxf(245.0, (view.x - edge * 2.0) / ui_scale))
+		_set_scaled_rect(_objective, Vector2(edge, objective_y), Vector2(objective_width, 94.0), ui_scale)
 		_set_scaled_rect(
 			_inventory,
-			Vector2(edge, objective_y + 178.0 * ui_scale),
-			Vector2(235.0, 128.0),
+			Vector2(edge, objective_y + 106.0 * ui_scale),
+			Vector2(220.0, 112.0),
 			ui_scale
 		)
-		notice_y = objective_y + 178.0 * ui_scale
 	else:
+		_set_scaled_rect(_status, Vector2(edge, edge), Vector2(235.0, 76.0), ui_scale)
+		_set_scaled_rect(
+			_compass,
+			Vector2(view.x - edge - 74.0 * ui_scale, edge),
+			Vector2(74.0, 74.0),
+			ui_scale
+		)
 		_set_scaled_rect(
 			_objective,
 			Vector2(view.x - edge - 352.0 * ui_scale, edge),
@@ -132,26 +138,27 @@ func _apply_layout() -> void:
 		_set_scaled_rect(
 			_field_hint,
 			Vector2(edge + 248.0 * ui_scale, edge + 82.0 * ui_scale),
-			Vector2(360.0, 22.0),
+			Vector2(300.0, 22.0),
 			ui_scale * 0.9
 		)
 
 	var notice_scale := ui_scale * 0.9
-	var notice_width := minf(560.0, maxf(260.0, (view.x - edge * 2.0) / notice_scale))
+	var notice_width := minf(540.0, maxf(250.0, (view.x - edge * 2.0) / notice_scale))
+	var notice_y := edge + (188.0 if portrait else 148.0) * ui_scale
 	_set_scaled_rect(
 		_notice,
 		Vector2((view.x - notice_width * notice_scale) * 0.5, notice_y),
-		Vector2(notice_width, 66.0),
+		Vector2(notice_width, 62.0),
 		notice_scale
 	)
 
 	var prompt_scale := ui_scale
-	var prompt_width := minf(480.0, maxf(280.0, (view.x - edge * 2.0) / prompt_scale))
-	var prompt_bottom_clearance := (212.0 if portrait else 185.0) * ui_scale
+	var prompt_width := minf(460.0, maxf(260.0, (view.x - edge * 2.0) / prompt_scale))
+	var prompt_bottom_clearance := (252.0 if portrait else 205.0) * ui_scale
 	_set_scaled_rect(
 		_prompt_panel,
 		Vector2((view.x - prompt_width * prompt_scale) * 0.5, view.y - prompt_bottom_clearance),
-		Vector2(prompt_width, 46.0),
+		Vector2(prompt_width, 48.0),
 		prompt_scale
 	)
 
