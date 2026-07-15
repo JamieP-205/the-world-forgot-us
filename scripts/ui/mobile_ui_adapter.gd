@@ -1,11 +1,12 @@
 extends Node
-## Repositions the existing HUD for touch devices without changing desktop UI.
-## The desktop scene remains the source layout; this adapter only runs when a
-## touchscreen or mobile web feature is detected.
+## Repositions and scales the existing HUD for touch devices without changing
+## the desktop scene. Final sizes are based on physical window pixels rather
+## than the expanded 1280 x 720 game canvas, so text remains readable on phones.
 
 var _hud: CanvasLayer
 var _interface: Control
 var _status: Control
+var _inventory: Control
 var _objective: Control
 var _notice: Control
 var _prompt_panel: Control
@@ -15,6 +16,7 @@ var _archive_count: Label
 var _field_hint: Label
 var _pause_menu: Control
 var _pause_hint: Label
+var _pause_items: VBoxContainer
 
 
 func _ready() -> void:
@@ -37,6 +39,7 @@ func _bind_hud() -> void:
 		return
 	_interface = _hud.get_node("Interface") as Control
 	_status = _hud.get_node("Interface/StatusPanel") as Control
+	_inventory = _hud.get_node("Interface/InventoryPanel") as Control
 	_objective = _hud.get_node("Interface/ObjectivePanel") as Control
 	_notice = _hud.get_node("Interface/Notice") as Control
 	_prompt_panel = _hud.get_node("Interface/Prompt") as Control
@@ -45,6 +48,7 @@ func _bind_hud() -> void:
 	_archive_count = _hud.get_node("Interface/ArchiveCount") as Label
 	_field_hint = _hud.get_node("Interface/FieldHint") as Label
 	_pause_menu = _hud.get_node("PauseOverlay/Menu") as Control
+	_pause_items = _hud.get_node("PauseOverlay/Menu/Margin/Items") as VBoxContainer
 	_pause_hint = _hud.get_node("PauseOverlay/Menu/Margin/Items/Hint") as Label
 
 	EventBus.interaction_prompt_changed.connect(_on_prompt_changed)
@@ -52,11 +56,15 @@ func _bind_hud() -> void:
 	_field_hint.text = "HELP  /  TOUCH GUIDE     MENU  /  PAUSE"
 	_pause_hint.text = "TAP RETURN TO ROAD  /  MAP AND GUIDE ARE ON SCREEN"
 	(_hud.get_node("PauseOverlay/Menu/Margin/Items/Guide") as Button).text = "TOUCH GUIDE"
-	for child in (_hud.get_node("PauseOverlay/Menu/Margin/Items") as VBoxContainer).get_children():
-		if child is Button:
-			(child as Button).custom_minimum_size.y = 52.0
 	_apply_layout()
 	_refresh_archive()
+
+
+func _physical_scale(view: Vector2) -> float:
+	var window_size := Vector2(DisplayServer.window_get_size())
+	if window_size.x <= 1.0 or window_size.y <= 1.0 or view.x <= 1.0 or view.y <= 1.0:
+		return 1.0
+	return maxf(0.05, minf(window_size.x / view.x, window_size.y / view.y))
 
 
 func _apply_layout() -> void:
@@ -67,32 +75,111 @@ func _apply_layout() -> void:
 		return
 	var window_size := Vector2(DisplayServer.window_get_size())
 	var portrait := window_size.y > window_size.x
+	var physical := _physical_scale(view)
+	var ui_scale := clampf(0.92 / physical, 0.95, 2.85)
+	var edge := 14.0 * ui_scale
 
-	_set_rect(_status, Vector2(14.0, 14.0), Vector2(235.0, 76.0))
+	_set_scaled_rect(_status, Vector2(edge, edge), Vector2(235.0, 76.0), ui_scale)
+	_set_scaled_rect(
+		_compass,
+		Vector2(view.x - edge - 74.0 * ui_scale, edge),
+		Vector2(74.0, 74.0),
+		ui_scale
+	)
+
 	if portrait:
-		_set_rect(_objective, Vector2(14.0, 104.0), Vector2(minf(370.0, view.x - 28.0), 136.0))
-		_set_rect(_notice, Vector2(20.0, 250.0), Vector2(maxf(220.0, view.x - 40.0), 70.0))
-		_set_rect(_compass, Vector2(maxf(268.0, view.x - 92.0), 16.0), Vector2(74.0, 74.0))
-		_set_rect(_archive_count, Vector2(maxf(270.0, view.x - 230.0), 92.0), Vector2(212.0, 22.0))
-		_set_rect(_field_hint, Vector2(14.0, 246.0), Vector2(minf(430.0, view.x - 28.0), 22.0))
-		_set_rect(_prompt_panel, Vector2(maxf(14.0, (view.x - 440.0) * 0.5), view.y - 330.0), Vector2(minf(440.0, view.x - 28.0), 46.0))
+		var objective_y := edge + 90.0 * ui_scale
+		_set_scaled_rect(_objective, Vector2(edge, objective_y), Vector2(352.0, 136.0), ui_scale)
+		_set_scaled_rect(
+			_archive_count,
+			Vector2(view.x - edge - 190.0 * ui_scale, edge + 78.0 * ui_scale),
+			Vector2(190.0, 22.0),
+			ui_scale
+		)
+		_set_scaled_rect(
+			_inventory,
+			Vector2(edge, objective_y + 146.0 * ui_scale),
+			Vector2(235.0, 128.0),
+			ui_scale
+		)
+		_set_scaled_rect(
+			_field_hint,
+			Vector2(edge, objective_y + 146.0 * ui_scale),
+			Vector2(330.0, 22.0),
+			ui_scale * 0.9
+		)
 	else:
-		_set_rect(_objective, Vector2(maxf(14.0, view.x - 370.0), 14.0), Vector2(352.0, 136.0))
-		_set_rect(_notice, Vector2(maxf(270.0, (view.x - 560.0) * 0.5), 20.0), Vector2(minf(560.0, view.x - 540.0), 62.0))
-		_set_rect(_compass, Vector2(maxf(14.0, view.x - 92.0), 164.0), Vector2(74.0, 74.0))
-		_set_rect(_archive_count, Vector2(maxf(14.0, view.x - 226.0), 164.0), Vector2(124.0, 22.0))
-		_set_rect(_field_hint, Vector2(270.0, 96.0), Vector2(minf(430.0, view.x - 540.0), 22.0))
-		_set_rect(_prompt_panel, Vector2(maxf(260.0, (view.x - 480.0) * 0.5), view.y - 250.0), Vector2(minf(480.0, view.x - 520.0), 46.0))
+		_set_scaled_rect(
+			_objective,
+			Vector2(view.x - edge - 352.0 * ui_scale, edge),
+			Vector2(352.0, 136.0),
+			ui_scale
+		)
+		_set_scaled_rect(
+			_archive_count,
+			Vector2(view.x - edge - 124.0 * ui_scale, edge + 148.0 * ui_scale),
+			Vector2(124.0, 22.0),
+			ui_scale
+		)
+		_set_scaled_rect(
+			_inventory,
+			Vector2(edge, edge + 88.0 * ui_scale),
+			Vector2(235.0, 128.0),
+			ui_scale
+		)
+		_set_scaled_rect(
+			_field_hint,
+			Vector2(edge + 248.0 * ui_scale, edge + 82.0 * ui_scale),
+			Vector2(360.0, 22.0),
+			ui_scale * 0.9
+		)
 
-	var menu_width := minf(430.0, view.x - 30.0)
-	var menu_height := minf(620.0, view.y - 30.0)
-	_set_rect(_pause_menu, Vector2((view.x - menu_width) * 0.5, (view.y - menu_height) * 0.5), Vector2(menu_width, menu_height))
+	var notice_scale := ui_scale * 0.9
+	var notice_width := minf(560.0, maxf(260.0, (view.x - edge * 2.0) / notice_scale))
+	_set_scaled_rect(
+		_notice,
+		Vector2((view.x - notice_width * notice_scale) * 0.5, edge),
+		Vector2(notice_width, 66.0),
+		notice_scale
+	)
+
+	var prompt_scale := ui_scale
+	var prompt_width := minf(480.0, maxf(280.0, (view.x - edge * 2.0) / prompt_scale))
+	var prompt_bottom_clearance := (212.0 if portrait else 185.0) * ui_scale
+	_set_scaled_rect(
+		_prompt_panel,
+		Vector2((view.x - prompt_width * prompt_scale) * 0.5, view.y - prompt_bottom_clearance),
+		Vector2(prompt_width, 46.0),
+		prompt_scale
+	)
+
+	var menu_scale := minf(
+		ui_scale,
+		(view.x - edge * 2.0) / 420.0,
+		(view.y - edge * 2.0) / 600.0
+	)
+	menu_scale = maxf(0.72, menu_scale)
+	_set_scaled_rect(
+		_pause_menu,
+		Vector2((view.x - 420.0 * menu_scale) * 0.5, (view.y - 600.0 * menu_scale) * 0.5),
+		Vector2(420.0, 600.0),
+		menu_scale
+	)
+	var button_height := clampf(44.0 / maxf(physical * menu_scale, 0.01), 52.0, 78.0)
+	var button_font := roundi(clampf(14.0 / maxf(physical * menu_scale, 0.01), 15.0, 26.0))
+	for child in _pause_items.get_children():
+		if child is Button:
+			var button := child as Button
+			button.custom_minimum_size.y = button_height
+			button.add_theme_font_size_override("font_size", button_font)
 
 
-func _set_rect(control: Control, position: Vector2, control_size: Vector2) -> void:
+func _set_scaled_rect(control: Control, position: Vector2, control_size: Vector2, scale_value: float) -> void:
 	if control == null:
 		return
 	control.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	control.pivot_offset = Vector2.ZERO
+	control.scale = Vector2.ONE * scale_value
 	control.position = position
 	control.size = Vector2(maxf(1.0, control_size.x), maxf(1.0, control_size.y))
 
