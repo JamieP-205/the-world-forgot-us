@@ -64,6 +64,7 @@ var _shake_strength: float = 0.0
 var _anim_lock: float = 0.0
 
 @onready var _visual: AnimatedSprite2D = $Visual
+@onready var _walk_visual: AnimatedSprite2D = $WalkVisual
 @onready var _facing_indicator: Polygon2D = $FacingIndicator
 @onready var _interaction_area: Area2D = $InteractionArea
 @onready var _health: HealthComponent = $HealthComponent
@@ -84,6 +85,8 @@ func _ready() -> void:
 	EventBus.camera_shake_requested.connect(_on_camera_shake_requested)
 	_swing_timer.timeout.connect(func() -> void: _swing_visual.visible = false)
 	_swing_visual.visible = false
+	_walk_visual.visible = false
+	_walk_visual.frame_changed.connect(_on_walk_frame_changed)
 	_visual.play(&"idle_down")
 
 	# Push the starting health to the HUD now that listeners are wired up.
@@ -114,6 +117,8 @@ func _facing_dir() -> String:
 ## locomotion doesn't immediately override it. Guards against missing anims.
 func _play_action(anim: StringName, lock: float) -> void:
 	if _visual.sprite_frames != null and _visual.sprite_frames.has_animation(anim):
+		_walk_visual.visible = false
+		_visual.visible = true
 		_visual.play(anim)
 		_anim_lock = lock
 
@@ -122,9 +127,27 @@ func _play_action(anim: StringName, lock: float) -> void:
 func _update_locomotion(moving: bool) -> void:
 	if _anim_lock > 0.0:
 		return
-	var want := StringName(("walk_" if moving else "idle_") + _facing_dir())
-	if _visual.animation != want or not _visual.is_playing():
-		_visual.play(want)
+	if moving:
+		_visual.visible = false
+		_walk_visual.visible = true
+		var walk_anim := StringName("walk_" + _facing_dir())
+		if _walk_visual.animation != walk_anim or not _walk_visual.is_playing():
+			_walk_visual.play(walk_anim)
+		return
+	_walk_visual.visible = false
+	_visual.visible = true
+	var idle_anim := StringName("idle_" + _facing_dir())
+	if _visual.animation != idle_anim or not _visual.is_playing():
+		_visual.play(idle_anim)
+
+
+## The generated four-direction walk cycle has two planted-foot beats per
+## loop. Driving footsteps from those frames keeps sound and motion locked
+## together at every movement speed without a second timer.
+func _on_walk_frame_changed() -> void:
+	if not _walk_visual.visible or _walk_visual.frame not in [0, 2]:
+		return
+	AudioManager.play_footstep(global_position, velocity)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -279,15 +302,18 @@ func _try_memory_burst() -> void:
 
 
 func _spawn_motion_echo() -> void:
-	if _visual.sprite_frames == null:
+	var active_visual: AnimatedSprite2D = _walk_visual if _walk_visual.visible else _visual
+	if active_visual.sprite_frames == null:
 		return
-	var texture := _visual.sprite_frames.get_frame_texture(_visual.animation, _visual.frame)
+	var texture := active_visual.sprite_frames.get_frame_texture(
+		active_visual.animation, active_visual.frame)
 	if texture == null:
 		return
 	var echo := Sprite2D.new()
 	echo.texture = texture
-	echo.global_position = global_position + _visual.position
-	echo.scale = _visual.scale
+	echo.offset = active_visual.offset
+	echo.global_position = global_position + active_visual.position
+	echo.scale = active_visual.scale
 	echo.modulate = Color(0.42, 0.92, 0.96, 0.48)
 	echo.z_index = -1
 	get_parent().add_child(echo)
@@ -333,6 +359,13 @@ func _flash_hurt() -> void:
 
 
 func _on_camera_shake_requested(strength: float, duration: float) -> void:
+	var settings := get_node_or_null("/root/SettingsManager")
+	if settings != null and settings.has_method("get_float"):
+		strength *= clampf(float(settings.call(
+			"get_float", "accessibility", "screen_shake", 1.0)), 0.0, 1.0)
+	if strength <= 0.0:
+		_camera.offset = Vector2.ZERO
+		return
 	_shake_strength = maxf(_shake_strength, strength)
 	_shake_duration = maxf(_shake_duration, duration)
 	_shake_time = _shake_duration

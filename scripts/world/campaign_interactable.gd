@@ -13,6 +13,9 @@ var _time := 0.0
 
 func _ready() -> void:
 	add_to_group("objective_targets")
+	# Runtime-authored campaign maps and the HUD resolve targets through stable
+	# metadata; keep it in sync with the exported story id for every scene.
+	set_meta("story_id", story_id)
 	if _core != null:
 		_core.color = accent
 	if _ring != null:

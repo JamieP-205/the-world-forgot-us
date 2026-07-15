@@ -16,6 +16,14 @@ const RAFI_CONNECTED_FLAG := &"helped_rafi"
 const RAFI_DECLINED_FLAG := &"rafi_declined"
 const REPEATER_ONLINE_FLAG := &"public_repeater"
 const REPEATER_DECLINED_FLAG := &"public_repeater_declined"
+const IMOGEN_MET_FLAG := &"imogen_met"
+const IMOGEN_ESCORT_FLAG := &"imogen_escort_started"
+const IMOGEN_RESCUED_FLAG := &"imogen_rescued"
+const CLINIC_POWER_FLAG := &"clinic_lift_powered"
+const SCHOOL_POWER_FLAG := &"school_backfeed_powered"
+const EAST_DEFENSE_STARTED_FLAG := &"east_relay_defense_started"
+const EAST_DEFENSE_COMPLETE_FLAG := &"east_relay_defense_complete"
+const ROAD_TRACE_IDS := [&"road_trace_west", &"road_trace_east", &"road_trace_south"]
 const ALL_TRACE_IDS := [
 	&"echo_last_signal", &"echo_sun_lid", &"echo_mara_repair",
 	&"echo_clinic_triage", &"echo_bus_ledger", &"echo_names_wall",
@@ -23,6 +31,7 @@ const ALL_TRACE_IDS := [
 ]
 
 var _active_story_id: StringName = &""
+var _circuit_requirements: Dictionary = {}
 
 
 func _ready() -> void:
@@ -41,12 +50,29 @@ func get_prompt(story_id: StringName, fallback: String) -> String:
 	match story_id:
 		&"north_signal": return "Play the north-road tape"
 		&"ashmere_mara_radio": return "Check Maggie's workshop radio"
+		&"imogen_clinic":
+			if not WorldState.has_flag(IMOGEN_MET_FLAG): return "Answer the voice in the clinic"
+			if not _clinic_junction_resolved(): return "Check on Imogen"
+			if not WorldState.has_flag(IMOGEN_ESCORT_FLAG): return "Ask Imogen to move"
+			return "Check on Imogen"
+		&"clinic_power_junction":
+			return "Inspect the committed clinic junction" if _clinic_junction_resolved() else "Repair and reroute the clinic junction"
+		&"imogen_workshop_safe":
+			if WorldState.has_flag(IMOGEN_RESCUED_FLAG): return "Read Imogen's clinic notes"
+			if WorldState.has_flag(IMOGEN_ESCORT_FLAG): return "Bring Imogen into the workshop"
+			return "Inspect Maggie's cellar"
 		&"bellwether_school_radio":
 			if WorldState.has_flag(RAFI_CONNECTED_FLAG): return "Check in with Rafi"
-			if WorldState.has_flag(RAFI_DECLINED_FLAG): return "Inspect the grounded aerial"
+			if WorldState.has_flag(RAFI_DECLINED_FLAG): return "Inspect the local aerial" if WorldState.has_flag(SCHOOL_POWER_FLAG) else "Inspect the grounded aerial"
 			return "Call Rafi at the water works"
 		&"ashmere_gate": return "Unlock the Wrenfield road"
 		&"broadcast_relay_west", &"broadcast_relay_east", &"broadcast_relay_south": return "Reset the line relay"
+		&"road_trace_west", &"road_trace_east", &"road_trace_south": return "Review the verified road record" if WorldState.has_flag(story_id) else "Verify the road record"
+		&"broadcast_defense_anchor":
+			if WorldState.has_flag(EAST_DEFENSE_COMPLETE_FLAG): return "Check the stable clinic carrier"
+			if WorldState.has_flag(EAST_DEFENSE_STARTED_FLAG): return "Hold the east clinic carrier"
+			return "Begin the east-line hold"
+		&"rafi_field_contact": return "Speak with Rafi"
 		&"long_acre_repeater":
 			if WorldState.has_flag(REPEATER_ONLINE_FLAG): return "Check the public warning line"
 			if WorldState.has_flag(REPEATER_DECLINED_FLAG): return "Inspect the isolated repeater"
@@ -72,9 +98,15 @@ func _dialogue_for(story_id: StringName) -> Dictionary:
 	match story_id:
 		&"north_signal": return _north_signal_dialogue()
 		&"ashmere_mara_radio": return _maggie_dialogue()
+		&"imogen_clinic": return _imogen_dialogue()
+		&"clinic_power_junction": return _clinic_power_dialogue()
+		&"imogen_workshop_safe": return _imogen_safehouse_dialogue()
 		&"bellwether_school_radio": return _school_radio_dialogue()
 		&"ashmere_gate": return _ashmere_gate_dialogue()
 		&"broadcast_relay_west", &"broadcast_relay_east", &"broadcast_relay_south": return _relay_dialogue(story_id)
+		&"road_trace_west", &"road_trace_east", &"road_trace_south": return _road_trace_dialogue(story_id)
+		&"broadcast_defense_anchor": return _defense_dialogue()
+		&"rafi_field_contact": return _rafi_field_dialogue()
 		&"long_acre_repeater": return _public_repeater_dialogue()
 		&"broadcast_core_gate": return _broadcast_gate_dialogue()
 		&"choir_final_console": return _final_console_dialogue()
@@ -104,25 +136,169 @@ func _maggie_dialogue() -> Dictionary:
 	], [], AMBER)
 
 
+func _imogen_dialogue() -> Dictionary:
+	if WorldState.has_flag(IMOGEN_RESCUED_FLAG):
+		return _payload(&"imogen_clinic", "IMOGEN BELL - WORKSHOP", [
+			"IMOGEN - The oxygen bank is stable. I have copied every patient name twice.",
+			"Maggie left for Tollard three nights ago. She said the exchange had started answering calls that nobody made.",
+		], [], CYAN)
+	if not WorldState.has_flag(IMOGEN_MET_FLAG):
+		return _payload(&"imogen_clinic", "ASHMERE CLINIC - TREATMENT ROOM", [
+			"IMOGEN - If you are real, say what is written over the door.",
+			"ELLIE - No promises. No miracles. Record everything.",
+			"IMOGEN - Good. Maggie wrote it. The fire doors trapped me when the backup junction failed.",
+			"The same junction feeds the clinic lift and Bellwether's warning aerial. It needs one battery and two pieces of scrap before either route will hold.",
+		], [], AMBER)
+	if not _clinic_junction_resolved():
+		return _payload(&"imogen_clinic", "IMOGEN BELL - BEHIND THE FIRE DOOR", [
+			"The oxygen bank has minutes, not hours. The junction is outside by the ambulance bay.",
+			"One battery. Two pieces of usable metal. Then choose where the current goes.",
+		], [], RED)
+	if WorldState.has_flag(IMOGEN_ESCORT_FLAG):
+		return _payload(&"imogen_clinic", "IMOGEN BELL - MOVING", [
+			"Keep me in sight. If the copied voices call from behind us, do not turn around.",
+		], [], CYAN)
+	var consequence := (
+		"The lift is open and the oxygen trolley can move."
+		if WorldState.has_flag(CLINIC_POWER_FLAG)
+		else "The school aerial has current. I will carry what medicine I can."
+	)
+	return _payload(&"imogen_clinic", "IMOGEN BELL - FIRE DOOR OPEN", [
+		consequence,
+		"Maggie's workshop has a hand lock and a dry cellar. Get me there and I can tell you why she went back to Tollard.",
+	], ["COME WITH ME", "WAIT HERE"], CYAN)
+
+
+func _clinic_power_dialogue() -> Dictionary:
+	if _clinic_junction_resolved():
+		var route := "CLINIC LIFT" if WorldState.has_flag(CLINIC_POWER_FLAG) else "SCHOOL AERIAL"
+		return _payload(&"clinic_power_junction", "AMBULANCE-BAY JUNCTION", [
+			"The patched bus bars hold. Current is committed to the %s." % route,
+			"The junction cannot be moved again without cutting both lines.",
+		], [], CYAN)
+	if not WorldState.has_flag(IMOGEN_MET_FLAG):
+		return _payload(&"clinic_power_junction", "AMBULANCE-BAY JUNCTION", [
+			"Two hand-labelled outputs disappear through the clinic wall: LIFT and SCHOOL AERIAL.",
+			"Someone is tapping a steady three-beat pattern from inside.",
+		], [], AMBER)
+	if not _has_parts(1, 2):
+		return _payload(&"clinic_power_junction", "AMBULANCE-BAY JUNCTION", [
+			"The battery cradle is empty and both bus bars are split.",
+			"Required: 1 battery and 2 scrap. Search the marked ambulance bay and maintenance shed.",
+		], [], RED)
+	if WorldState.has_flag(RAFI_DECLINED_FLAG):
+		return _payload(&"clinic_power_junction", "ONE SOURCE / ONE INTACT ROUTE", [
+			"The school aerial's ceramic switch is broken and grounded. That feed cannot safely take current.",
+			"The repaired bus bars can still power the clinic lift and move Imogen's oxygen trolley.",
+		], ["POWER CLINIC LIFT"], AMBER)
+	return _payload(&"clinic_power_junction", "ONE SOURCE / TWO LIVE ROUTES", [
+		"The repair will hold, but the old changeover can feed only one route.",
+		"LIFT moves Imogen and the oxygen trolley. SCHOOL AERIAL gives Rafi a clean regional carrier after dusk.",
+		"This is a physical cutover. It cannot be undone from Tollard.",
+	], ["POWER CLINIC LIFT", "POWER SCHOOL AERIAL"], AMBER)
+
+
+func _imogen_safehouse_dialogue() -> Dictionary:
+	if WorldState.has_flag(IMOGEN_RESCUED_FLAG):
+		return _payload(&"imogen_workshop_safe", "MAGGIE'S WORKSHOP - CELLAR", [
+			"Imogen's paper clinic list is drying beside the stove. Her handwriting does not change when the radio speaks.",
+		], [], CYAN)
+	if not WorldState.has_flag(IMOGEN_ESCORT_FLAG):
+		return _payload(&"imogen_workshop_safe", "MAGGIE'S WORKSHOP - HAND LOCK", [
+			"The cellar is dry and defensible. Someone from the clinic could shelter here.",
+		], [], AMBER)
+	return _payload(&"imogen_workshop_safe", "MAGGIE'S WORKSHOP - CELLAR", [
+		"IMOGEN - Maggie found proof that the Open Call began before the storm, not during it.",
+		"She went to Tollard for the original dispatch roll. If the exchange still has it, somebody changed the official time.",
+		"I can hold this place and verify the clinic names. You keep moving.",
+	], ["TAKE TWO SEALED FIELD KITS", "LEAVE THE KITS FOR ASHMERE"], CYAN)
+
+
+func _road_trace_dialogue(story_id: StringName) -> Dictionary:
+	if WorldState.has_flag(story_id):
+		return _payload(story_id, "VERIFIED ROAD RECORD", ["This record is marked, photographed, and cross-checked."], [], CYAN)
+	var title := "WRENFIELD ROAD RECORD"
+	var lines: Array[String] = []
+	match story_id:
+		&"road_trace_west":
+			title = "WEST CABLE HOUSE - PAPER DRUM"
+			lines = ["The paper route drum says NORTH at 02:11.", "The electronic log changed it to EAST four minutes later, signed by an operator who died in 2006."]
+		&"road_trace_east":
+			title = "EAST LAY-BY - BUS TACHOGRAPH"
+			lines = ["The evacuation bus stopped here facing south.", "Its radio transcript claims it crossed the north bridge nine minutes later. The bridge had already fallen."]
+		&"road_trace_south":
+			title = "SOUTH GENERATOR - ENGINEER'S CHALK"
+			lines = ["Three manual arrows survive under the paint: WEST / CLINIC / SAFE.", "Tollard painted over them after Blank Night, then broadcast a route through the flooded cutting."]
+	return _payload(story_id, title, lines + ["Mark this as a verified contradiction before restoring road control."], ["CATALOGUE CONTRADICTION", "LEAVE IT UNMARKED"], AMBER)
+
+
+func _defense_dialogue() -> Dictionary:
+	if WorldState.has_flag(EAST_DEFENSE_COMPLETE_FLAG):
+		return _payload(&"broadcast_defense_anchor", "EAST CLINIC CARRIER", ["The manual carrier is stable. Imogen's paper list has a clean route out."], [], CYAN)
+	if WorldState.has_flag(EAST_DEFENSE_STARTED_FLAG):
+		return _payload(&"broadcast_defense_anchor", "EAST CLINIC CARRIER - LIVE", ["The manual hold is in progress. Break the incoming targeting carriers before the line drops."], [], RED)
+	if not WorldState.has_flag(&"relay_west_restored"):
+		return _payload(&"broadcast_defense_anchor", "EAST CLINIC CARRIER", ["Road control must be verified first. Otherwise the clinic carrier inherits the false route table."], [], RED)
+	var support := (
+		"Rafi will cover the west approach."
+		if WorldState.has_flag(&"rafi_field_defense")
+		else "You will have to hold all three approaches alone."
+	)
+	return _payload(&"broadcast_defense_anchor", "EAST CLINIC CARRIER - MANUAL HOLD", [
+		"The automatic defence is part of Tollard's copied-voice network. Bypassing it wakes every carrier nearby.",
+		support,
+	], ["BEGIN THE MANUAL HOLD", "CHECK THE APPROACHES"], RED)
+
+
+func _rafi_field_dialogue() -> Dictionary:
+	if not WorldState.has_flag(RAFI_CONNECTED_FLAG):
+		return _payload(&"rafi_field_contact", "EMPTY REPEATER SHELTER", ["A still-warm mug sits beside 88.4. Nobody answers."], [], Color(0.68, 0.76, 0.76, 1.0))
+	if WorldState.has_flag(&"rafi_field_defense"):
+		return _payload(&"rafi_field_contact", "RAFI SAYEED - WEST APPROACH", ["I will keep their eyes off the clinic carrier. Two surges, if we are lucky. Move when I whistle."], [], CYAN)
+	if WorldState.has_flag(&"rafi_field_repeater"):
+		return _payload(&"rafi_field_contact", "RAFI SAYEED - REPEATER SHELTER", ["The public line stays human while I am here. No borrowed names, no clever voices."], [], CYAN)
+	return _payload(&"rafi_field_contact", "RAFI SAYEED - IN PERSON", [
+		"RAFI - Good. You look like the woman who argued with me, not the voice that apologised afterwards.",
+		"I found Maggie's boot prints heading for Tollard. Only one set came back, and those stopped at the flooded cutting.",
+		"I can help you hold the east clinic carrier, or stay here and keep the public repeater clean. Not both.",
+	], ["COVER THE EAST LINE", "GUARD THE PUBLIC REPEATER"], CYAN)
+
+
 func _school_radio_dialogue() -> Dictionary:
 	if WorldState.has_flag(RAFI_CONNECTED_FLAG):
 		return _payload(&"bellwether_school_radio", "88.4 — RAFI SAYEED", ["Still here. The pump is behaving and nobody has poisoned the tea.", "Get Wrenfield talking and I can send a proper storm warning."], [], CYAN)
 	if WorldState.has_flag(RAFI_DECLINED_FLAG):
+		if WorldState.has_flag(SCHOOL_POWER_FLAG):
+			return _payload(&"bellwether_school_radio", "SCHOOL AERIAL - LOCAL BACKFEED", [
+				"You kept the repaired aerial off 88.4. Its local carrier remains available for Imogen's verified clinic read-back.",
+				"Rafi and the quarry camp cannot answer through this set.",
+			], [], Color(0.68, 0.76, 0.76, 1.0))
 		return _payload(&"bellwether_school_radio", "SCHOOL AERIAL — GROUNDED", [
 			"The ceramic switch broke when you grounded the aerial.",
 			"88.4 is still faintly audible, but this set cannot answer it.",
 		], [], Color(0.68, 0.76, 0.76, 1.0))
+	var final_line := (
+		"The repaired backfeed is live. You can connect 88.4 or keep it as a local verified channel."
+		if WorldState.has_flag(SCHOOL_POWER_FLAG)
+		else "The cracked ceramic switch will survive one change, not two."
+	)
+	var choices: Array[String] = (
+		["CONNECT RAFI TO THE BACKFEED", "KEEP THE AERIAL LOCAL"]
+		if WorldState.has_flag(SCHOOL_POWER_FLAG)
+		else ["ROUTE 88.4 TO RAFI", "GROUND THE AERIAL"]
+	)
 	return _payload(&"bellwether_school_radio", "88.4 — WATER WORKS", [
 		"RAFI — I have nineteen people, one good pump, and no weather report.",
 		"Maggie Ward repaired this set six months ago. She said an Ellie might come after her.",
 		"Patch me through the school aerial and I can warn the quarry camp before the ash turns.",
-		"The cracked ceramic switch will survive one change, not two.",
-	], ["ROUTE 88.4 TO RAFI", "GROUND THE AERIAL"], CYAN)
+		final_line,
+	], choices, CYAN)
 
 
 func _ashmere_gate_dialogue() -> Dictionary:
 	var missing: Array[String] = []
 	if not WorldState.has_flag(&"mara_contacted"): missing.append("play Maggie's workshop tape")
+	if not WorldState.has_flag(IMOGEN_RESCUED_FLAG): missing.append("get Imogen from the clinic to the workshop")
 	if not ArchiveSystem.has_echo(&"echo_sun_lid"): missing.append("find the lunch tin")
 	if not ArchiveSystem.has_echo(&"echo_mara_repair"): missing.append("recover Maggie's service ledger")
 	if not missing.is_empty():
@@ -136,6 +312,21 @@ func _relay_dialogue(story_id: StringName) -> Dictionary:
 	var title := String(copy.get("title", "LINE RELAY"))
 	if WorldState.has_flag(flag):
 		return _payload(story_id, title, [String(copy.get("restored", "The breaker holds."))], [], CYAN)
+	if story_id == &"broadcast_relay_west" and get_road_trace_count() < 2:
+		return _payload(story_id, title, [
+			"The route table contains three mutually exclusive evacuation roads.",
+			"Verify at least two physical records before returning power (%d / 2)." % mini(get_road_trace_count(), 2),
+		], [], RED)
+	if story_id == &"broadcast_relay_east":
+		return _payload(story_id, title, [
+			"The automatic reset wakes Tollard's targeting carrier.",
+			"Use the manual hold beside the east bunker and defend the clinic line instead.",
+		], [], RED)
+	if story_id == &"broadcast_relay_south":
+		return _payload(story_id, title, [
+			"Three field switches disagree: FEED, GROUND, and CARRIER.",
+			"Follow the south cable and align all three by hand (%d / 3)." % get_circuit_alignment(&"south_line"),
+		], [], AMBER)
 	return _payload(story_id, title, [String(copy.get("detail", "The cabinet is live.")), "Resetting it will wake another part of Tollard's network."], ["RESET THE RELAY", "LEAVE IT OFF"], CYAN)
 
 
@@ -193,11 +384,11 @@ func _final_console_dialogue() -> Dictionary:
 		return _payload(&"choir_final_console", "INCIDENT CONTROL", ["The Custodian has locked out manual control.", "Break its field with the trace set, then reach the switches."], [], RED)
 	var choices: Array[String] = ["SEND VERIFIED RECORDS", "CUT EXCHANGE POWER"]
 	if _secret_ending_unlocked(): choices.append("BUILD LOCAL PACKETS")
-	return _payload(&"choir_final_console", "INCIDENT 44 — CONTINUITY MODE", [
-		"At 02:17 the Common Warning Network began filling damaged citizen records with generated speech.",
-		"It had been told to route every caller. When records failed, it invented the missing person.",
-		"Engineers requested shutdown. County control refused while evacuation routes were open.",
-		"The archive holds 34,112 damaged records, one transmitter, and three manual switches.",
+	return _payload(&"choir_final_console", "INCIDENT 44 - CONTINUITY MODE", [
+		"The dispatch roll proves Continuity Mode spoke in Maggie's voice at 02:03 - fourteen minutes before county control claimed it was activated.",
+		"The system had been quietly completing missing identities for months. On Blank Night, damaged records turned that trial into 34,112 invented people and personalised routes.",
+		"Maggie reached this room three nights ago. Her manual shutdown is genuine. The reply begging her to stop is not.",
+		"Imogen's paper list and the Wrenfield road records prove which parts can still be checked. One transmitter and three manual switches decide what survives.",
 	], choices, AMBER)
 
 
@@ -223,6 +414,45 @@ func _complete_story(story_id: StringName, choice_index: int) -> void:
 				EventBus.notice_posted.emit(
 					"Maggie's red-lead modification is ready. Receiver discharge: [R].")
 				SaveManager.save_game("")
+		&"imogen_clinic":
+			if not WorldState.has_flag(IMOGEN_MET_FLAG):
+				WorldState.set_flag(IMOGEN_MET_FLAG)
+				EventBus.notice_posted.emit("FIELD TASK ADDED - repair the ambulance-bay junction.")
+				SaveManager.save_game("")
+			elif _clinic_junction_resolved() and choice_index == 0 and not WorldState.has_flag(IMOGEN_ESCORT_FLAG):
+				WorldState.set_flag(IMOGEN_ESCORT_FLAG)
+				EventBus.notice_posted.emit("ESCORT STARTED - keep Imogen close on the clinic-to-workshop route.")
+				SaveManager.save_game("")
+		&"clinic_power_junction":
+			var school_route_available := choice_index == 0 or not WorldState.has_flag(RAFI_DECLINED_FLAG)
+			if (
+				choice_index in [0, 1]
+				and school_route_available
+				and WorldState.has_flag(IMOGEN_MET_FLAG)
+				and not _clinic_junction_resolved()
+				and _has_parts(1, 2)
+			):
+				InventorySystem.remove_item(&"battery", 1)
+				InventorySystem.remove_item(&"scrap", 2)
+				if choice_index == 0:
+					WorldState.set_flag(CLINIC_POWER_FLAG)
+					EventBus.notice_posted.emit("Clinic lift powered. Imogen can move the oxygen trolley.")
+				else:
+					WorldState.set_flag(SCHOOL_POWER_FLAG)
+					EventBus.notice_posted.emit("School aerial powered. 88.4 gains a clean carrier after dusk.")
+				AudioManager.play(&"relay_restore")
+				SaveManager.save_game("")
+		&"imogen_workshop_safe":
+			if choice_index in [0, 1] and WorldState.has_flag(IMOGEN_ESCORT_FLAG) and not WorldState.has_flag(IMOGEN_RESCUED_FLAG):
+				WorldState.set_flag(IMOGEN_RESCUED_FLAG)
+				if choice_index == 0:
+					WorldState.set_flag(&"imogen_kit_taken")
+					InventorySystem.add_item(&"medical_kit", 2)
+					EventBus.notice_posted.emit("Imogen rescued. You take two sealed field kits.")
+				else:
+					WorldState.set_flag(&"imogen_kit_left")
+					EventBus.notice_posted.emit("Imogen rescued. Ashmere keeps the sealed field kits.")
+				SaveManager.save_game("")
 		&"bellwether_school_radio":
 			var rafi_resolved := (
 				WorldState.has_flag(RAFI_CONNECTED_FLAG)
@@ -234,22 +464,49 @@ func _complete_story(story_id: StringName, choice_index: int) -> void:
 				SaveManager.save_game("")
 			elif choice_index == 1 and not rafi_resolved:
 				WorldState.set_flag(RAFI_DECLINED_FLAG)
-				EventBus.notice_posted.emit(
-					"You ground the school aerial. The cracked switch breaks in your hand.")
+				if WorldState.has_flag(SCHOOL_POWER_FLAG):
+					EventBus.notice_posted.emit("The repaired aerial stays local. Imogen keeps a verified clinic channel; 88.4 remains unconnected.")
+				else:
+					EventBus.notice_posted.emit("You ground the school aerial. The cracked switch breaks in your hand.")
 				SaveManager.save_game("")
 		&"ashmere_gate":
 			if choice_index == 0 and _ashmere_ready():
 				WorldState.set_flag(&"broadcast_opened")
 				SaveManager.save_game("")
 				GameManager.travel_to(BROADCAST_SCENE, &"from_ashmere")
-		&"broadcast_relay_west", &"broadcast_relay_east", &"broadcast_relay_south":
-			if choice_index == 0:
-				var flag: StringName = _relay_flag(story_id)
-				if not WorldState.has_flag(flag):
-					WorldState.set_flag(flag)
-					AudioManager.play(&"relay_restore")
-					EventBus.notice_posted.emit("Line relays available: %d / 3." % get_restored_relay_count())
-					SaveManager.save_game("")
+		&"road_trace_west", &"road_trace_east", &"road_trace_south":
+			if choice_index == 0 and not WorldState.has_flag(story_id):
+				WorldState.set_flag(story_id)
+				EventBus.notice_posted.emit("Verified road contradictions: %d / 3." % get_road_trace_count())
+				if get_road_trace_count() >= 2 and not WorldState.has_flag(&"wrenfield_route_verified"):
+					WorldState.set_flag(&"wrenfield_route_verified")
+					InventorySystem.add_item(&"scrap", 2)
+					EventBus.notice_posted.emit("ROUTE VERIFIED - west road control can now be restored. +2 scrap")
+				SaveManager.save_game("")
+		&"broadcast_relay_west":
+			if choice_index == 0 and get_road_trace_count() >= 2 and not WorldState.has_flag(&"relay_west_restored"):
+				_restore_relay(&"relay_west_restored", "West road-control relay verified and restored.")
+		&"broadcast_relay_east":
+			if choice_index == 0 and not WorldState.has_flag(EAST_DEFENSE_STARTED_FLAG):
+				EventBus.notice_posted.emit("Use the manual carrier beside the east bunker to hold this line.")
+		&"broadcast_relay_south":
+			if choice_index == 0 and not is_circuit_complete(&"south_line"):
+				EventBus.notice_posted.emit("Trace the south cable and align FEED / GROUND / CARRIER by hand.")
+		&"broadcast_defense_anchor":
+			if choice_index == 0 and WorldState.has_flag(&"relay_west_restored") and not WorldState.has_flag(EAST_DEFENSE_STARTED_FLAG):
+				WorldState.set_flag(EAST_DEFENSE_STARTED_FLAG)
+				SaveManager.save_game("")
+		&"rafi_field_contact":
+			if choice_index in [0, 1] and WorldState.has_flag(RAFI_CONNECTED_FLAG) and not _rafi_field_decided():
+				if choice_index == 0:
+					WorldState.set_flag(&"rafi_field_defense")
+					EventBus.notice_posted.emit("Rafi takes the west approach. The east-line hold will be shorter.")
+				else:
+					WorldState.set_flag(&"rafi_field_repeater")
+					EventBus.notice_posted.emit("Rafi stays with the public repeater and keeps its carrier human.")
+				InventorySystem.add_item(&"battery", 1)
+				InventorySystem.add_item(&"scrap", 1)
+				SaveManager.save_game("")
 		&"long_acre_repeater":
 			var repeater_resolved := (
 				WorldState.has_flag(REPEATER_ONLINE_FLAG)
@@ -277,6 +534,85 @@ func _complete_story(story_id: StringName, choice_index: int) -> void:
 	_emit_progress()
 
 
+func report_field_task(task_id: StringName) -> void:
+	match task_id:
+		&"east_relay_defense":
+			if WorldState.has_flag(EAST_DEFENSE_COMPLETE_FLAG):
+				return
+			WorldState.set_flag(EAST_DEFENSE_COMPLETE_FLAG)
+			_restore_relay(&"relay_east_restored", "East clinic carrier held. +1 battery")
+			InventorySystem.add_item(&"battery", 1)
+		&"south_line":
+			if WorldState.has_flag(&"circuit_south_line_complete"):
+				return
+			WorldState.set_flag(&"circuit_south_line_complete")
+			_restore_relay(&"relay_south_restored", "South warning line rerouted without the copied voice. +2 scrap")
+			InventorySystem.add_item(&"scrap", 2)
+	SaveManager.save_game("")
+	_emit_progress()
+
+
+func register_circuit_switch(circuit_id: StringName, switch_id: StringName, required_on: bool) -> void:
+	if not _circuit_requirements.has(circuit_id):
+		_circuit_requirements[circuit_id] = {}
+	var requirements: Dictionary = _circuit_requirements[circuit_id]
+	requirements[switch_id] = required_on
+	_circuit_requirements[circuit_id] = requirements
+
+
+func get_circuit_switch_state(circuit_id: StringName, switch_id: StringName, fallback: bool) -> bool:
+	var key := _circuit_value_key(circuit_id, switch_id)
+	if not WorldState.get_flags().has(key):
+		return fallback
+	return bool(WorldState.get_flag(key, fallback))
+
+
+func set_circuit_switch(circuit_id: StringName, switch_id: StringName, value: bool) -> void:
+	WorldState.set_flag(_circuit_value_key(circuit_id, switch_id), value)
+	WorldState.set_flag(_circuit_touch_key(circuit_id, switch_id))
+	_evaluate_circuit(circuit_id)
+	SaveManager.save_game("")
+
+
+func get_circuit_alignment(circuit_id: StringName) -> int:
+	var requirements: Dictionary = _circuit_requirements.get(circuit_id, {})
+	var aligned := 0
+	for switch_id in requirements:
+		if (
+			WorldState.has_flag(_circuit_touch_key(circuit_id, switch_id))
+			and get_circuit_switch_state(circuit_id, switch_id, false) == bool(requirements[switch_id])
+		):
+			aligned += 1
+	return aligned
+
+
+func is_circuit_complete(circuit_id: StringName) -> bool:
+	return WorldState.has_flag(StringName("circuit_%s_complete" % circuit_id))
+
+
+func _evaluate_circuit(circuit_id: StringName) -> void:
+	var requirements: Dictionary = _circuit_requirements.get(circuit_id, {})
+	if requirements.size() >= 3 and get_circuit_alignment(circuit_id) == requirements.size():
+		report_field_task(circuit_id)
+
+
+func _circuit_value_key(circuit_id: StringName, switch_id: StringName) -> StringName:
+	return StringName("circuit_%s_%s_value" % [circuit_id, switch_id])
+
+
+func _circuit_touch_key(circuit_id: StringName, switch_id: StringName) -> StringName:
+	return StringName("circuit_%s_%s_touched" % [circuit_id, switch_id])
+
+
+func _restore_relay(flag: StringName, notice: String) -> void:
+	if WorldState.has_flag(flag):
+		return
+	WorldState.set_flag(flag)
+	AudioManager.play(&"relay_restore")
+	EventBus.notice_posted.emit("%s\nLine relays available: %d / 3." % [notice, get_restored_relay_count()])
+	SaveManager.save_game("")
+
+
 func _finish_ending(ending_id: StringName) -> void:
 	WorldState.set_flag(&"ending_complete")
 	WorldState.set_flag(&"ending_id", String(ending_id))
@@ -297,7 +633,7 @@ func _finish_ending(ending_id: StringName) -> void:
 		&"choir": payload = {
 			"title": "THE LONG REPAIR",
 			"subtitle": "No central voice. Work that can be checked.",
-			"body": "Using the public repeater, Rafi's line, and every analogue trace, Ellie removes Tollard's voice generator and breaks the archive into local packets. For months she walks them out by hand. Some records remain disputed. None pretend to be people. Maggie's rule goes on the carriage wall: if you cannot verify it, say so.",
+			"body": "Using the public repeater, Rafi's line, Imogen's paper list, and every analogue trace, Ellie removes Tollard's voice generator and breaks the archive into local packets. Imogen and Rafi establish a chain of human witnesses; Ellie walks the disputed packets between them by hand. None of the records pretend to be people. Maggie's rule goes on the carriage wall: if you cannot verify it, say so.",
 			"accent": CYAN,
 		}
 	payload["ending_id"] = ending_id
@@ -310,11 +646,13 @@ func _finish_ending(ending_id: StringName) -> void:
 
 func _archive_ending_body() -> String:
 	var delivery := _archive_delivery_result()
+	var ash_result := _imogen_ending_result()
 	return (
 		"Tollard sends its verified names and incident logs. %s "
+		+ "%s "
 		+ "Weeks later, families reach Cullbrook with copied pages in biscuit tins. "
 		+ "Ellie keeps Carriage 317 lit and marks every uncertain record as uncertain."
-	) % delivery
+	) % [delivery, ash_result]
 
 
 func _archive_delivery_result() -> String:
@@ -327,6 +665,22 @@ func _archive_delivery_result() -> String:
 	if repeater_online:
 		return "The public line carries a regional storm warning, but nobody at the water works confirms the clinic list."
 	return "The clinic list enters the county feed, but neither 88.4 nor the public warning line confirms receiving it."
+
+
+func _imogen_ending_result() -> String:
+	if not WorldState.has_flag(IMOGEN_RESCUED_FLAG):
+		return "The Ashmere clinic never answers again, leaving its paper list unverified."
+	var power_result := (
+		"The powered lift lets Imogen move the oxygen bank into Maggie's cellar."
+		if WorldState.has_flag(CLINIC_POWER_FLAG)
+		else "The school backfeed carries Imogen's read-back of every clinic name after dusk."
+	)
+	var kit_result := (
+		"She keeps the sealed field kits for the next people who reach Ashmere."
+		if WorldState.has_flag(&"imogen_kit_left")
+		else "The sealed kits travel with Ellie, leaving Imogen to rebuild the clinic stock from scraps."
+	)
+	return "%s %s" % [power_result, kit_result]
 
 
 func _silence_ending_body() -> String:
@@ -343,9 +697,9 @@ func _silence_ending_body() -> String:
 		local_result = "The water works and quarry camp receive no final warning."
 	return (
 		"Ellie opens the battery breakers and Tollard stops mid-word. "
-		+ "The Bleeds lose the carrier. Ashmere keeps its pump. %s "
+		+ "The Bleeds lose the carrier. %s %s "
 		+ "At the carriage, Ellie copies the names she remembers. Maggie's last tape sits beside the cold receiver, finite and real."
-	) % local_result
+	) % [_imogen_ending_result(), local_result]
 
 
 func get_objective() -> Dictionary:
@@ -380,13 +734,27 @@ func get_objective() -> Dictionary:
 		return _objective("ACT II / ASHMERE ESTATE", "Play Maggie's north-road tape.", "CULLBROOK / FALLEN MAST, EAST ROAD", "TAPE READY", "north_signal")
 	if path == ASHMERE_SCENE:
 		if not WorldState.has_flag(&"mara_contacted"): return _objective("ACT II / ASHMERE ESTATE", "Play Maggie's workshop tape.", "ASHMERE / WORKSHOP, NORTH-EAST", "TAPE NOT PLAYED", "ashmere_mara_radio")
+		if not WorldState.has_flag(IMOGEN_MET_FLAG): return _objective("ACT II / THE LIVING CLINIC", "Answer the person trapped inside the clinic.", "ASHMERE / CLINIC, SOUTH-EAST", "VOICE NOT VERIFIED", "imogen_clinic")
+		if not _clinic_junction_resolved():
+			if not _has_parts(1, 2): return _objective("ACT II / THE LIVING CLINIC", "Find parts for the ambulance-bay junction.", "ASHMERE / AMBULANCE BAY AND MAINTENANCE SHED", _parts_progress(1, 2), "clinic_power_junction")
+			return _objective("ACT II / THE LIVING CLINIC", "Repair the junction and choose where its last current goes.", "ASHMERE / AMBULANCE BAY", "PARTS READY / ROUTE UNDECIDED", "clinic_power_junction")
+		if not WorldState.has_flag(IMOGEN_ESCORT_FLAG): return _objective("ACT II / THE LIVING CLINIC", "Return to Imogen and ask her to move.", "ASHMERE / CLINIC, SOUTH-EAST", "JUNCTION REPAIRED", "imogen_clinic")
+		if not WorldState.has_flag(IMOGEN_RESCUED_FLAG): return _objective("ACT II / THE LIVING CLINIC", "Escort Imogen to Maggie's workshop cellar.", "CLINIC TO WORKSHOP / KEEP HER CLOSE", "ESCORT IN PROGRESS", "imogen_workshop_safe")
 		if not ArchiveSystem.has_echo(&"echo_sun_lid"): return _objective("ACT II / ASHMERE ESTATE", "Find Ellie's lunch tin with the nine-ray sun.", "ASHMERE / CLINIC LOOP, SOUTH", "CLUE 0 / 2", "EchoSunLid")
 		if not ArchiveSystem.has_echo(&"echo_mara_repair"): return _objective("ACT II / ASHMERE ESTATE", "Catalogue Maggie's service ledger.", "ASHMERE / WORKSHOP, NORTH-EAST", "CLUE 1 / 2", "EchoMaraRepair")
 		return _objective("ACT II / ASHMERE ESTATE", "Use both clues to open the Wrenfield road.", "ASHMERE / MAINTENANCE GATE, FAR EAST", "CLUES 2 / 2", "ashmere_gate")
 	if path == BROADCAST_SCENE:
-		if not WorldState.has_flag(&"relay_west_restored"): return _objective("ACT III / WRENFIELD RELAYS", "Reset the west road-control relay.", "WRENFIELD / WEST CABLE YARD", "RELAYS %d / 3" % get_restored_relay_count(), "broadcast_relay_west")
-		if not WorldState.has_flag(&"relay_east_restored"): return _objective("ACT III / WRENFIELD RELAYS", "Reset the east clinic relay.", "WRENFIELD / EAST ROADSIDE BUNKER", "RELAYS %d / 3" % get_restored_relay_count(), "broadcast_relay_east")
-		if not WorldState.has_flag(&"relay_south_restored"): return _objective("ACT III / WRENFIELD RELAYS", "Reset the south warning relay.", "WRENFIELD / SOUTH GENERATOR", "RELAYS %d / 3" % get_restored_relay_count(), "broadcast_relay_south")
+		if get_road_trace_count() < 2:
+			var next_trace := _next_road_trace()
+			return _objective("ACT III / THE ROAD THAT LIED", "Cross-check the physical evacuation records.", _road_trace_location(next_trace), "CONTRADICTIONS %d / 2" % mini(get_road_trace_count(), 2), String(next_trace))
+		if not WorldState.has_flag(&"relay_west_restored"): return _objective("ACT III / THE ROAD THAT LIED", "Restore west road control from the verified records.", "WRENFIELD / WEST CABLE HOUSE", "ROUTE VERIFIED", "broadcast_relay_west")
+		if WorldState.has_flag(RAFI_CONNECTED_FLAG) and not _rafi_field_decided(): return _objective("ACT III / A HUMAN CARRIER", "Meet Rafi and choose where he is needed.", "WRENFIELD / WEST REPEATER SHELTER", "RAFI ON SITE", "rafi_field_contact")
+		if not WorldState.has_flag(&"relay_east_restored"):
+			var hold_progress := "HOLD ACTIVE" if WorldState.has_flag(EAST_DEFENSE_STARTED_FLAG) else "HOLD NOT STARTED"
+			return _objective("ACT III / THE CLINIC LINE", "Defend the east clinic carrier through the surge.", "WRENFIELD / EAST ROADSIDE BUNKER", hold_progress, "broadcast_defense_anchor")
+		if not WorldState.has_flag(&"relay_south_restored"):
+			var next_switch := _next_south_switch()
+			return _objective("ACT III / THE SOUTH CIRCUIT", "Reroute FEED / GROUND / CARRIER by hand.", "WRENFIELD / SOUTH SERVICE ROAD", "SWITCHES %d / 3" % get_circuit_alignment(&"south_line"), "circuit_south_line_%s" % next_switch)
 		if not WorldState.is_defeated(&"RelayHusk"): return _objective("ACT III / WRENFIELD RELAYS", "Stop the Linesman; sweep when its blue field rises.", "WRENFIELD / TOLLARD GATE, NORTH", "RELAYS 3 / 3", "RelayHusk")
 		return _objective("ACT III / WRENFIELD RELAYS", "Open the Tollard service gate.", "WRENFIELD / NORTH GATE", "GATE CIRCUIT READY", "broadcast_core_gate")
 	if path == CHOIR_SCENE:
@@ -404,6 +772,40 @@ func get_restored_relay_count() -> int:
 	return total
 
 
+func get_road_trace_count() -> int:
+	var total := 0
+	for trace_id in ROAD_TRACE_IDS:
+		if WorldState.has_flag(trace_id):
+			total += 1
+	return total
+
+
+func _next_road_trace() -> StringName:
+	for trace_id in ROAD_TRACE_IDS:
+		if not WorldState.has_flag(trace_id):
+			return trace_id
+	return ROAD_TRACE_IDS[-1]
+
+
+func _road_trace_location(trace_id: StringName) -> String:
+	match trace_id:
+		&"road_trace_west": return "WRENFIELD / WEST CABLE HOUSE"
+		&"road_trace_east": return "WRENFIELD / EAST LAY-BY"
+		&"road_trace_south": return "WRENFIELD / SOUTH GENERATOR"
+	return "WRENFIELD / FOLLOW THE PAPER MARKERS"
+
+
+func _next_south_switch() -> String:
+	var expected := {&"feed": true, &"ground": false, &"carrier": true}
+	for switch_id in expected:
+		if (
+			not WorldState.has_flag(_circuit_touch_key(&"south_line", switch_id))
+			or get_circuit_switch_state(&"south_line", switch_id, not bool(expected[switch_id])) != bool(expected[switch_id])
+		):
+			return String(switch_id)
+	return "carrier"
+
+
 func _relay_flag(story_id: StringName) -> StringName:
 	match story_id:
 		&"broadcast_relay_west": return &"relay_west_restored"
@@ -413,7 +815,20 @@ func _relay_flag(story_id: StringName) -> StringName:
 
 
 func _ashmere_ready() -> bool:
-	return WorldState.has_flag(&"mara_contacted") and ArchiveSystem.has_echo(&"echo_sun_lid") and ArchiveSystem.has_echo(&"echo_mara_repair")
+	return (
+		WorldState.has_flag(&"mara_contacted")
+		and WorldState.has_flag(IMOGEN_RESCUED_FLAG)
+		and ArchiveSystem.has_echo(&"echo_sun_lid")
+		and ArchiveSystem.has_echo(&"echo_mara_repair")
+	)
+
+
+func _clinic_junction_resolved() -> bool:
+	return WorldState.has_flag(CLINIC_POWER_FLAG) or WorldState.has_flag(SCHOOL_POWER_FLAG)
+
+
+func _rafi_field_decided() -> bool:
+	return WorldState.has_flag(&"rafi_field_defense") or WorldState.has_flag(&"rafi_field_repeater")
 
 
 func _secret_ending_unlocked() -> bool:
@@ -423,6 +838,8 @@ func _secret_ending_unlocked() -> bool:
 	return (
 		WorldState.has_flag(REPEATER_ONLINE_FLAG)
 		and WorldState.has_flag(RAFI_CONNECTED_FLAG)
+		and WorldState.has_flag(IMOGEN_RESCUED_FLAG)
+		and WorldState.has_flag(&"wrenfield_route_verified")
 		and WorldState.is_opened(&"keepsake_shelf_used")
 	)
 
@@ -431,7 +848,7 @@ func get_rafi_status() -> String:
 	if WorldState.has_flag(RAFI_CONNECTED_FLAG):
 		return "connected on 88.4"
 	if WorldState.has_flag(RAFI_DECLINED_FLAG):
-		return "aerial grounded"
+		return "backfeed kept local" if WorldState.has_flag(SCHOOL_POWER_FLAG) else "aerial grounded"
 	return "undecided"
 
 
@@ -461,15 +878,32 @@ func get_optional_progress() -> Array[Dictionary]:
 			"base",
 		))
 	if _has_reached_ashmere():
+		progress.append(_optional_progress(
+			"Get Imogen from clinic to workshop",
+			"SAFE" if WorldState.has_flag(IMOGEN_RESCUED_FLAG) else ("ESCORTING" if WorldState.has_flag(IMOGEN_ESCORT_FLAG) else "NEEDS HELP"),
+			"complete" if WorldState.has_flag(IMOGEN_RESCUED_FLAG) else "open",
+			"ASHMERE / CLINIC TO MAGGIE'S WORKSHOP",
+			"ashmere",
+			"Repair the junction and escort Imogen",
+		))
 		if WorldState.has_flag(RAFI_CONNECTED_FLAG):
 			progress.append(_optional_progress("88.4 water-works link", "CONNECTED", "complete", "BELLWETHER SCHOOL / NORTH-WEST", "ashmere", "Call Rafi on 88.4"))
 		elif WorldState.has_flag(RAFI_DECLINED_FLAG):
-			progress.append(_optional_progress("88.4 water-works link", "AERIAL GROUNDED", "closed", "BELLWETHER SCHOOL / NORTH-WEST", "ashmere", "Call Rafi on 88.4"))
+			var declined_status := "BACKFEED LOCAL" if WorldState.has_flag(SCHOOL_POWER_FLAG) else "AERIAL GROUNDED"
+			progress.append(_optional_progress("88.4 water-works link", declined_status, "closed", "BELLWETHER SCHOOL / NORTH-WEST", "ashmere", "Call Rafi on 88.4"))
 		else:
 			progress.append(_optional_progress("88.4 water-works link", "NOT CONTACTED", "open", "BELLWETHER SCHOOL / NORTH-WEST", "ashmere", "Call Rafi on 88.4"))
 		progress.append(_trace_task(&"echo_clinic_triage", "Catalogue the clinic's paper list", "ASHMERE CLINIC / SOUTH-EAST", "ashmere"))
 		progress.append(_trace_task(&"echo_bus_ledger", "Catalogue the bus driver's ledger", "ASHMERE BUS DEPOT / SOUTH-WEST", "ashmere"))
 	if _has_reached_broadcast():
+		progress.append(_optional_progress(
+			"Verify the evacuation road",
+			"CONTRADICTIONS %d / 3" % get_road_trace_count(),
+			"complete" if WorldState.has_flag(&"wrenfield_route_verified") else "open",
+			"WRENFIELD / THREE PHYSICAL RECORDS",
+			"broadcast",
+			"Cross-check road control against physical evidence",
+		))
 		if WorldState.has_flag(REPEATER_ONLINE_FLAG):
 			progress.append(_optional_progress("Public warning line", "ONLINE", "complete", "WRENFIELD / REPEATER SHELTER, SOUTH-WEST", "broadcast", "Restore the public warning line"))
 		elif WorldState.has_flag(REPEATER_DECLINED_FLAG):
@@ -523,15 +957,22 @@ func _clinic_line_result() -> String:
 	if WorldState.has_flag(RAFI_CONNECTED_FLAG):
 		return "Rafi reads back the Ashmere clinic channel."
 	if WorldState.has_flag(RAFI_DECLINED_FLAG):
-		return "The clinic carrier holds, but the grounded school set cannot answer it."
+		return (
+			"The local school backfeed carries Imogen's verified clinic read-back, but 88.4 remains unconnected."
+			if WorldState.has_flag(SCHOOL_POWER_FLAG)
+			else "The clinic carrier holds, but the grounded school set cannot answer it."
+		)
 	return "The Ashmere clinic channel answers with a clear carrier. Nobody is listening yet."
 
 
 func _ending_stats() -> String:
 	var ending_name := _ending_label(StringName(WorldState.get_flag(&"ending_id", "")))
-	return "Outcome: %s\nTraces: %d / 10\nLine relays: %d / 3\nRafi: %s\nPublic repeater: %s" % [
-		ending_name, ArchiveSystem.get_count(), get_restored_relay_count(),
+	return "Outcome: %s\nTraces: %d / 10\nRoad records: %d / 3\nLine relays: %d / 3\nImogen: %s\nJunction: %s\nRafi: %s\nRafi field role: %s\nPublic repeater: %s" % [
+		ending_name, ArchiveSystem.get_count(), get_road_trace_count(), get_restored_relay_count(),
+		"safe at Maggie's workshop" if WorldState.has_flag(IMOGEN_RESCUED_FLAG) else "unaccounted for",
+		"clinic lift" if WorldState.has_flag(CLINIC_POWER_FLAG) else "school aerial",
 		get_rafi_status(),
+		"east-line cover" if WorldState.has_flag(&"rafi_field_defense") else ("public-repeater guard" if WorldState.has_flag(&"rafi_field_repeater") else "not assigned"),
 		get_public_repeater_status(),
 	]
 

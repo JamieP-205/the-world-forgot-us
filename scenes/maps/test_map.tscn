@@ -1,4 +1,4 @@
-[gd_scene load_steps=47 format=3]
+[gd_scene load_steps=50 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/loot_container.tscn" id="1_crate"]
 [ext_resource type="PackedScene" path="res://scenes/world/scene_exit.tscn" id="2_exit"]
@@ -35,6 +35,9 @@
 [ext_resource type="Texture2D" path="res://assets/processed/effects_pack_01/radio_waves.png" id="33_waves"]
 [ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/signal_sparks.png" id="34_sparks"]
 [ext_resource type="Texture2D" path="res://assets/processed/environment/ash_asphalt_seamless.png" id="35_ashground"]
+[ext_resource type="Texture2D" path="res://assets/processed/petrol_station_props/station_counter.png" id="36_counter"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/base_doorway.png" id="37_doorway"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_childs_lunchbox.png" id="38_lunchbox"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
 size = Vector2(2080, 44)
@@ -96,11 +99,13 @@ region_rect = Rect2(0, 0, 2000, 1200)
 modulate = Color(0.78, 0.79, 0.72, 1)
 
 [node name="ColdAshBandNorth" type="Polygon2D" parent="."]
+visible = false
 z_index = -5
 color = Color(0.19, 0.22, 0.20, 0.62)
 polygon = PackedVector2Array(-740, -410, 700, -410, 700, -330, 480, -350, 210, -320, -40, -360, -300, -334, -740, -370)
 
 [node name="ColdAshBandSouth" type="Polygon2D" parent="."]
+visible = false
 z_index = -5
 color = Color(0.24, 0.21, 0.17, 0.58)
 polygon = PackedVector2Array(-740, 335, -520, 300, -260, 342, -30, 312, 240, 348, 510, 314, 700, 340, 700, 400, -740, 400)
@@ -111,7 +116,7 @@ texture_repeat = 2
 texture_filter = 2
 texture = ExtResource("19_dcrack")
 texture_scale = Vector2(0.9, 0.9)
-color = Color(0.42, 0.43, 0.39, 1)
+color = Color(0.57, 0.56, 0.49, 1)
 polygon = PackedVector2Array(-760, 300, -650, 220, -520, 196, -380, 140, -225, 90, -90, 24, 80, -34, 260, -108, 458, -220, 665, -250, 715, -164, 500, -115, 318, -32, 120, 40, -60, 110, -248, 178, -465, 245, -660, 328, -760, 360)
 
 [node name="RoadShoulder" type="Polygon2D" parent="."]
@@ -125,19 +130,19 @@ color = Color(0.22, 0.21, 0.19, 0.34)
 polygon = PackedVector2Array(-715, 350, -510, 270, -255, 204, -52, 136, 136, 66, 336, -10, 528, -92, 700, -130, 700, -92, 520, -50, 332, 36, 140, 106, -48, 176, -248, 246, -506, 312, -718, 392)
 
 [node name="RoadLine1" type="Polygon2D" parent="."]
-color = Color(0.58, 0.49, 0.31, 0.22)
+color = Color(0.58, 0.49, 0.31, 0.10)
 polygon = PackedVector2Array(-610, 260, -500, 218, -494, 230, -604, 272)
 
 [node name="RoadLine2" type="Polygon2D" parent="."]
-color = Color(0.58, 0.49, 0.31, 0.20)
+color = Color(0.58, 0.49, 0.31, 0.09)
 polygon = PackedVector2Array(-250, 145, -120, 92, -114, 104, -244, 157)
 
 [node name="RoadLine3" type="Polygon2D" parent="."]
-color = Color(0.58, 0.49, 0.31, 0.18)
+color = Color(0.58, 0.49, 0.31, 0.08)
 polygon = PackedVector2Array(120, 8, 266, -54, 272, -42, 126, 20)
 
 [node name="RoadLine4" type="Polygon2D" parent="."]
-color = Color(0.58, 0.49, 0.31, 0.16)
+color = Color(0.58, 0.49, 0.31, 0.07)
 polygon = PackedVector2Array(390, -126, 522, -178, 528, -166, 396, -114)
 
 [node name="GroundDecals" type="Node2D" parent="."]
@@ -226,6 +231,27 @@ position = Vector2(238, -104)
 scale = Vector2(0.19, 0.19)
 modulate = Color(0.78, 0.74, 0.62, 0.86)
 texture = ExtResource("25_sign")
+
+[node name="ForecourtThreshold" type="Node2D" parent="."]
+position = Vector2(-175, 78)
+rotation = -0.35
+
+[node name="Paint" type="Line2D" parent="ForecourtThreshold"]
+points = PackedVector2Array(-92, 0, 92, 0)
+width = 5.0
+default_color = Color(0.72, 0.55, 0.3, 0.24)
+
+[node name="WestBarrier" type="Sprite2D" parent="ForecourtThreshold"]
+position = Vector2(-108, -8)
+scale = Vector2(0.12, 0.12)
+modulate = Color(0.78, 0.72, 0.6, 0.92)
+texture = ExtResource("14_warnboard")
+
+[node name="EastBarrier" type="Sprite2D" parent="ForecourtThreshold"]
+position = Vector2(108, -8)
+scale = Vector2(0.12, 0.12)
+modulate = Color(0.78, 0.72, 0.6, 0.92)
+texture = ExtResource("14_warnboard")
 
 [node name="NorthSignal" type="Node2D" parent="."]
 visible = false
@@ -347,6 +373,18 @@ polygon = PackedVector2Array(70, -216, 136, -216, 136, -178, 70, -178)
 color = Color(0.38, 0.3, 0.2, 0.55)
 polygon = PackedVector2Array(164, -214, 284, -214, 284, -204, 164, -204)
 
+[node name="OfficeAuthoredFacade" type="Sprite2D" parent="PetrolStation"]
+position = Vector2(176, -192)
+scale = Vector2(0.38, 0.38)
+modulate = Color(0.82, 0.79, 0.68, 0.96)
+texture = ExtResource("36_counter")
+
+[node name="OfficeDoorway" type="Sprite2D" parent="PetrolStation"]
+position = Vector2(288, -174)
+scale = Vector2(0.15, 0.15)
+modulate = Color(0.76, 0.74, 0.66, 0.94)
+texture = ExtResource("37_doorway")
+
 [node name="Canopy" type="Polygon2D" parent="PetrolStation"]
 texture_repeat = 2
 texture_filter = 2
@@ -428,6 +466,12 @@ polygon = PackedVector2Array(-54, -20, 16, -20, 16, 10, -54, 10)
 color = Color(0.50, 0.36, 0.22, 0.50)
 polygon = PackedVector2Array(24, -20, 62, -18, 62, -10, 24, -12)
 
+[node name="AuthoredFacade" type="Sprite2D" parent="RoadsideKiosk"]
+position = Vector2(0, 2)
+scale = Vector2(0.24, 0.24)
+modulate = Color(0.80, 0.76, 0.64, 0.95)
+texture = ExtResource("36_counter")
+
 [node name="KioskShape" type="CollisionShape2D" parent="RoadsideKiosk"]
 shape = SubResource("RectangleShape2D_kiosk")
 
@@ -464,6 +508,12 @@ polygon = PackedVector2Array(-62, -22, 52, -22, 54, -17, -64, -17)
 color = Color(0.52, 0.38, 0.22, 0.36)
 polygon = PackedVector2Array(-70, 14, 62, 8, 64, 13, -72, 21)
 
+[node name="AuthoredDoorway" type="Sprite2D" parent="MaintenanceShed"]
+position = Vector2(4, 2)
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.79, 0.77, 0.68, 0.96)
+texture = ExtResource("37_doorway")
+
 [node name="ShedShape" type="CollisionShape2D" parent="MaintenanceShed"]
 shape = SubResource("RectangleShape2D_shed")
 
@@ -472,6 +522,7 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="RubbleVisual1" type="Polygon2D" parent="Rubble"]
+visible = false
 color = Color(0.20, 0.19, 0.16, 1)
 polygon = PackedVector2Array(-452, 58, -330, 30, -302, 78, -424, 116)
 
@@ -480,8 +531,23 @@ position = Vector2(-378, 72)
 shape = SubResource("RectangleShape2D_rubble")
 
 [node name="RubbleVisual2" type="Polygon2D" parent="Rubble"]
+visible = false
 color = Color(0.20, 0.19, 0.16, 1)
 polygon = PackedVector2Array(110, 270, 250, 242, 278, 304, 138, 334)
+
+[node name="RubbleArtWest" type="Sprite2D" parent="Rubble"]
+position = Vector2(-378, 72)
+rotation = -0.15
+scale = Vector2(0.42, 0.34)
+modulate = Color(0.72, 0.70, 0.61, 0.92)
+texture = ExtResource("30_debris")
+
+[node name="RubbleArtSouth" type="Sprite2D" parent="Rubble"]
+position = Vector2(190, 288)
+rotation = 0.12
+scale = Vector2(0.46, 0.36)
+modulate = Color(0.72, 0.70, 0.61, 0.92)
+texture = ExtResource("30_debris")
 
 [node name="RubbleShape2" type="CollisionShape2D" parent="Rubble"]
 position = Vector2(190, 288)
@@ -493,8 +559,8 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="MastPool" type="Polygon2D" parent="RadioMast"]
-color = Color(0.12, 0.25, 0.27, 0.12)
-polygon = PackedVector2Array(-150, -78, 140, -92, 166, 38, -126, 64)
+color = Color(0.12, 0.25, 0.27, 0.055)
+polygon = PackedVector2Array(156, 0, 145, 19, 111, 36, 60, 48, 0, 52, -60, 48, -111, 36, -145, 19, -156, 0, -145, -19, -111, -36, -60, -48, 0, -52, 60, -48, 111, -36, 145, -19)
 
 [node name="MastPole" type="Polygon2D" parent="RadioMast"]
 color = Color(0.36, 0.38, 0.34, 1)
@@ -504,10 +570,17 @@ polygon = PackedVector2Array(-72, 12, 70, -18, 76, -8, -68, 24)
 color = Color(0.28, 0.36, 0.35, 1)
 polygon = PackedVector2Array(56, -42, 100, -28, 84, 2, 52, -8)
 
+[node name="TowerArt" type="Sprite2D" parent="RadioMast"]
+position = Vector2(0, -15)
+rotation = -0.22
+scale = Vector2(0.24, 0.24)
+modulate = Color(0.64, 0.72, 0.69, 0.92)
+texture = ExtResource("25_sign")
+
 [node name="RecoveredGlow" type="Polygon2D" parent="RadioMast"]
 visible = false
 color = Color(1, 0.76, 0.34, 0.09)
-polygon = PackedVector2Array(-138, -72, 128, -92, 150, 34, -118, 56)
+polygon = PackedVector2Array(156, 0, 145, 19, 111, 36, 60, 48, 0, 52, -60, 48, -111, 36, -145, 19, -156, 0, -145, -19, -111, -36, -60, -48, 0, -52, 60, -48, 111, -36, 145, -19)
 
 [node name="MastShape" type="CollisionShape2D" parent="RadioMast"]
 shape = SubResource("RectangleShape2D_mast")
@@ -685,19 +758,23 @@ prompt = "Take child's lunchbox"
 empty_prompt = "Lunchbox taken"
 loot = {"child_lunchbox": 1}
 
-[node name="Visual" type="Polygon2D" parent="ChildLunchbox"]
-color = Color(0.62, 0.42, 0.18, 1)
-polygon = PackedVector2Array(-20, -10, 20, -10, 20, 14, -20, 14)
+[node name="Visual" type="Sprite2D" parent="ChildLunchbox"]
+scale = Vector2(0.12, 0.12)
+modulate = Color(0.88, 0.79, 0.62, 0.96)
+texture = ExtResource("38_lunchbox")
 
 [node name="Handle" type="Polygon2D" parent="ChildLunchbox/Visual"]
+visible = false
 color = Color(0.28, 0.20, 0.12, 1)
 polygon = PackedVector2Array(-9, -18, 9, -18, 13, -10, 7, -10, 5, -14, -5, -14, -7, -10, -13, -10)
 
 [node name="SunScratch" type="Polygon2D" parent="ChildLunchbox/Visual"]
+visible = false
 color = Color(0.88, 0.68, 0.30, 0.9)
 polygon = PackedVector2Array(-4, -2, 4, -2, 8, 4, 0, 10, -8, 4)
 
 [node name="Glint" type="Polygon2D" parent="ChildLunchbox"]
+visible = false
 color = Color(1, 0.78, 0.34, 0.72)
 polygon = PackedVector2Array(16, -18, 20, -8, 30, -4, 20, 0, 16, 10, 12, 0, 2, -4, 12, -8)
 
@@ -722,7 +799,7 @@ texture_repeat = 2
 texture_filter = 2
 texture = ExtResource("19_dcrack")
 texture_scale = Vector2(0.92, 0.92)
-color = Color(0.36, 0.37, 0.34, 1)
+color = Color(0.52, 0.51, 0.45, 1)
 polygon = PackedVector2Array(245, -72, 600, -105, 875, 10, 935, 185, 820, 310, 585, 250, 430, 125, 250, 72)
 
 [node name="CullbrookDrainageTrack" type="Polygon2D" parent="."]
@@ -731,7 +808,7 @@ texture_repeat = 2
 texture_filter = 2
 texture = ExtResource("23_ddgrav")
 texture_scale = Vector2(1.08, 1.08)
-color = Color(0.31, 0.29, 0.24, 0.9)
+color = Color(0.46, 0.43, 0.35, 0.92)
 polygon = PackedVector2Array(560, 215, 850, 250, 970, 405, 938, 560, 740, 565, 600, 455, 470, 360)
 
 [node name="ServiceYardApron" type="Polygon2D" parent="."]
@@ -740,7 +817,7 @@ texture_repeat = 2
 texture_filter = 2
 texture = ExtResource("20_dconc")
 texture_scale = Vector2(0.78, 0.78)
-color = Color(0.38, 0.37, 0.32, 0.9)
+color = Color(0.52, 0.50, 0.43, 0.94)
 polygon = PackedVector2Array(500, 205, 895, 205, 950, 470, 535, 485)
 
 [node name="ServiceBayNorth" type="StaticBody2D" parent="."]
@@ -760,6 +837,12 @@ polygon = PackedVector2Array(-75, -35, 75, -35, 75, 35, -75, 35)
 color = Color(0.29, 0.19, 0.13, 0.82)
 polygon = PackedVector2Array(-82, -40, 82, -40, 70, -26, -70, -26)
 
+[node name="AuthoredFacade" type="Sprite2D" parent="ServiceBayNorth"]
+position = Vector2(0, 3)
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.78, 0.76, 0.67, 0.95)
+texture = ExtResource("37_doorway")
+
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ServiceBayNorth"]
 shape = SubResource("RectangleShape2D_shed")
 
@@ -775,6 +858,12 @@ texture = ExtResource("24_drub")
 texture_scale = Vector2(0.74, 0.74)
 color = Color(0.35, 0.31, 0.25, 1)
 polygon = PackedVector2Array(-75, -35, 75, -35, 75, 35, -75, 35)
+
+[node name="AuthoredFacade" type="Sprite2D" parent="ServiceBaySouth"]
+position = Vector2(0, 2)
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.76, 0.73, 0.63, 0.95)
+texture = ExtResource("36_counter")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="ServiceBaySouth"]
 shape = SubResource("RectangleShape2D_shed")

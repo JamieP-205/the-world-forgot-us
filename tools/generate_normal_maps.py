@@ -44,6 +44,7 @@ DEFAULT_FOLDERS = (
     "decals",
     "demo_ground_tiles",
     "environment",
+    "environment_landmarks_v2",
     "hollow_topdown",
     "loot_containers",
     "petrol_station_props",

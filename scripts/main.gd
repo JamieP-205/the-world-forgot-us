@@ -9,10 +9,10 @@ extends Node2D
 @export var start_level: PackedScene
 @export var start_spawn: StringName = &""
 
-@onready var _world_tint: CanvasModulate = $WorldTint
 @onready var _level_holder: Node2D = $LevelHolder
 @onready var _player: Player = $Player
 @onready var _camera: Camera2D = $Player/Camera2D
+@onready var _day_night_cycle: DayNightCycle = $DayNightCycle
 
 var _current_level: Node = null
 var _current_level_path: String = ""
@@ -40,7 +40,8 @@ func _load_level(scene: PackedScene, spawn: StringName) -> void:
 	_current_level = scene.instantiate()
 	_current_level_path = scene.resource_path
 	_level_holder.add_child(_current_level)
-	_apply_level_tint()
+	if _day_night_cycle != null:
+		_day_night_cycle.configure_level(_current_level_path)
 	_place_player(spawn)
 	_configure_camera_limits()
 	EventBus.level_loaded.emit()
@@ -52,21 +53,6 @@ func get_current_level_path() -> String:
 
 func get_current_level() -> Node:
 	return _current_level
-
-
-func _apply_level_tint() -> void:
-	if _world_tint == null:
-		return
-	if _current_level_path == GameManager.BASE_SCENE_PATH:
-		_world_tint.color = Color(0.72, 0.62, 0.50, 1.0)
-	elif _current_level_path.ends_with("ashmere_verge.tscn"):
-		_world_tint.color = Color(0.52, 0.60, 0.63, 1.0)
-	elif _current_level_path.ends_with("broadcast_fields.tscn"):
-		_world_tint.color = Color(0.46, 0.55, 0.63, 1.0)
-	elif _current_level_path.ends_with("choir_core.tscn"):
-		_world_tint.color = Color(0.40, 0.49, 0.58, 1.0)
-	else:
-		_world_tint.color = Color(0.58, 0.64, 0.66, 1.0)
 
 
 func _place_player(spawn: StringName) -> void:
@@ -129,3 +115,15 @@ func _find_spawn(spawn: StringName) -> Marker2D:
 		if node is Marker2D and node.name == spawn:
 			return node as Marker2D
 	return null
+
+
+func get_day_phase() -> float:
+	return _day_night_cycle.phase if _day_night_cycle != null else 0.25
+
+
+func get_day_phase_name() -> StringName:
+	return _day_night_cycle.get_phase_name() if _day_night_cycle != null else &"day"
+
+
+func is_night() -> bool:
+	return _day_night_cycle != null and _day_night_cycle.is_night()

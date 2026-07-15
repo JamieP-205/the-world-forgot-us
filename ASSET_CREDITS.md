@@ -14,6 +14,14 @@ The PNG sheets under [`assets/source/generated/`](assets/source/generated/) were
 
 The source sheets do not preserve reliable provider, model or generation-date metadata for every file. This record therefore stops at the information the repository can support rather than guessing missing details.
 
+The July 2026 production pass used the built-in OpenAI image-generation tool for these project-specific additions:
+
+- [`assets/source/generated/player_walk_v2/`](assets/source/generated/player_walk_v2/) contains the green-screen source for Ellie's sixteen-frame, four-direction walk cycle. Existing player views were supplied as identity and style references.
+- [`assets/source/generated/environment_landmarks_v2/`](assets/source/generated/environment_landmarks_v2/) contains green-screen source art for the Bellwether civic ruin, Long Acre relay station and Tollard Exchange ruin. Existing environment props were supplied as style and camera references.
+- [`assets/generated/npcs/`](assets/generated/npcs/) contains transparent painted directional sheets for Imogen and Rafi, made to match the project's top-down character presentation.
+
+The prompts requested top-down three-quarter painterly pixel art, continuity with the supplied project references, isolated assets, no text or interface elements, and either a flat green extraction background or transparency. No external stock art was introduced in this pass.
+
 ## Processed game images
 
 Most PNGs under [`assets/processed/`](assets/processed/) are derivatives prepared for the Godot project rather than separate source artwork.
@@ -21,6 +29,7 @@ Most PNGs under [`assets/processed/`](assets/processed/) are derivatives prepare
 - [`tools/chroma_extract_assets.py`](tools/chroma_extract_assets.py) removes the green background from generated sheets, despills their edges, detects individual objects and writes transparent prop, icon and effect images.
 - [`tools/make_ground_decals.py`](tools/make_ground_decals.py) turns opaque ground-tile slices into feathered decals.
 - [`tools/generate_normal_maps.py`](tools/generate_normal_maps.py) derives deterministic tangent-space normal maps from processed art using alpha-weighted luminance. These are generated lighting data, not artist-authored height maps.
+- [`assets/processed/player_walk_v2/`](assets/processed/player_walk_v2/) and [`assets/processed/environment_landmarks_v2/`](assets/processed/environment_landmarks_v2/) are transparent derivatives extracted from the July 2026 green-screen sources with the local chroma-key helper, soft matte and edge despill. Landmark normals live under [`assets/processed/normals/environment_landmarks_v2/`](assets/processed/normals/environment_landmarks_v2/).
 - [`tools/gen_player_placeholder_sheet.py`](tools/gen_player_placeholder_sheet.py) and [`tools/gen_hollow_placeholder_sheet.py`](tools/gen_hollow_placeholder_sheet.py) create fallback top-down blockout sheets with Pillow drawing commands. The live player and Hollow scenes now use the processed painted concept art through `resources/spriteframes/*_painted_spriteframes.tres`; the scripted sheets remain as documented fallbacks.
 
 The character placeholder directories contain their own format notes:
@@ -38,7 +47,7 @@ Several visuals are assembled directly in Godot from polygons, particles, gradie
 
 ## Audio
 
-There are no imported music or sound-effect files in the current project tree. [`scripts/systems/audio_manager.gd`](scripts/systems/audio_manager.gd) synthesises the interaction cues, wind bed and drone in-engine at runtime.
+There are no imported music or sound-effect files in the current project tree. [`scripts/systems/audio_manager.gd`](scripts/systems/audio_manager.gd) synthesises region-specific music, threat and night layers, ambience, footsteps, combat feedback and interaction cues in-engine at runtime.
 
 ## External software
 

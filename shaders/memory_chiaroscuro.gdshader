@@ -13,6 +13,10 @@ uniform float grade_strength : hint_range(0.0, 1.0) = 0.72;
 uniform float grain_strength : hint_range(0.0, 0.08) = 0.018;
 uniform float vignette_strength : hint_range(0.0, 0.8) = 0.32;
 uniform float memory_fringe : hint_range(0.0, 0.004) = 0.0012;
+uniform float night_factor : hint_range(0.0, 1.0) = 0.0;
+uniform float dusk_factor : hint_range(0.0, 1.0) = 0.0;
+uniform float dawn_factor : hint_range(0.0, 1.0) = 0.0;
+uniform vec4 region_tone : source_color = vec4(0.50, 0.61, 0.56, 1.0);
 // Set by LightingDirector. Web defaults to the one-sample path; desktop keeps
 // pigment bleed and the cyan optical fringe.
 uniform bool low_effects = false;
@@ -49,6 +53,14 @@ void fragment() {
 	vec3 warm_paper = vec3(1.055, 1.015, 0.91);
 	graded *= mix(vec3(1.0), cool_ink, shadow_mask * 0.20 * grade_strength);
 	graded *= mix(vec3(1.0), warm_paper, light_mask * 0.14 * grade_strength);
+
+	// Time-of-day is a restrained colour separation, not a dark overlay. Night
+	// cools the shadows while preserving warm practical lights; dusk and dawn
+	// touch only midtones so interactables never disappear into the grade.
+	vec3 night_ink = mix(vec3(0.72, 0.80, 0.90), region_tone.rgb, 0.32);
+	graded *= mix(vec3(1.0), night_ink, shadow_mask * night_factor * 0.22);
+	graded *= mix(vec3(1.0), vec3(1.08, 0.91, 0.79), dusk_factor * (1.0 - shadow_mask) * 0.10);
+	graded *= mix(vec3(1.0), vec3(1.06, 0.95, 0.86), dawn_factor * (1.0 - shadow_mask) * 0.08);
 
 	// A restrained wash bleed softens single-pixel colour noise without
 	// blurring silhouettes. High-contrast edges receive a faint charcoal key.

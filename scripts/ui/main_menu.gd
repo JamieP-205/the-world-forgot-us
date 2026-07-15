@@ -19,17 +19,23 @@ var _redraw_accum := 0.0
 @onready var _continue_btn: Button = $Box/Continue
 @onready var _box: VBoxContainer = $Box
 @onready var _controls_panel: Control = $ControlsPanel
+@onready var _settings_panel: Control = $SettingsPanel
 @onready var _confirm: ConfirmationDialog = $NewGameConfirm
 
 
 func _ready() -> void:
 	# Make sure a returned-from-pause state never leaves the tree paused.
 	get_tree().paused = false
+	# Keep punctuation deterministic across Web font/encoding pipelines.
+	$QuotePanel/Margin/Content/Quote.text = "\"Take the tuning plate off.\nIf it doesn't say 14B,\nswitch the set off and walk.\""
+	$QuotePanel/Margin/Content/Attribution.text = "- MAGGIE WARD  /  FAULT TAPE 06"
+	$Footer.text = "JAMIE PARR  /  GODOT 4.7  /  HEADPHONES RECOMMENDED"
 
 	_continue_btn.disabled = not SaveManager.has_save()
 	_continue_btn.pressed.connect(_on_continue)
 	$Box/NewGame.pressed.connect(_on_new_game)
 	$Box/Controls.pressed.connect(_on_controls)
+	$Box/Settings.pressed.connect(_on_settings)
 	$Box/Credits.pressed.connect(func() -> void: $CreditsDialog.popup_centered())
 	$Box/Quit.pressed.connect(_on_quit_or_fullscreen)
 	if OS.has_feature("web"):
@@ -37,6 +43,8 @@ func _ready() -> void:
 
 	_controls_panel.visible = false
 	_controls_panel.closed.connect(_on_controls_closed)
+	_settings_panel.visible = false
+	_settings_panel.closed.connect(_on_settings_closed)
 	_confirm.confirmed.connect(_do_new_game)
 
 	if not _continue_btn.disabled:
@@ -149,6 +157,7 @@ func _on_new_game() -> void:
 
 func _do_new_game() -> void:
 	SaveManager.clear_run_state()
+	WorldState.set_flag(&"intro_pending")
 	_start_game()
 
 
@@ -163,6 +172,16 @@ func _on_controls() -> void:
 
 func _on_controls_closed() -> void:
 	_controls_panel.visible = false
+	_box.visible = true
+
+
+func _on_settings() -> void:
+	_box.visible = false
+	_settings_panel.open_panel()
+
+
+func _on_settings_closed() -> void:
+	_settings_panel.visible = false
 	_box.visible = true
 
 

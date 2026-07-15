@@ -13,6 +13,13 @@ const LOOT_SCENE := preload("res://scenes/world/loot_container.tscn")
 const ECHO_SCENE := preload("res://scenes/world/memory_echo.tscn")
 const EXIT_SCENE := preload("res://scenes/world/scene_exit.tscn")
 const HOLLOW_SCENE := preload("res://scenes/enemies/enemy_hollow.tscn")
+const IMOGEN_SCENE := preload("res://scenes/npcs/imogen_bell.tscn")
+const RAFI_SCENE := preload("res://scenes/npcs/rafi_sayeed.tscn")
+const QUEST_DEVICE_SCENE := preload("res://scenes/world/quest_device.tscn")
+const DEFENSE_ANCHOR_SCENE := preload("res://scenes/world/signal_defense_anchor.tscn")
+const CIRCUIT_SWITCH_SCENE := preload("res://scenes/world/circuit_switch.tscn")
+const SIGNAL_LEECH_SCENE := preload("res://scenes/enemies/enemy_signal_leech.tscn")
+const MIMIC_STALKER_SCENE := preload("res://scenes/enemies/enemy_mimic_stalker.tscn")
 
 const CAMPAIGN_INTERACTABLE_PATH := "res://scenes/world/campaign_interactable.tscn"
 const STATIC_WRAITH_PATH := "res://scenes/enemies/enemy_static_wraith.tscn"
@@ -20,8 +27,8 @@ const RELAY_HUSK_PATH := "res://scenes/enemies/enemy_relay_husk.tscn"
 
 const ASH_GROUND := Color(0.16, 0.17, 0.155, 1.0)
 const ASH_LIGHT := Color(0.22, 0.23, 0.20, 1.0)
-const ROAD := Color(0.32, 0.33, 0.30, 1.0)
-const ROAD_EDGE := Color(0.27, 0.24, 0.20, 0.68)
+const ROAD := Color(0.54, 0.53, 0.47, 1.0)
+const ROAD_EDGE := Color(0.42, 0.38, 0.31, 0.72)
 const RUST := Color(0.42, 0.25, 0.16, 1.0)
 const RUST_DARK := Color(0.24, 0.16, 0.13, 1.0)
 const METAL := Color(0.30, 0.33, 0.31, 1.0)
@@ -36,6 +43,18 @@ const TEX_CONCRETE := "res://assets/processed/decals/concrete_broken.png"
 const TEX_METAL := "res://assets/processed/decals/metal_floor.png"
 const TEX_PLANKS := "res://assets/processed/decals/rubble_planks.png"
 const TEX_ASH_SEAMLESS := "res://assets/processed/environment/ash_asphalt_seamless.png"
+const PROP_DOORWAY := "res://assets/processed/railhome_props/base_doorway.png"
+const PROP_COUNTER := "res://assets/processed/petrol_station_props/station_counter.png"
+const PROP_WORKBENCH := "res://assets/processed/railhome_props/workbench_tools.png"
+const PROP_RADIO_DESK := "res://assets/processed/railhome_props/radio_desk.png"
+const PROP_MAP_WALL := "res://assets/processed/railhome_props/map_wall.png"
+const PROP_BROKEN_CAR := "res://assets/processed/roadside_props/broken_car.png"
+const PROP_GUARDRAIL := "res://assets/processed/roadside_props/guardrail.png"
+const PROP_BARRIER := "res://assets/processed/petrol_station_props/warning_barrier.png"
+const PROP_STATION_SIGN := "res://assets/processed/petrol_station_props/station_sign_tall.png"
+const LANDMARK_BELLWETHER := "res://assets/processed/environment_landmarks_v2/bellwether_civic_ruin.png"
+const LANDMARK_LONG_ACRE := "res://assets/processed/environment_landmarks_v2/long_acre_relay_station.png"
+const LANDMARK_TOLLARD := "res://assets/processed/environment_landmarks_v2/tollard_exchange_ruin.png"
 
 
 func _ready() -> void:
@@ -80,17 +99,20 @@ func _build_ashmere_verge() -> void:
 	_add_textured_polygon("SchoolApproach", PackedVector2Array([
 		Vector2(-1130, -90), Vector2(-930, -120), Vector2(-760, -520),
 		Vector2(-560, -500), Vector2(-650, -150), Vector2(-1050, 20),
-	]), TEX_GRAVEL, Color(0.29, 0.30, 0.27, 1.0), -1, Vector2(1.08, 1.08))
+	]), TEX_GRAVEL, Color(0.48, 0.48, 0.42, 1.0), -1, Vector2(1.08, 1.08))
 	_add_textured_polygon("ClinicLoop", PackedVector2Array([
 		Vector2(-470, 190), Vector2(-620, 500), Vector2(-420, 670),
 		Vector2(280, 620), Vector2(610, 400), Vector2(520, 180),
 		Vector2(245, 320), Vector2(-190, 430),
-	]), TEX_CONCRETE, Color(0.35, 0.33, 0.28, 1.0), -1, Vector2(0.82, 0.82))
+	]), TEX_CONCRETE, Color(0.52, 0.49, 0.41, 1.0), -1, Vector2(0.82, 0.82))
 	_add_textured_polygon("WorkshopCutThrough", PackedVector2Array([
 		Vector2(500, -510), Vector2(760, -600), Vector2(1100, -500),
 		Vector2(1310, -395), Vector2(1270, -245), Vector2(1010, -330),
 		Vector2(730, -390), Vector2(520, -330),
-	]), TEX_PLANKS, Color(0.31, 0.28, 0.23, 1.0), -1, Vector2(0.78, 0.78))
+	]), TEX_PLANKS, Color(0.47, 0.42, 0.34, 1.0), -1, Vector2(0.78, 0.78))
+	_add_landmark_threshold("SchoolGate", Vector2(-900, -280), -1.38, Color(0.72, 0.56, 0.34, 1.0))
+	_add_landmark_threshold("ClinicGate", Vector2(80, 250), -0.18, Color(0.62, 0.75, 0.68, 1.0))
+	_add_landmark_threshold("WorkshopGate", Vector2(610, -285), -0.30, Color(0.76, 0.50, 0.30, 1.0))
 
 	_add_obstacle("RuinedTerraceNorth", Vector2(-210, -365), Vector2(520, 180), RUST_DARK)
 	_add_obstacle("RuinedTerraceSouth", Vector2(-330, 390), Vector2(360, 150), RUST)
@@ -116,13 +138,11 @@ func _build_ashmere_verge() -> void:
 	_add_sprite("MissingElliePoster", "res://assets/processed/roadside_props/missing_person_poster.png", Vector2(-30, 255), Vector2(0.18, 0.18), 4)
 	_add_sprite("RoadSign", "res://assets/processed/roadside_props/road_sign.png", Vector2(-820, -135), Vector2(0.17, 0.17), 4)
 	_add_sprite("AshmerePhone", "res://assets/processed/petrol_station_props/phone_booth.png", Vector2(405, 165), Vector2(0.22, 0.22), 4)
-	_add_sprite("WorkshopRadio", "res://assets/processed/roadside_props/portable_radio.png", Vector2(645, -250), Vector2(0.20, 0.20), 4)
 	_add_sprite("ClinicBarrier", "res://assets/processed/petrol_station_props/warning_barrier.png", Vector2(220, 235), Vector2(0.18, 0.18), 4)
 	_add_sprite("SouthDebris", "res://assets/processed/roadside_props/debris_pile.png", Vector2(-90, 420), Vector2(0.20, 0.20), 3)
 	_add_sprite("WorkshopSign", "res://assets/processed/petrol_station_props/station_sign_tall.png", Vector2(815, -255), Vector2(0.16, 0.16), 4)
 	_add_sprite("ClinicPump", "res://assets/processed/petrol_station_props/petrol_pump.png", Vector2(475, 160), Vector2(0.14, 0.14), 4, Color(0.72, 0.70, 0.61, 0.92))
 	_add_sprite("ClinicCone", "res://assets/processed/roadside_props/traffic_cone.png", Vector2(270, 196), Vector2(0.10, 0.10), 4, Color(0.72, 0.62, 0.46, 0.90))
-	_add_sprite("SchoolRadio", "res://assets/processed/roadside_props/portable_radio.png", Vector2(-1010, -505), Vector2(0.19, 0.19), 4)
 	_add_sprite("SchoolNotice", "res://assets/processed/roadside_props/missing_person_poster.png", Vector2(-915, -505), Vector2(0.17, 0.17), 4)
 	_add_sprite("DepotBarrier", "res://assets/processed/petrol_station_props/warning_barrier.png", Vector2(-520, 540), Vector2(0.18, 0.18), 4)
 	_add_sprite("ClinicPhone", "res://assets/processed/petrol_station_props/phone_booth.png", Vector2(650, 340), Vector2(0.18, 0.18), 4)
@@ -146,6 +166,20 @@ func _build_ashmere_verge() -> void:
 	_add_campaign_interactable("ashmere_mara_radio", Vector2(645, -250), "Answer the workshop radio")
 	_add_campaign_interactable("bellwether_school_radio", Vector2(-1010, -505), "Call the quarry camp")
 	_add_campaign_interactable("ashmere_gate", Vector2(1260, -360), "Unlock the Long Acre road")
+	# The clinic-to-workshop rescue follows the physical loop the player has
+	# already learned: meet Imogen in the annex, reroute the ambulance junction,
+	# then escort her across the road to Maggie's cellar.
+	_add_authored_scene(IMOGEN_SCENE, "ImogenBell", Vector2(725, 420))
+	_add_authored_scene(QUEST_DEVICE_SCENE, "ClinicPowerJunction", Vector2(265, 510), {
+		&"story_id": &"clinic_power_junction",
+		&"prompt": "Reroute the clinic junction",
+		&"accent": Color(0.96, 0.62, 0.28, 1.0),
+	})
+	_add_authored_scene(QUEST_DEVICE_SCENE, "ImogenWorkshopSafe", Vector2(930, -405), {
+		&"story_id": &"imogen_workshop_safe",
+		&"prompt": "Open Maggie's workshop cellar",
+		&"accent": Color(0.38, 0.88, 0.82, 1.0),
+	})
 
 	_add_enemy("AshmereRoadHollow", HOLLOW_SCENE, Vector2(-130, -20), &"AshmereRoadHollow")
 	_add_enemy("AshmereClinicHollow", HOLLOW_SCENE, Vector2(455, 105), &"AshmereClinicHollow")
@@ -153,6 +187,8 @@ func _build_ashmere_verge() -> void:
 	_add_enemy("BellwetherSchoolHollow", HOLLOW_SCENE, Vector2(-690, -420), &"BellwetherSchoolHollow")
 	_add_enemy("AshmereDepotHollow", HOLLOW_SCENE, Vector2(-440, 560), &"AshmereDepotHollow")
 	_add_future_enemy("ClinicCorridorWraith", STATIC_WRAITH_PATH, Vector2(620, 315), &"ClinicCorridorWraith", Color(0.50, 0.92, 0.94, 0.86))
+	_add_enemy("BellwetherSignalLeech", SIGNAL_LEECH_SCENE, Vector2(-845, -355), &"BellwetherSignalLeech")
+	_add_enemy("WorkshopMimicStalker", MIMIC_STALKER_SCENE, Vector2(990, -220), &"WorkshopMimicStalker")
 
 	_add_spawn("from_rustway", Vector2(-1240, 0))
 	_add_spawn("from_broadcast", Vector2(1190, -330))
@@ -185,27 +221,30 @@ func _build_broadcast_fields() -> void:
 	]), TEX_ASPHALT, ROAD, -1, Vector2(0.95, 0.95))
 	_add_textured_polygon("CoreApproach", PackedVector2Array([
 		Vector2(-125, -20), Vector2(125, -20), Vector2(175, -700), Vector2(-175, -700),
-	]), TEX_CONCRETE, Color(0.26, 0.31, 0.30, 1.0), -1, Vector2(0.82, 0.82))
+	]), TEX_CONCRETE, Color(0.46, 0.50, 0.47, 1.0), -1, Vector2(0.82, 0.82))
 	_add_textured_polygon("RelayHub", PackedVector2Array([
 		Vector2(-240, -96), Vector2(-115, -202), Vector2(108, -196), Vector2(238, -88),
 		Vector2(236, 116), Vector2(115, 204), Vector2(-118, 202), Vector2(-240, 104),
-	]), TEX_METAL, Color(0.34, 0.38, 0.35, 1.0), 0, Vector2(0.76, 0.76))
+	]), TEX_METAL, Color(0.52, 0.55, 0.49, 1.0), 0, Vector2(0.76, 0.76))
 	_add_textured_polygon("WestCableTrack", PackedVector2Array([
 		Vector2(-700, 55), Vector2(-1480, 10), Vector2(-1490, -255), Vector2(-1160, -330),
 		Vector2(-930, -185), Vector2(-650, -95),
-	]), TEX_GRAVEL, Color(0.25, 0.30, 0.29, 1.0), -1, Vector2(1.12, 1.12))
+	]), TEX_GRAVEL, Color(0.44, 0.48, 0.44, 1.0), -1, Vector2(1.12, 1.12))
 	_add_textured_polygon("EastAntennaTrack", PackedVector2Array([
 		Vector2(700, 55), Vector2(1480, 20), Vector2(1490, -245), Vector2(1180, -325),
 		Vector2(930, -180), Vector2(650, -95),
-	]), TEX_CONCRETE, Color(0.31, 0.33, 0.30, 1.0), -1, Vector2(0.86, 0.86))
+	]), TEX_CONCRETE, Color(0.48, 0.49, 0.44, 1.0), -1, Vector2(0.86, 0.86))
 	_add_textured_polygon("SouthGeneratorLoop", PackedVector2Array([
 		Vector2(-150, 260), Vector2(-820, 500), Vector2(-1080, 760), Vector2(-850, 900),
 		Vector2(0, 690), Vector2(850, 900), Vector2(1080, 760), Vector2(820, 500),
 		Vector2(150, 260),
-	]), TEX_ASPHALT, Color(0.30, 0.31, 0.28, 1.0), -1, Vector2(0.94, 0.94))
+	]), TEX_ASPHALT, Color(0.50, 0.49, 0.43, 1.0), -1, Vector2(0.94, 0.94))
 	_add_faded_lane_markers("SouthLane", [Vector2(0, 535), Vector2(0, 390), Vector2(0, 225)], -PI * 0.5)
 	_add_faded_lane_markers("WestLane", [Vector2(-210, 38), Vector2(-430, -8), Vector2(-625, -62)], 0.12)
 	_add_faded_lane_markers("EastLane", [Vector2(210, 38), Vector2(430, -8), Vector2(625, -62)], -0.12)
+	_add_landmark_threshold("WestCableGate", Vector2(-760, -85), 0.10, Color(0.45, 0.72, 0.72, 1.0))
+	_add_landmark_threshold("EastAntennaGate", Vector2(760, -80), -0.10, Color(0.55, 0.69, 0.66, 1.0))
+	_add_landmark_threshold("GeneratorGate", Vector2(0, 330), 0.0, Color(0.78, 0.56, 0.30, 1.0))
 
 	_add_obstacle("WestTransformer", Vector2(-430, -360), Vector2(300, 150), RUST_DARK)
 	_add_obstacle("EastTransformer", Vector2(430, -355), Vector2(300, 150), RUST_DARK)
@@ -246,7 +285,6 @@ func _build_broadcast_fields() -> void:
 	_add_sprite("EastCone", "res://assets/processed/roadside_props/traffic_cone.png", Vector2(590, 112), Vector2(0.10, 0.10), 4, Color(0.74, 0.60, 0.42, 0.88))
 	_add_sprite("WestCableRadio", "res://assets/processed/roadside_props/portable_radio.png", Vector2(-1310, -245), Vector2(0.17, 0.17), 4)
 	_add_sprite("EastDriverPhone", "res://assets/processed/petrol_station_props/phone_booth.png", Vector2(1240, 235), Vector2(0.18, 0.18), 4)
-	_add_sprite("PublicRepeaterSet", "res://assets/processed/roadside_props/portable_radio.png", Vector2(-1270, 500), Vector2(0.20, 0.20), 4)
 	_add_sprite("GeneratorWarning", "res://assets/processed/petrol_station_props/warning_barrier.png", Vector2(-230, 565), Vector2(0.18, 0.18), 4)
 	_add_decal("HubMetal", "res://assets/processed/decals/metal_floor.png", Vector2(0, 40), Vector2(0.85, 0.85), 1)
 	_add_decal("WestRubble", "res://assets/processed/decals/gravel_rubble.png", Vector2(-790, 5), Vector2(0.76, 0.76), 1)
@@ -270,6 +308,38 @@ func _build_broadcast_fields() -> void:
 	_add_memory_echo("EchoNamesWall", &"echo_names_wall", Vector2(-945, 390))
 	_add_memory_echo("EchoRelayWarning", &"echo_relay_warning", Vector2(-1310, -245))
 	_add_memory_echo("EchoDriverCall", &"echo_driver_call", Vector2(1240, 235))
+	# Wrenfield's three relays now ask for three different kinds of field work,
+	# each tied to a visually distinct route pocket rather than three identical
+	# cabinets standing in open ground.
+	_add_authored_scene(QUEST_DEVICE_SCENE, "RoadTraceWest", Vector2(-1450, 115), {
+		&"story_id": &"road_trace_west",
+		&"prompt": "Verify the cable-yard road card",
+		&"accent": Color(0.42, 0.84, 0.86, 1.0),
+	})
+	_add_authored_scene(QUEST_DEVICE_SCENE, "RoadTraceEast", Vector2(1435, -205), {
+		&"story_id": &"road_trace_east",
+		&"prompt": "Verify the roadside bunker log",
+		&"accent": Color(0.42, 0.84, 0.86, 1.0),
+	})
+	_add_authored_scene(QUEST_DEVICE_SCENE, "RoadTraceSouth", Vector2(610, 760), {
+		&"story_id": &"road_trace_south",
+		&"prompt": "Verify the generator route card",
+		&"accent": Color(0.42, 0.84, 0.86, 1.0),
+	})
+	_add_authored_scene(DEFENSE_ANCHOR_SCENE, "EastRelayDefense", Vector2(1080, -25), {
+		&"story_id": &"broadcast_defense_anchor",
+		&"prompt": "Hold the east clinic carrier",
+	})
+	_add_authored_scene(CIRCUIT_SWITCH_SCENE, "SouthFeedSwitch", Vector2(-70, 805), {
+		&"circuit_id": &"south_line", &"switch_id": &"feed", &"required_on": true,
+	})
+	_add_authored_scene(CIRCUIT_SWITCH_SCENE, "SouthGroundSwitch", Vector2(70, 690), {
+		&"circuit_id": &"south_line", &"switch_id": &"ground", &"required_on": false,
+	})
+	_add_authored_scene(CIRCUIT_SWITCH_SCENE, "SouthCarrierSwitch", Vector2(-70, 575), {
+		&"circuit_id": &"south_line", &"switch_id": &"carrier", &"required_on": true,
+	})
+	_add_authored_scene(RAFI_SCENE, "RafiFieldContact", Vector2(-1160, 565))
 
 	_add_enemy("BroadcastEntryHollow", HOLLOW_SCENE, Vector2(-105, 470), &"BroadcastEntryHollow")
 	_add_enemy("BroadcastHubHollow", HOLLOW_SCENE, Vector2(125, -170), &"BroadcastHubHollow")
@@ -280,6 +350,8 @@ func _build_broadcast_fields() -> void:
 	_add_enemy("LongAcreLaybyHollow", HOLLOW_SCENE, Vector2(1310, 105), &"LongAcreLaybyHollow")
 	_add_enemy("LongAcreGeneratorHollow", HOLLOW_SCENE, Vector2(420, 625), &"LongAcreGeneratorHollow")
 	_add_future_enemy("RelayHusk", RELAY_HUSK_PATH, Vector2(0, -650), &"RelayHusk", Color(1.0, 0.72, 0.32, 1.0), Vector2(1.25, 1.25))
+	_add_enemy("WestCableSignalLeech", SIGNAL_LEECH_SCENE, Vector2(-1040, -300), &"WestCableSignalLeech")
+	_add_enemy("EastSignMimic", MIMIC_STALKER_SCENE, Vector2(880, 115), &"EastSignMimic")
 
 	_add_spawn("from_ashmere", Vector2(0, 850))
 	_add_spawn("from_core", Vector2(0, -790))
@@ -298,22 +370,22 @@ func _build_choir_core() -> void:
 	_add_textured_polygon("CoreFloor", PackedVector2Array([
 		Vector2(-410, 440), Vector2(410, 440), Vector2(600, 180), Vector2(520, -390),
 		Vector2(300, -540), Vector2(-300, -540), Vector2(-520, -390), Vector2(-600, 180),
-	]), TEX_METAL, Color(0.36, 0.40, 0.37, 1.0), -1, Vector2(0.72, 0.72))
+	]), TEX_METAL, Color(0.50, 0.53, 0.48, 1.0), -1, Vector2(0.72, 0.72))
 	_add_textured_polygon("ProcessionalLane", PackedVector2Array([
 		Vector2(-90, 900), Vector2(90, 900), Vector2(125, -720), Vector2(-125, -720),
-	]), TEX_PLANKS, Color(0.34, 0.30, 0.24, 1.0), 0, Vector2(0.72, 0.72))
+	]), TEX_PLANKS, Color(0.50, 0.44, 0.35, 1.0), 0, Vector2(0.72, 0.72))
 	_add_textured_polygon("PublicArchiveWing", PackedVector2Array([
 		Vector2(-1110, 170), Vector2(-520, 170), Vector2(-420, -440),
 		Vector2(-690, -640), Vector2(-1090, -530),
-	]), TEX_CONCRETE, Color(0.30, 0.34, 0.32, 1.0), -1, Vector2(0.78, 0.78))
+	]), TEX_CONCRETE, Color(0.45, 0.49, 0.45, 1.0), -1, Vector2(0.78, 0.78))
 	_add_textured_polygon("OperationsWing", PackedVector2Array([
 		Vector2(1110, 170), Vector2(520, 170), Vector2(420, -440),
 		Vector2(690, -640), Vector2(1090, -530),
-	]), TEX_METAL, Color(0.29, 0.36, 0.35, 1.0), -1, Vector2(0.72, 0.72))
+	]), TEX_METAL, Color(0.44, 0.50, 0.48, 1.0), -1, Vector2(0.72, 0.72))
 	_add_textured_polygon("ReceptionLoop", PackedVector2Array([
 		Vector2(-520, 620), Vector2(-160, 760), Vector2(0, 610), Vector2(160, 760),
 		Vector2(520, 620), Vector2(430, 400), Vector2(0, 480), Vector2(-430, 400),
-	]), TEX_ASPHALT, Color(0.31, 0.31, 0.28, 1.0), -1, Vector2(0.92, 0.92))
+	]), TEX_ASPHALT, Color(0.49, 0.48, 0.42, 1.0), -1, Vector2(0.92, 0.92))
 	_add_signal_channel("MemoryCircuitWest", PackedVector2Array([
 		Vector2(-510, 125), Vector2(-360, 112), Vector2(-240, 92), Vector2(-116, 88),
 	]))
@@ -327,6 +399,9 @@ func _build_choir_core() -> void:
 		Vector2(920, -270), Vector2(680, -230), Vector2(470, -120), Vector2(116, 88),
 	]))
 	_add_faded_lane_markers("CoreProcession", [Vector2(0, 445), Vector2(0, 295), Vector2(0, 135)], -PI * 0.5, Color(0.58, 0.49, 0.33, 0.24))
+	_add_landmark_threshold("ArchiveThreshold", Vector2(-520, 250), -0.72, Color(0.46, 0.74, 0.76, 1.0))
+	_add_landmark_threshold("OperationsThreshold", Vector2(520, 250), 0.72, Color(0.70, 0.58, 0.36, 1.0))
+	_add_landmark_threshold("ChoirThreshold", Vector2(0, -180), 0.0, Color(0.42, 0.83, 0.86, 1.0))
 
 	_add_obstacle("CorePylonNW", Vector2(-350, -180), Vector2(130, 250), METAL)
 	_add_obstacle("CorePylonNE", Vector2(350, -180), Vector2(130, 250), METAL)
@@ -346,7 +421,6 @@ func _build_choir_core() -> void:
 	_add_core_rings(Vector2(0, -420))
 	_add_glow("FirstToneGlow", Vector2(0, -330), 165.0, Color(CYAN, 0.16), 3)
 	_add_glow("FinalConsoleGlow", Vector2(0, -690), 140.0, Color(AMBER, 0.15), 3)
-	_add_sprite("CoreRadio", "res://assets/processed/railhome_props/radio_desk.png", Vector2(0, -695), Vector2(0.25, 0.25), 5)
 	_add_sprite("WestConsole", "res://assets/processed/railhome_props/workbench_tools.png", Vector2(-500, -315), Vector2(0.20, 0.20), 4)
 	_add_sprite("EastConsole", "res://assets/processed/railhome_props/map_wall.png", Vector2(505, -315), Vector2(0.18, 0.18), 4)
 	_add_sprite("CoreWarning", "res://assets/processed/petrol_station_props/warning_barrier.png", Vector2(0, 325), Vector2(0.22, 0.22), 4)
@@ -374,6 +448,8 @@ func _build_choir_core() -> void:
 	_add_enemy("TollardOperationsHollow", HOLLOW_SCENE, Vector2(720, 190), &"TollardOperationsHollow")
 	_add_future_enemy("TollardRecordsWraith", STATIC_WRAITH_PATH, Vector2(-865, -210), &"TollardRecordsWraith", Color(0.45, 0.88, 0.94, 0.86))
 	_add_future_enemy("ChoirWarden", RELAY_HUSK_PATH, Vector2(0, -470), &"ChoirWarden", Color(0.52, 0.94, 1.0, 1.0), Vector2(1.55, 1.55))
+	_add_enemy("ArchiveSignalLeech", SIGNAL_LEECH_SCENE, Vector2(-680, 300), &"ArchiveSignalLeech")
+	_add_enemy("OperationsMimic", MIMIC_STALKER_SCENE, Vector2(690, -250), &"OperationsMimic")
 
 	_add_spawn("from_fields", Vector2(0, 750))
 	_add_exit("BackToBroadcastFields", Vector2(0, 840), "Return to Long Acre", "res://scenes/maps/broadcast_fields.tscn", &"from_core", PI)
@@ -489,6 +565,7 @@ func _add_rect_visual(node_name: String, center: Vector2, size: Vector2, color: 
 
 
 func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Color) -> StaticBody2D:
+	var uses_named_landmark := _uses_named_landmark(node_name)
 	var body := StaticBody2D.new()
 	body.name = node_name
 	body.position = center
@@ -522,15 +599,24 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		Vector2(-visual_half.x * 0.78, visual_half.y * 0.88),
 		Vector2(-visual_half.x, visual_half.y * 0.22),
 	])
-	visual.color = Color(0.72, 0.69, 0.59, 1.0).lerp(color.lightened(0.55), 0.32)
-	visual.texture = load(TEX_CONCRETE) as Texture2D
+	visual.color = Color(0.74, 0.71, 0.62, 1.0).lerp(color.lightened(0.50), 0.28)
+	visual.texture = load(_structure_texture_for(node_name, size)) as Texture2D
 	visual.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	visual.texture_scale = Vector2(0.74, 0.74)
 	visual.z_index = 2
+	# Full painted landmark sprites replace the old procedural obstacle face.
+	# Keeping both visible left a long, uniform backing band around the authored
+	# building, especially at the South Generator Hall and Tollard structures.
+	visual.visible = not uses_named_landmark
 	body.add_child(visual)
 	var ruin_texture := load("res://assets/processed/roadside_props/debris_pile.png") as Texture2D
-	if ruin_texture != null and size.x >= 260.0 and size.x / maxf(size.y, 1.0) >= 1.35:
+	if (
+		ruin_texture != null
+		and not uses_named_landmark
+		and size.x >= 260.0
+		and size.x / maxf(size.y, 1.0) >= 1.35
+	):
 		var ruin_crown := Sprite2D.new()
 		ruin_crown.name = "RuinCrown"
 		ruin_crown.texture = ruin_texture
@@ -542,15 +628,7 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		ruin_crown.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		ruin_crown.z_index = 3
 		body.add_child(ruin_crown)
-	var roof := Polygon2D.new()
-	roof.name = "RustEdge"
-	roof.polygon = PackedVector2Array([
-		Vector2(-visual_half.x * 0.50, -visual_half.y), Vector2(visual_half.x * 0.82, -visual_half.y * 0.90),
-		Vector2(visual_half.x * 0.73, -visual_half.y * 0.76), Vector2(-visual_half.x * 0.46, -visual_half.y * 0.84),
-	])
-	roof.color = Color(0.35, 0.27, 0.21, 0.30)
-	roof.z_index = 3
-	body.add_child(roof)
+	_add_structure_art(body, node_name, size)
 	# Match collision to the authored ruin silhouette. The previous rectangle
 	# left invisible corners that caught the player several pixels outside the
 	# visible wall.
@@ -561,6 +639,133 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 	collision.shape = shape
 	body.add_child(collision)
 	return body
+
+
+func _structure_texture_for(node_name: String, size: Vector2) -> String:
+	var lower := node_name.to_lower()
+	if size.y <= 105.0 or "terrace" in lower or "school" in lower or "archive" in lower:
+		return TEX_PLANKS
+	if (
+		"relay" in lower or "transformer" in lower or "pylon" in lower
+		or "bank" in lower or "switch" in lower or "operations" in lower
+		or "clinic" in lower or "generator" in lower
+	):
+		return TEX_METAL
+	return TEX_CONCRETE
+
+
+func _add_structure_art(body: StaticBody2D, node_name: String, size: Vector2) -> void:
+	var lower := node_name.to_lower()
+	if _add_named_landmark_art(body, lower, size):
+		return
+	if "bus" in lower:
+		_add_structure_sprite(body, "VehicleShell", PROP_BROKEN_CAR, Vector2(0, -4), minf(size.x / 480.0, size.y / 300.0) * 1.35, 5)
+		return
+	if size.y <= 105.0 or "fence" in lower or "barrier" in lower:
+		var pieces := clampi(floori(size.x / 115.0), 1, 5)
+		var spacing := minf(108.0, size.x / float(pieces))
+		var first_x := -spacing * float(pieces - 1) * 0.5
+		for index in pieces:
+			_add_structure_sprite(
+				body,
+				"Rail%d" % (index + 1),
+				PROP_GUARDRAIL,
+				Vector2(first_x + spacing * float(index), -3),
+				0.14,
+				5
+			)
+		return
+
+	var feature_path := PROP_COUNTER
+	if "workshop" in lower or "control" in lower or "operations" in lower:
+		feature_path = PROP_WORKBENCH
+	elif "relay" in lower or "transformer" in lower or "pylon" in lower or "switch" in lower:
+		feature_path = PROP_RADIO_DESK
+	elif "archive" in lower or "school" in lower:
+		feature_path = PROP_MAP_WALL
+
+	# A single authored facade makes the structure read as a place rather than
+	# an obstacle rectangle. It is deliberately centred on the traversable edge
+	# so collision and visual silhouette continue to agree.
+	var feature_scale := clampf(minf(size.x / 620.0, size.y / 430.0), 0.18, 0.46)
+	_add_structure_sprite(body, "AuthoredFacade", feature_path, Vector2(0, size.y * 0.04), feature_scale, 5)
+	if size.x >= 240.0 and not ("pylon" in lower or "bank" in lower):
+		var door_scale := clampf(size.y / 720.0, 0.12, 0.24)
+		_add_structure_sprite(
+			body,
+			"ServiceDoor",
+			PROP_DOORWAY,
+			Vector2(size.x * 0.28, size.y * 0.18),
+			door_scale,
+			6
+		)
+
+
+func _uses_named_landmark(node_name: String) -> bool:
+	var lower := node_name.to_lower()
+	return (
+		"bellwetherschool" in lower or "ashmereclinic" in lower
+		or "relayworkshop" in lower or "cablehouse" in lower
+		or "antennabunker" in lower or "generatorhall" in lower
+		or "tollardoperationsdesk" in lower or "tollardarchivestacks" in lower
+	)
+
+
+func _add_named_landmark_art(body: Node2D, lower: String, size: Vector2) -> bool:
+	var path := ""
+	var reference_width := 1.0
+	if "bellwetherschool" in lower or "ashmereclinic" in lower:
+		path = LANDMARK_BELLWETHER
+		reference_width = 1773.0
+	elif (
+		"relayworkshop" in lower or "cablehouse" in lower
+		or "antennabunker" in lower or "generatorhall" in lower
+	):
+		path = LANDMARK_LONG_ACRE
+		reference_width = 1704.0
+	elif "tollardoperationsdesk" in lower or "tollardarchivestacks" in lower:
+		path = LANDMARK_TOLLARD
+		reference_width = 1902.0
+	if path.is_empty():
+		return false
+	var texture := load(path) as Texture2D
+	if texture == null:
+		return false
+	var art_scale := clampf(size.x / reference_width, 0.18, 0.27)
+	var art := Sprite2D.new()
+	art.name = "AuthoredLandmark"
+	art.texture = texture
+	art.scale = Vector2.ONE * art_scale
+	# Align the painted building's front step with the obstacle footprint. This
+	# keeps collision honest while allowing antennas and rooflines to rise above
+	# the nominal map block.
+	art.position = Vector2(0, size.y * 0.5 - texture.get_height() * art_scale * 0.5)
+	art.modulate = Color(0.92, 0.90, 0.83, 0.99)
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	art.z_index = 5
+	body.add_child(art)
+	return true
+
+
+func _add_structure_sprite(
+		parent: Node2D,
+		node_name: String,
+		path: String,
+		position_value: Vector2,
+		scale_value: float,
+		z: int) -> void:
+	var texture := load(path) as Texture2D
+	if texture == null:
+		return
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = texture
+	sprite.position = position_value
+	sprite.scale = Vector2.ONE * scale_value
+	sprite.modulate = Color(0.82, 0.80, 0.70, 0.96)
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	sprite.z_index = z
+	parent.add_child(sprite)
 
 
 func _add_world_bounds(size: Vector2) -> void:
@@ -726,6 +931,57 @@ func _add_guardrail_piece(node_name: String, center: Vector2, rotation_value: fl
 	body.add_child(collision)
 
 
+func _add_landmark_threshold(
+		node_name: String,
+		center: Vector2,
+		rotation_value: float,
+		accent: Color) -> void:
+	# Repeated two-post thresholds teach the route grammar: crossing one means
+	# entering a named activity pocket, while open asphalt remains navigation.
+	# Real barrier/sign art carries the silhouette; the line is only worn paint.
+	var cluster := Node2D.new()
+	cluster.name = node_name
+	cluster.position = center
+	cluster.rotation = rotation_value
+	cluster.add_to_group("lighting_cyan" if accent.b > accent.r * 1.05 else "lighting_amber")
+	cluster.set_meta("lighting_priority", 285.0)
+	cluster.set_meta("lighting_cast_shadows", false)
+	add_child(cluster)
+
+	var paint := Line2D.new()
+	paint.name = "ThresholdPaint"
+	paint.points = PackedVector2Array([Vector2(-86, 0), Vector2(86, 0)])
+	paint.width = 5.0
+	paint.default_color = Color(accent, 0.26)
+	paint.z_index = 1
+	cluster.add_child(paint)
+
+	var barrier_texture := load(PROP_BARRIER) as Texture2D
+	if barrier_texture != null:
+		for side in [-1.0, 1.0]:
+			var barrier := Sprite2D.new()
+			barrier.name = "BarrierWest" if side < 0.0 else "BarrierEast"
+			barrier.texture = barrier_texture
+			barrier.position = Vector2(102.0 * side, -8.0)
+			barrier.scale = Vector2(0.12, 0.12)
+			barrier.modulate = Color(0.78, 0.73, 0.62, 0.92)
+			barrier.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+			barrier.z_index = 4
+			cluster.add_child(barrier)
+
+	var sign_texture := load("res://assets/processed/roadside_props/road_sign.png") as Texture2D
+	if sign_texture != null:
+		var sign := Sprite2D.new()
+		sign.name = "RouteSign"
+		sign.texture = sign_texture
+		sign.position = Vector2(-126, -42)
+		sign.scale = Vector2(0.095, 0.095)
+		sign.modulate = accent.lightened(0.18)
+		sign.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		sign.z_index = 4
+		cluster.add_child(sign)
+
+
 func _add_loot(node_name: String, position_value: Vector2, loot: Dictionary, prompt_text: String) -> void:
 	var container := LOOT_SCENE.instantiate()
 	container.name = node_name
@@ -800,6 +1056,22 @@ func _add_enemy(node_name: String, scene: PackedScene, position_value: Vector2, 
 	enemy.position = position_value
 	_set_property_if_present(enemy, &"persistent_id", persistent_id)
 	add_child(enemy)
+
+
+func _add_authored_scene(
+		scene: PackedScene,
+		node_name: String,
+		position_value: Vector2,
+		properties: Dictionary = {}) -> Node2D:
+	var node := scene.instantiate() as Node2D
+	if node == null:
+		return null
+	node.name = node_name
+	node.position = position_value
+	for property_name in properties:
+		_set_property_if_present(node, StringName(property_name), properties[property_name])
+	add_child(node)
+	return node
 
 
 func _add_future_enemy(
@@ -877,24 +1149,30 @@ func _add_relay_landmark(node_name: String, center: Vector2, lean: float) -> voi
 	relay.position = center
 	relay.rotation = lean
 	add_child(relay)
-	var pool := _make_local_polygon("SignalPool", PackedVector2Array([
-		Vector2(0, -54), Vector2(50, -18), Vector2(42, 36),
-		Vector2(0, 58), Vector2(-42, 36), Vector2(-50, -18),
-	]), Color(CYAN, 0.13), 1)
-	relay.add_child(pool)
-	var mast := _make_local_polygon("Mast", PackedVector2Array([
-		Vector2(-8, 42), Vector2(8, 42), Vector2(18, -84), Vector2(2, -90),
-	]), Color(0.35, 0.25, 0.18, 1.0), 3)
-	relay.add_child(mast)
-	var dish := _make_local_polygon("Dish", PackedVector2Array([
-		Vector2(-34, -72), Vector2(28, -93), Vector2(18, -48), Vector2(-18, -44),
-	]), Color(0.24, 0.32, 0.32, 1.0), 4)
-	relay.add_child(dish)
-	var spark := _make_local_polygon("SignalSpark", PackedVector2Array([
-		Vector2(20, -105), Vector2(28, -88), Vector2(43, -82),
-		Vector2(29, -74), Vector2(25, -55), Vector2(16, -75), Vector2(2, -82), Vector2(16, -90),
-	]), Color(CYAN, 0.86), 5)
-	relay.add_child(spark)
+	_add_landmark_sprite(relay, "RelayTower", PROP_STATION_SIGN, Vector2(0, -42), 0.24, Color(0.63, 0.70, 0.66, 0.98), 3)
+	_add_landmark_sprite(relay, "RelayConsole", PROP_RADIO_DESK, Vector2(-12, 22), 0.17, Color(0.70, 0.74, 0.67, 0.96), 4)
+
+
+func _add_landmark_sprite(
+		parent: Node2D,
+		node_name: String,
+		path: String,
+		position_value: Vector2,
+		scale_value: float,
+		tint: Color,
+		z: int) -> void:
+	var texture := load(path) as Texture2D
+	if texture == null:
+		return
+	var sprite := Sprite2D.new()
+	sprite.name = node_name
+	sprite.texture = texture
+	sprite.position = position_value
+	sprite.scale = Vector2.ONE * scale_value
+	sprite.modulate = tint
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	sprite.z_index = z
+	parent.add_child(sprite)
 
 
 func _add_core_rings(center: Vector2) -> void:

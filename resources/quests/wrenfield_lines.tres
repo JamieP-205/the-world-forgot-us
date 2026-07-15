@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/quest_data.gd" id="1_quest"]
+
+[resource]
+script = ExtResource("1_quest")
+id = &"wrenfield_lines"
+title = "Three lines, three different failures"
+objective_verb = "Investigate / defend / reroute"
+location = "Wrenfield cable yard, clinic bunker, and south generator"
+stakes = "Tollard's relays disagree about where the evacuation road led. Restoring them blindly would preserve the lie."
+reward_summary = "A verified route, field supplies, and local-packet evidence"
