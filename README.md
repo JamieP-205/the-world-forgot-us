@@ -2,7 +2,7 @@
 
 [![Build and deploy Godot Web](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml/badge.svg)](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml)
 
-**[Play the browser build](https://jamiep-205.github.io/the-world-forgot-us/)** — keyboard and mouse recommended.
+**[Play the browser build](https://jamiep-205.github.io/the-world-forgot-us/)** — keyboard and mouse or the on-screen phone controls; landscape is recommended on smaller screens.
 
 A top-down Godot game set around a failed British civil-warning network. You play Ellie Ward, following recordings left by her sister through Cullbrook Services, Ashmere Estate, Wrenfield Relay Station and Tollard Exchange.
 
@@ -18,6 +18,7 @@ The setting also gave me a useful technical problem to work through: campaign st
 
 - Four connected areas, from the service road at Cullbrook to the controls under Tollard Exchange
 - Directional melee, a dodge, healing supplies, Trace Receiver sweeps, an unlockable receiver discharge and a four-direction walk cycle
+- An adaptive touch overlay for phone and tablet browsers, using the same actions as keyboard and mouse controls
 - Ten recoverable traces, NPC assignments, a road-record investigation, a signal defence, a circuit rerouting puzzle and three ending routes
 - Hollows, Linesmen, a Custodian, ranged Signal Leeches and ambushing Mimic Stalkers with night and scanner reactions
 - A small base with a shortwave desk, receiver upgrades, lighting and a keepsake shelf
@@ -31,20 +32,22 @@ The setting also gave me a useful technical problem to work through: campaign st
 
 Cullbrook is an authored Godot scene. The other three areas use a shared runtime builder so campaign rules stay consistent without copying the same placement code into several scenes. The builder now combines region-specific route grammar, structures, prop clusters, landmarks, quest pockets and lighting rather than repeating one generic blockout.
 
+The mobile controls deliberately feed the existing Godot input actions. Movement still uses `move_left`, `move_right`, `move_up` and `move_down`; the buttons emit the same interact, attack, scan, dodge, healing, burst, map, archive and pause actions used by desktop input. This keeps the player, scanner and HUD scripts as the only gameplay implementation instead of adding phone-specific copies of those systems.
+
 ## Controls
 
-| Action | Input |
-| --- | --- |
-| Move | WASD or arrow keys |
-| Interact / advance dialogue | E |
-| Melee attack | J or left-click |
-| Trace Receiver sweep | Q or right-click |
-| Dodge | Space |
-| Receiver discharge | R, after the Ashmere workshop repair |
-| Use healing supplies | F |
-| Open trace archive | I |
-| Open field map | M |
-| Pause | Esc |
+| Action | Keyboard / mouse | Phone or tablet |
+| --- | --- | --- |
+| Move | WASD or arrow keys | Floating left-thumb stick |
+| Interact / advance dialogue | E | USE button or the dialogue button |
+| Melee attack | J or left-click | HIT button |
+| Trace Receiver sweep | Q or right-click | SCAN button |
+| Dodge | Space | DODGE button |
+| Receiver discharge | R, after the Ashmere workshop repair | BURST button, after the repair |
+| Use healing supplies | F | HEAL button |
+| Open trace archive | I | LOG button |
+| Open field map | M | MAP button |
+| Pause | Esc | MENU button |
 
 The Trace Receiver reveals nearby traces and exposed enemies. Its sweep also interrupts the Linesman and Custodian shields for a short damage window.
 
@@ -115,13 +118,12 @@ Normal maps are deterministic and can be checked separately after installing Pil
 python tools/generate_normal_maps.py --check
 ```
 
-GitHub Pages is configured to deploy through GitHub Actions. The workflow's default `GITHUB_TOKEN` builds and publishes the browser release on each push to `main`.
-
-Pushes to `main` verify generated normal maps, import the project, run the smoke test, export the Web build, check the expected HTML/JavaScript/WebAssembly/PCK files and then publish them through GitHub Pages.
+GitHub Pages is configured to deploy through GitHub Actions. Pull requests run the import, smoke and Web-export checks without deploying. Pushes to `main` verify generated normal maps, import the project, run the smoke test, export the Web build, check the expected HTML/JavaScript/WebAssembly/PCK files and then publish them through GitHub Pages.
 
 ## Known limitations
 
-- Keyboard and mouse are the tested controls. There is no finished controller or touch layout.
+- Keyboard and mouse remain the most extensively tested controls. The touch overlay is designed for current phone and tablet browsers, but still needs hands-on tuning across a wider range of devices; landscape is the intended layout.
+- Finished controller support is not yet included.
 - The Web build requires WebGL 2. Browser or driver settings can still prevent it from starting.
 - Several source sheets were generated with image tools. The live walk cycle, characters and landmarks are production-pass prototypes, and combat action frames still have less variation than locomotion.
 - Ashmere, Wrenfield and Tollard share a runtime construction system. Their routes and landmarks are now region-specific, but content density and navigation still need observation in external playtests.
@@ -137,6 +139,7 @@ I used AI tooling while working on parts of the campaign implementation, runtime
 ## Next
 
 - Run timed external playtests and tune encounter, quest and travel pacing from the results
+- Test and tune the phone controls across more Android and iOS browser sizes
 - Expand combat reactions and action animation to the same coverage as locomotion
 - Add further NPC branches and optional discoveries without obscuring the main route
 - Finish controller support and broader accessibility testing
