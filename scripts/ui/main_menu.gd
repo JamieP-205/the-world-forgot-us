@@ -15,21 +15,32 @@ const GAME_SCENE := "res://scenes/main.tscn"
 
 var _wash_time := 0.0
 var _redraw_accum := 0.0
+var _touch_ui := false
+var _mobile_tag: Label
 
 @onready var _continue_btn: Button = $Box/Continue
 @onready var _box: VBoxContainer = $Box
 @onready var _controls_panel: Control = $ControlsPanel
 @onready var _settings_panel: Control = $SettingsPanel
 @onready var _confirm: ConfirmationDialog = $NewGameConfirm
+@onready var _signal_tag: Label = $SignalTag
+@onready var _title: Label = $Title
+@onready var _subtitle: Label = $Subtitle
+@onready var _title_rule: ColorRect = $TitleRule
+@onready var _quote_panel: PanelContainer = $QuotePanel
+@onready var _footer_rule: ColorRect = $FooterRule
+@onready var _footer: Label = $Footer
+@onready var _build_label: Label = $BuildLabel
 
 
 func _ready() -> void:
 	# Make sure a returned-from-pause state never leaves the tree paused.
 	get_tree().paused = false
+	_touch_ui = _is_touch_device()
 	# Keep punctuation deterministic across Web font/encoding pipelines.
 	$QuotePanel/Margin/Content/Quote.text = "\"Take the tuning plate off.\nIf it doesn't say 14B,\nswitch the set off and walk.\""
 	$QuotePanel/Margin/Content/Attribution.text = "- MAGGIE WARD  /  FAULT TAPE 06"
-	$Footer.text = "JAMIE PARR  /  GODOT 4.7  /  HEADPHONES RECOMMENDED"
+	_footer.text = "JAMIE PARR  /  GODOT 4.7  /  HEADPHONES RECOMMENDED"
 
 	_continue_btn.disabled = not SaveManager.has_save()
 	_continue_btn.pressed.connect(_on_continue)
@@ -47,11 +58,129 @@ func _ready() -> void:
 	_settings_panel.closed.connect(_on_settings_closed)
 	_confirm.confirmed.connect(_do_new_game)
 
+	_create_mobile_tag()
+	get_viewport().size_changed.connect(_apply_responsive_layout)
+	_apply_responsive_layout()
+
 	if not _continue_btn.disabled:
 		_continue_btn.grab_focus()
 	else:
 		$Box/NewGame.grab_focus()
 	queue_redraw()
+
+
+func _is_touch_device() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("web_android") \
+		or OS.has_feature("web_ios") or DisplayServer.is_touchscreen_available()
+
+
+func _create_mobile_tag() -> void:
+	_mobile_tag = Label.new()
+	_mobile_tag.name = "MobileTag"
+	_mobile_tag.text = "TOUCH CONTROLS READY  /  LANDSCAPE RECOMMENDED"
+	_mobile_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_mobile_tag.add_theme_color_override("font_color", Color(0.42, 0.84, 0.82, 0.92))
+	_mobile_tag.add_theme_font_size_override("font_size", 12)
+	_mobile_tag.visible = _touch_ui
+	add_child(_mobile_tag)
+
+
+func _apply_responsive_layout() -> void:
+	if not is_node_ready():
+		return
+	if not _touch_ui:
+		_apply_desktop_layout()
+		return
+
+	var view := size
+	var window_size := Vector2(DisplayServer.window_get_size())
+	var portrait := window_size.y > window_size.x
+	var compact := portrait or window_size.x < 900.0
+	var menu_width := minf(390.0, view.x - 48.0)
+	var button_height := 58.0 if portrait else 52.0
+
+	_signal_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
+	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER if portrait else HORIZONTAL_ALIGNMENT_LEFT
+	_title.add_theme_font_size_override("font_size", 44 if portrait else 48)
+	$Box/Controls.text = "TOUCH GUIDE"
+	_footer.text = "JAMIE PARR  /  GODOT 4.7  /  TOUCH CONTROLS READY"
+	_build_label.text = "PHONE BUILD  /  LANDSCAPE RECOMMENDED"
+	_mobile_tag.visible = true
+
+	for child in _box.get_children():
+		if child is Button:
+			(child as Button).custom_minimum_size = Vector2(menu_width, button_height)
+
+	if portrait:
+		_signal_tag.position = Vector2(24.0, 32.0)
+		_signal_tag.size = Vector2(view.x - 48.0, 24.0)
+		_title.position = Vector2(24.0, 68.0)
+		_title.size = Vector2(view.x - 48.0, 116.0)
+		_subtitle.position = Vector2(24.0, 194.0)
+		_subtitle.size = Vector2(view.x - 48.0, 26.0)
+		_title_rule.position = Vector2((view.x - menu_width) * 0.5, 235.0)
+		_title_rule.size = Vector2(menu_width, 2.0)
+		_mobile_tag.position = Vector2(24.0, 246.0)
+		_mobile_tag.size = Vector2(view.x - 48.0, 22.0)
+		_box.position = Vector2((view.x - menu_width) * 0.5, 286.0)
+		_box.size = Vector2(menu_width, button_height * 6.0 + 54.0)
+		_quote_panel.visible = false
+		_build_label.visible = false
+	else:
+		var left := 44.0 if compact else 70.0
+		_signal_tag.position = Vector2(left, 38.0)
+		_signal_tag.size = Vector2(540.0, 24.0)
+		_title.position = Vector2(left, 68.0)
+		_title.size = Vector2(600.0, 116.0)
+		_subtitle.position = Vector2(left + 4.0, 192.0)
+		_subtitle.size = Vector2(540.0, 26.0)
+		_title_rule.position = Vector2(left + 4.0, 230.0)
+		_title_rule.size = Vector2(menu_width, 2.0)
+		_mobile_tag.position = Vector2(left + 4.0, 241.0)
+		_mobile_tag.size = Vector2(menu_width, 22.0)
+		_mobile_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		_box.position = Vector2(left + 4.0, 275.0)
+		_box.size = Vector2(menu_width, button_height * 6.0 + 54.0)
+		_quote_panel.visible = not compact
+		_build_label.visible = not compact
+
+	_footer_rule.position = Vector2(32.0, view.y - 54.0)
+	_footer_rule.size = Vector2(maxf(0.0, view.x - 64.0), 1.0)
+	_footer.position = Vector2(32.0, view.y - 42.0)
+	_footer.size = Vector2(maxf(0.0, view.x - 64.0), 25.0)
+	_build_label.position = Vector2(maxf(32.0, view.x - 360.0), view.y - 42.0)
+	_build_label.size = Vector2(328.0, 25.0)
+
+
+func _apply_desktop_layout() -> void:
+	_signal_tag.position = Vector2(74.0, 42.0)
+	_signal_tag.size = Vector2(356.0, 22.0)
+	_signal_tag.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_title.position = Vector2(70.0, 72.0)
+	_title.size = Vector2(580.0, 114.0)
+	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_title.add_theme_font_size_override("font_size", 49)
+	_subtitle.position = Vector2(74.0, 198.0)
+	_subtitle.size = Vector2(486.0, 26.0)
+	_subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_title_rule.position = Vector2(74.0, 240.0)
+	_title_rule.size = Vector2(332.0, 2.0)
+	_box.position = Vector2(74.0, 274.0)
+	_box.size = Vector2(332.0, 284.0)
+	for child in _box.get_children():
+		if child is Button:
+			(child as Button).custom_minimum_size = Vector2(332.0, 46.0)
+	$Box/Controls.text = "FIELD GUIDE"
+	_quote_panel.visible = true
+	_footer_rule.position = Vector2(74.0, size.y - 54.0)
+	_footer_rule.size = Vector2(maxf(0.0, size.x - 148.0), 1.0)
+	_footer.position = Vector2(74.0, size.y - 42.0)
+	_footer.size = Vector2(576.0, 25.0)
+	_build_label.position = Vector2(maxf(0.0, size.x - 340.0), size.y - 42.0)
+	_build_label.size = Vector2(266.0, 25.0)
+	_build_label.visible = true
+	_mobile_tag.visible = false
 
 
 func _process(delta: float) -> void:
@@ -138,7 +267,7 @@ func _draw() -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event is InputEventKey or event is InputEventMouseButton:
+	if event is InputEventKey or event is InputEventMouseButton or event is InputEventScreenTouch:
 		if event.pressed:
 			AudioManager.unlock_audio()
 
