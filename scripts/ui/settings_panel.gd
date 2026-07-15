@@ -95,12 +95,11 @@ func _apply_responsive_layout() -> void:
 	var requested_scale := clampf(0.92 / _physical_scale(), 1.0, 2.85)
 	var base_size := Vector2(620.0, 820.0) if portrait else Vector2(900.0, 480.0)
 	var edge := 16.0 * requested_scale
-	var card_scale := minf(
-		requested_scale,
+	var fit_scale := minf(
 		(size.x - edge * 2.0) / base_size.x,
 		(size.y - edge * 2.0) / base_size.y
 	)
-	card_scale = maxf(0.72, card_scale)
+	var card_scale := maxf(0.72, minf(requested_scale, fit_scale))
 
 	_set_columns_stacked(portrait)
 	_card.set_anchors_preset(Control.PRESET_TOP_LEFT)
@@ -148,7 +147,7 @@ func _set_columns_stacked(stacked: bool) -> void:
 		if _mobile_stack != null:
 			_audio_column.reparent(_columns)
 			_options_column.reparent(_columns)
-			_mobile_stack.queue_free()
+			_mobile_stack.free()
 			_mobile_stack = null
 
 
