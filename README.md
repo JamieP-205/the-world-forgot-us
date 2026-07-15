@@ -18,7 +18,7 @@ The setting also gave me a useful technical problem to work through: campaign st
 
 - Four connected areas, from the service road at Cullbrook to the controls under Tollard Exchange
 - Directional melee, a dodge, healing supplies, Trace Receiver sweeps, an unlockable receiver discharge and a four-direction walk cycle
-- An adaptive touch overlay for phone and tablet browsers, using the same actions as keyboard and mouse controls
+- A responsive phone interface with thumb-sized controls, a first-run touch guide, adapted title menu, HUD, dialogue, field guide, pause menu and settings
 - Ten recoverable traces, NPC assignments, a road-record investigation, a signal defence, a circuit rerouting puzzle and three ending routes
 - Hollows, Linesmen, a Custodian, ranged Signal Leeches and ambushing Mimic Stalkers with night and scanner reactions
 - A small base with a shortwave desk, receiver upgrades, lighting and a keepsake shelf
@@ -32,14 +32,16 @@ The setting also gave me a useful technical problem to work through: campaign st
 
 Cullbrook is an authored Godot scene. The other three areas use a shared runtime builder so campaign rules stay consistent without copying the same placement code into several scenes. The builder now combines region-specific route grammar, structures, prop clusters, landmarks, quest pockets and lighting rather than repeating one generic blockout.
 
-The mobile controls deliberately feed the existing Godot input actions. Movement still uses `move_left`, `move_right`, `move_up` and `move_down`; the buttons emit the same interact, attack, scan, dodge, healing, burst, map, archive and pause actions used by desktop input. This keeps the player, scanner and HUD scripts as the only gameplay implementation instead of adding phone-specific copies of those systems.
+The phone controls deliberately feed the existing Godot input actions. Movement still uses `move_left`, `move_right`, `move_up` and `move_down`; the buttons emit the same interact, attack, scan, dodge, healing, burst, map, archive and pause actions used by desktop input. A touch-only adapter repositions and scales the existing HUD instead of maintaining a second gameplay interface. This keeps the player, scanner, dialogue and campaign scripts as the single implementation for desktop and mobile.
+
+The project uses an expanded 1280 x 720 canvas. Phone UI is therefore sized from the real browser window as well as the logical game viewport; otherwise a button that looks large in Godot can end up only a few physical pixels high on a portrait phone.
 
 ## Controls
 
 | Action | Keyboard / mouse | Phone or tablet |
 | --- | --- | --- |
-| Move | WASD or arrow keys | Floating left-thumb stick |
-| Interact / advance dialogue | E | USE button or the dialogue button |
+| Move | WASD or arrow keys | Floating lower-left movement field |
+| Interact / advance dialogue | E | USE button or the large dialogue button |
 | Melee attack | J or left-click | HIT button |
 | Trace Receiver sweep | Q or right-click | SCAN button |
 | Dodge | Space | DODGE button |
@@ -48,6 +50,9 @@ The mobile controls deliberately feed the existing Godot input actions. Movement
 | Open trace archive | I | LOG button |
 | Open field map | M | MAP button |
 | Pause | Esc | MENU button |
+| Reopen touch explanation | Field Guide menu | HELP button |
+
+The first phone session opens a short three-step guide after the opening cinematic. It pauses the road while it is visible and records completion in the normal settings file. HELP reopens it later. The full Touch Guide remains available from the title and pause menus.
 
 The Trace Receiver reveals nearby traces and exposed enemies. Its sweep also interrupts the Linesman and Custodian shields for a short damage window.
 
@@ -122,13 +127,13 @@ GitHub Pages is configured to deploy through GitHub Actions. Pull requests run t
 
 ## Known limitations
 
-- Keyboard and mouse remain the most extensively tested controls. The touch overlay is designed for current phone and tablet browsers, but still needs hands-on tuning across a wider range of devices; landscape is the intended layout.
+- Keyboard and mouse remain the most extensively tested controls. The phone UI is built for current touch browsers and supports portrait, but landscape remains the intended play layout and still needs hands-on tuning across more Android and iOS devices.
 - Finished controller support is not yet included.
 - The Web build requires WebGL 2. Browser or driver settings can still prevent it from starting.
 - Several source sheets were generated with image tools. The live walk cycle, characters and landmarks are production-pass prototypes, and combat action frames still have less variation than locomotion.
 - Ashmere, Wrenfield and Tollard share a runtime construction system. Their routes and landmarks are now region-specific, but content density and navigation still need observation in external playtests.
 - Music and sound effects are synthesised in-engine. There is no recorded voice work or live-performed score.
-- Browser progress is one local save and can be lost when site data is cleared or private browsing ends.
+- Browser progress and the touch-guide preference are local to that browser and can be lost when site data is cleared or private browsing ends.
 - The launcher has keyboard and reduced-motion considerations, but the canvas game has not had a manual screen-reader accessibility pass.
 - Campaign pacing, balance and playtime need more external playtesting before I would call this a finished release.
 
@@ -139,7 +144,7 @@ I used AI tooling while working on parts of the campaign implementation, runtime
 ## Next
 
 - Run timed external playtests and tune encounter, quest and travel pacing from the results
-- Test and tune the phone controls across more Android and iOS browser sizes
+- Test the responsive phone UI across more Android and iOS browser sizes
 - Expand combat reactions and action animation to the same coverage as locomotion
 - Add further NPC branches and optional discoveries without obscuring the main route
 - Finish controller support and broader accessibility testing
