@@ -53,12 +53,11 @@ func _apply_responsive_layout() -> void:
 		var requested_scale := clampf(0.92 / physical, 1.0, 2.85)
 		var base_size := Vector2(620.0, 620.0) if portrait else Vector2(900.0, 520.0)
 		var edge := 16.0 * requested_scale
-		var card_scale := minf(
-			requested_scale,
+		var fit_scale := minf(
 			(size.x - edge * 2.0) / base_size.x,
 			(size.y - edge * 2.0) / base_size.y
 		)
-		card_scale = maxf(0.72, card_scale)
+		var card_scale := maxf(0.72, minf(requested_scale, fit_scale))
 		_card.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		_card.pivot_offset = Vector2.ZERO
 		_card.scale = Vector2.ONE * card_scale
