@@ -473,7 +473,25 @@ func _generate_level_lights(root_node: Node) -> void:
 			anchor in shadow_anchors
 		)
 		if attached != null:
+			_suppress_legacy_light_card(anchor)
 			_level_light_count += 1
+
+
+func _suppress_legacy_light_card(anchor: Node2D) -> void:
+	# Older authored scenes painted illumination as a translucent Polygon2D.
+	# Even when the polygon was nominally round, its hard edge read as a square
+	# colour card around the prop once the global grade became darker. Keep the
+	# anchor alive for the real soft PointLight2D child, but make only its baked
+	# fill transparent. Children do not inherit Polygon2D.color alpha.
+	if not (anchor is Polygon2D):
+		return
+	var lower := String(anchor.name).to_lower()
+	if not ("glow" in lower or "halo" in lower or "pool" in lower):
+		return
+	var polygon := anchor as Polygon2D
+	if not polygon.has_meta("lighting_original_alpha"):
+		polygon.set_meta("lighting_original_alpha", polygon.color.a)
+	polygon.color.a = 0.0
 
 
 func _light_candidate_before(a: Dictionary, b: Dictionary) -> bool:
@@ -637,7 +655,14 @@ func _configure_light(
 	# embossing every sprite edge into a metallic-looking ridge.
 	light.height = maxf(radius * 0.78, 48.0)
 	light.color = color
-	light.energy = energy
+	light.set_meta("day_night_base_energy", energy)
+	if not light.is_in_group("day_night_practical"):
+		light.add_to_group("day_night_practical")
+	var main := get_tree().get_first_node_in_group("main")
+	var night_factor := 0.0
+	if main != null and main.has_method("is_night") and bool(main.call("is_night")):
+		night_factor = 1.0
+	light.energy = energy * lerpf(0.72, 1.42, night_factor)
 	light.shadow_enabled = shadows
 	light.shadow_filter = Light2D.SHADOW_FILTER_PCF5
 	light.shadow_filter_smooth = shadow_filter_smooth
@@ -778,6 +803,15 @@ func _shape_is_structural(shape: Shape2D) -> bool:
 		return minf(size.x, size.y) >= 60.0 and maxf(size.x, size.y) >= 145.0
 	if shape is CircleShape2D:
 		return (shape as CircleShape2D).radius >= 72.0
+	if shape is ConvexPolygonShape2D:
+		var points := (shape as ConvexPolygonShape2D).points
+		if points.size() < 3:
+			return false
+		var bounds := Rect2(points[0], Vector2.ZERO)
+		for point in points:
+			bounds = bounds.expand(point)
+		return minf(bounds.size.x, bounds.size.y) >= 60.0 \
+			and maxf(bounds.size.x, bounds.size.y) >= 145.0
 	return false
 
 
@@ -797,4 +831,6 @@ func _occluder_points(shape: Shape2D) -> PackedVector2Array:
 			var angle := TAU * float(index) / 24.0
 			points.append(Vector2(cos(angle), sin(angle)) * radius)
 		return points
+	if shape is ConvexPolygonShape2D:
+		return (shape as ConvexPolygonShape2D).points
 	return PackedVector2Array()

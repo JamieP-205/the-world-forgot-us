@@ -1,4 +1,4 @@
-[gd_scene load_steps=28 format=3]
+[gd_scene load_steps=31 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/scene_exit.tscn" id="1_exit"]
 [ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="14_ash"]
@@ -20,6 +20,9 @@
 [ext_resource type="Texture2D" path="res://assets/processed/decals/dirt_debris.png" id="12_dirt"]
 [ext_resource type="Texture2D" path="res://assets/processed/decals/wood_floor.png" id="19_wood"]
 [ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/mnemoscope_device.png" id="20_scope"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/workbench_empty.png" id="21_emptybench"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_old_photo.png" id="22_photo"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_compass.png" id="23_compass"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
 size = Vector2(820, 30)
@@ -94,8 +97,23 @@ color = Color(0.06, 0.10, 0.11, 0.16)
 polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
 
 [node name="Bunks" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.13, 0.14, 0.13, 1)
 polygon = PackedVector2Array(-374, -134, -250, -134, -250, -104, -374, -104)
+
+[node name="BunkArtA" type="Sprite2D" parent="."]
+position = Vector2(-318, -112)
+rotation = 0.05
+scale = Vector2(0.17, 0.13)
+modulate = Color(0.72, 0.67, 0.56, 0.92)
+texture = ExtResource("6_bedroll")
+
+[node name="BunkArtB" type="Sprite2D" parent="."]
+position = Vector2(-214, -112)
+rotation = -0.04
+scale = Vector2(0.17, 0.13)
+modulate = Color(0.66, 0.62, 0.54, 0.88)
+texture = ExtResource("6_bedroll")
 
 [node name="TrackNorth" type="Polygon2D" parent="."]
 z_index = -6
@@ -300,12 +318,14 @@ upgrade_data = ExtResource("18_lantern")
 payoff_notice = "Signal Lantern lit. The carriage glows warm - the base feels awake."
 reveal_on_build = NodePath("../WarmOverlay")
 
-[node name="Visual" type="Polygon2D" parent="SignalLantern"]
+[node name="Visual" type="Sprite2D" parent="SignalLantern"]
 visible = false
-color = Color(0.36, 0.25, 0.14, 1)
-polygon = PackedVector2Array(-12, -13, 12, -13, 12, 12, -12, 12)
+scale = Vector2(0.12, 0.12)
+modulate = Color(0.92, 0.79, 0.58, 0.98)
+texture = ExtResource("8_lantern")
 
 [node name="Bulb" type="Polygon2D" parent="SignalLantern/Visual"]
+visible = false
 color = Color(1, 0.72, 0.34, 0.95)
 polygon = PackedVector2Array(-6, -7, 6, -7, 6, 4, -6, 4)
 
@@ -320,21 +340,32 @@ monitoring = false
 script = ExtResource("16_shelf")
 prompt = "Tend the memory shelf"
 
-[node name="Visual" type="Polygon2D" parent="KeepsakeShelf"]
-color = Color(0.28, 0.22, 0.17, 1)
-polygon = PackedVector2Array(-24, -11, 24, -11, 24, 10, -24, 10)
+[node name="Visual" type="Sprite2D" parent="KeepsakeShelf"]
+position = Vector2(0, 4)
+scale = Vector2(0.15, 0.11)
+modulate = Color(0.72, 0.68, 0.58, 0.94)
+texture = ExtResource("21_emptybench")
 
 [node name="Ledge" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+visible = false
 color = Color(0.56, 0.39, 0.22, 1)
 polygon = PackedVector2Array(-24, -3, 24, -3, 24, 0, -24, 0)
 
 [node name="Keepsake1" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+visible = false
 color = Color(0.74, 0.48, 0.18, 0.9)
 polygon = PackedVector2Array(-16, -9, -9, -9, -9, -4, -16, -4)
 
 [node name="Keepsake2" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+visible = false
 color = Color(0.66, 0.45, 0.22, 0.9)
 polygon = PackedVector2Array(6, -9, 13, -9, 13, -4, 6, -4)
+
+[node name="PhotoKeepsake" type="Sprite2D" parent="KeepsakeShelf"]
+position = Vector2(-16, -8)
+scale = Vector2(0.075, 0.075)
+modulate = Color(0.88, 0.75, 0.55, 0.96)
+texture = ExtResource("22_photo")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="KeepsakeShelf"]
 shape = SubResource("RectangleShape2D_bench")
@@ -369,15 +400,18 @@ script = ExtResource("13_lore")
 prompt = "Check the route notebook"
 notice = "Four places are written on the inside cover: Cullbrook Services. Bellwether. Long Acre. Tollard County Exchange. The last two match Maggie Ward's repair notes."
 
-[node name="Visual" type="Polygon2D" parent="CountyRouteLedger"]
-color = Color(0.48, 0.38, 0.24, 0.92)
-polygon = PackedVector2Array(-20, -13, 20, -13, 18, 14, -18, 14)
+[node name="Visual" type="Sprite2D" parent="CountyRouteLedger"]
+scale = Vector2(0.11, 0.11)
+modulate = Color(0.84, 0.76, 0.60, 0.94)
+texture = ExtResource("23_compass")
 
 [node name="Page" type="Polygon2D" parent="CountyRouteLedger/Visual"]
+visible = false
 color = Color(0.67, 0.62, 0.49, 0.88)
 polygon = PackedVector2Array(-15, -9, 15, -9, 14, 9, -14, 9)
 
 [node name="RouteLine" type="Polygon2D" parent="CountyRouteLedger/Visual/Page"]
+visible = false
 color = Color(0.26, 0.36, 0.35, 0.72)
 polygon = PackedVector2Array(-11, -4, 8, -4, 8, -2, -11, -2)
 

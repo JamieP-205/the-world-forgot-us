@@ -6,7 +6,7 @@
 
 A top-down Godot game set around a failed British civil-warning network. You play Ellie Ward, following recordings left by her sister through Cullbrook Services, Ashmere Estate, Wrenfield Relay Station and Tollard Exchange.
 
-I started this as a small vertical slice while learning Godot. It has grown into a playable four-area campaign with saving, combat, upgrades, optional records and three endings. It is still a personal project in active development: the systems and browser build are further along than the art, level composition and amount of optional content.
+I started this as a small vertical slice while learning Godot. It has grown into a playable four-area campaign with saving, combat, upgrades, NPC assignments, environmental puzzles, optional records and three endings. It is still a personal project in active development, and its pacing and balance need external playtesting.
 
 ## Why I built it
 
@@ -17,18 +17,19 @@ The setting also gave me a useful technical problem to work through: campaign st
 ## What is in it
 
 - Four connected areas, from the service road at Cullbrook to the controls under Tollard Exchange
-- Directional melee, a dodge, healing supplies, Trace Receiver sweeps and an unlockable receiver discharge
-- Ten recoverable traces, two optional radio repairs and three ending routes
+- Directional melee, a dodge, healing supplies, Trace Receiver sweeps, an unlockable receiver discharge and a four-direction walk cycle
+- Ten recoverable traces, NPC assignments, a road-record investigation, a signal defence, a circuit rerouting puzzle and three ending routes
+- Hollows, Linesmen, a Custodian, ranged Signal Leeches and ambushing Mimic Stalkers with night and scanner reactions
 - A small base with a shortwave desk, receiver upgrades, lighting and a keepsake shelf
-- Local save/load, death recovery, objectives, dialogue and an in-game trace archive
-- Real-time 2D lights, generated normal maps and shadow occluders
+- Local save/load, death recovery, objectives, dialogue, an in-game trace archive and a schematic field map
+- A short opening cinematic, a seven-minute day/night cycle, region-aware lighting and adaptive procedural music
+- Persistent display, audio and accessibility settings, including reduced effects and day/night controls
+- Authored landmarks, clearer routes, real-time 2D lights, generated normal maps and shadow occluders
 - A single-threaded Web export preset with an automated GitHub Actions build and check pipeline
 
 ## The thing that shaped the code
 
-Cullbrook is an authored Godot scene. The other three areas are assembled by a shared runtime builder so I could iterate on the campaign without copying the same placement code into several scenes.
-
-That kept the project moving, but it is also one reason the later maps can feel more repeated than Cullbrook. Replacing shared shapes with more authored landmarks and environmental routes is one of the main jobs left.
+Cullbrook is an authored Godot scene. The other three areas use a shared runtime builder so campaign rules stay consistent without copying the same placement code into several scenes. The builder now combines region-specific route grammar, structures, prop clusters, landmarks, quest pockets and lighting rather than repeating one generic blockout.
 
 ## Controls
 
@@ -42,6 +43,7 @@ That kept the project moving, but it is also one reason the later maps can feel 
 | Receiver discharge | R, after the Ashmere workshop repair |
 | Use healing supplies | F |
 | Open trace archive | I |
+| Open field map | M |
 | Pause | Esc |
 
 The Trace Receiver reveals nearby traces and exposed enemies. Its sweep also interrupts the Linesman and Custodian shields for a short damage window.
@@ -121,9 +123,9 @@ Pushes to `main` verify generated normal maps, import the project, run the smoke
 
 - Keyboard and mouse are the tested controls. There is no finished controller or touch layout.
 - The Web build requires WebGL 2. Browser or driver settings can still prevent it from starting.
-- Several source sheets were generated with image tools. Painted player/enemy concepts are live, but their directional and action sets remain limited and the wider visual style is not final.
-- Ashmere, Wrenfield and Tollard still share a runtime construction system and need more hand-authored routes, landmarks and side stories.
-- Audio is generated in-engine. There is no recorded voice work or composed soundtrack.
+- Several source sheets were generated with image tools. The live walk cycle, characters and landmarks are production-pass prototypes, and combat action frames still have less variation than locomotion.
+- Ashmere, Wrenfield and Tollard share a runtime construction system. Their routes and landmarks are now region-specific, but content density and navigation still need observation in external playtests.
+- Music and sound effects are synthesised in-engine. There is no recorded voice work or live-performed score.
 - Browser progress is one local save and can be lost when site data is cleared or private browsing ends.
 - The launcher has keyboard and reduced-motion considerations, but the canvas game has not had a manual screen-reader accessibility pass.
 - Campaign pacing, balance and playtime need more external playtesting before I would call this a finished release.
@@ -134,12 +136,11 @@ I used AI tooling while working on parts of the campaign implementation, runtime
 
 ## Next
 
-- Expand the limited directional/action character frames into one consistent final animation set
-- Hand-author more routes, environmental details and optional discoveries in the later areas
-- Add more enemy behaviour and encounter variation
+- Run timed external playtests and tune encounter, quest and travel pacing from the results
+- Expand combat reactions and action animation to the same coverage as locomotion
+- Add further NPC branches and optional discoveries without obscuring the main route
 - Finish controller support and broader accessibility testing
-- Replace the generated audio bed with a deliberate sound and music pass
-- Run several timed external playtests before assigning a release version
+- Evaluate recorded voice work and a commissioned or live-performed score
 
 ## Licence and project notes
 

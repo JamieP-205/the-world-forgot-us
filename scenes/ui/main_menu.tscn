@@ -1,7 +1,8 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_panel.tscn" id="2_ctl"]
+[ext_resource type="PackedScene" path="res://scenes/ui/settings_panel.tscn" id="3_settings"]
 
 [sub_resource type="StyleBoxFlat" id="Style_button_normal"]
 bg_color = Color(0.035, 0.044, 0.044, 0.88)
@@ -159,6 +160,12 @@ layout_mode = 2
 text = "FIELD GUIDE"
 alignment = 0
 
+[node name="Settings" type="Button" parent="Box"]
+custom_minimum_size = Vector2(332, 46)
+layout_mode = 2
+text = "SETTINGS"
+alignment = 0
+
 [node name="Credits" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
@@ -256,6 +263,9 @@ text = "ARCHIVE BUILD  /  COMPLETE"
 horizontal_alignment = 2
 
 [node name="ControlsPanel" parent="." instance=ExtResource("2_ctl")]
+visible = false
+
+[node name="SettingsPanel" parent="." instance=ExtResource("3_settings")]
 visible = false
 
 [node name="NewGameConfirm" type="ConfirmationDialog" parent="."]

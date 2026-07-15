@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/campaign_interactable.gd" id="1_story"]
+[ext_resource type="Texture2D" path="res://assets/processed/roadside_props/portable_radio.png" id="2_device"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_story"]
 radius = 38.0
@@ -20,18 +21,28 @@ color = Color(0.01, 0.018, 0.02, 0.5)
 polygon = PackedVector2Array(-30, -7, 30, -7, 38, 1, 26, 8, -26, 8, -38, 1)
 
 [node name="Housing" type="Polygon2D" parent="Visual"]
+visible = false
 color = Color(0.12, 0.16, 0.16, 1)
 polygon = PackedVector2Array(-24, -24, 24, -24, 30, 18, 20, 28, -20, 28, -30, 18)
 
 [node name="Panel" type="Polygon2D" parent="Visual"]
+visible = false
 color = Color(0.25, 0.22, 0.17, 1)
 polygon = PackedVector2Array(-17, -15, 17, -15, 20, 9, -20, 9)
 
+[node name="DeviceArt" type="Sprite2D" parent="Visual"]
+position = Vector2(0, -22)
+scale = Vector2(0.25, 0.25)
+texture = ExtResource("2_device")
+
 [node name="Core" type="Polygon2D" parent="Visual"]
+position = Vector2(4, -15)
+scale = Vector2(0.42, 0.42)
 color = Color(0.38, 0.9, 0.94, 1)
 polygon = PackedVector2Array(-8, -8, 8, -8, 12, 0, 8, 8, -8, 8, -12, 0)
 
 [node name="Ring" type="Polygon2D" parent="Visual"]
+visible = false
 color = Color(0.38, 0.9, 0.94, 0.42)
 polygon = PackedVector2Array(-3, -29, 3, -29, 7, -19, 18, -22, 22, -18, 19, -7, 29, -3, 29, 3, 19, 7, 22, 18, 18, 22, 7, 19, 3, 29, -3, 29, -7, 19, -18, 22, -22, 18, -19, 7, -29, 3, -29, -3, -19, -7, -22, -18, -18, -22, -7, -19)
 

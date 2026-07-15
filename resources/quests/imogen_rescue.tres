@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="QuestData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/quest_data.gd" id="1_quest"]
+
+[resource]
+script = ExtResource("1_quest")
+id = &"imogen_rescue"
+title = "The clinic is still breathing"
+objective_verb = "Repair / reroute / escort"
+location = "Ashmere clinic to Maggie's workshop"
+stakes = "Imogen Bell has kept the clinic oxygen bank alive alone. The last junction can power either its lift or Bellwether's warning aerial."
+reward_summary = "Field medicine, a verified witness, and an ending consequence"

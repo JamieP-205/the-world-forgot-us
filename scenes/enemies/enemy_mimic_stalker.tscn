@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/enemies/enemy_mimic_stalker.gd" id="1_enemy"]
+[ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
+[ext_resource type="SpriteFrames" path="res://resources/spriteframes/hollow_painted_spriteframes.tres" id="3_frames"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(20, 30)
+
+[node name="MimicStalker" type="CharacterBody2D" groups=["enemies", "scannables"]]
+collision_layer = 8
+collision_mask = 1
+motion_mode = 1
+script = ExtResource("1_enemy")
+
+[node name="ContactShadow" type="Polygon2D" parent="."]
+position = Vector2(0, 20)
+color = Color(0.1, 0.02, 0.13, 0.34)
+polygon = PackedVector2Array(-21, -4, 21, -4, 29, 2, 17, 8, -17, 8, -29, 2)
+
+[node name="Visual" type="AnimatedSprite2D" parent="."]
+modulate = Color(0.74, 0.48, 0.82, 0.58)
+scale = Vector2(0.145, 0.145)
+sprite_frames = ExtResource("3_frames")
+animation = &"idle_down"
+offset = Vector2(0, -20)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("2_health")
+max_health = 96.0

@@ -304,15 +304,22 @@ theme_override_styles/normal = SubResource("Style_key")
 text = "ESC"
 vertical_alignment = 1
 
-[node name="EmptyAction" type="Label" parent="Card/Margin/Box/Grid"]
+[node name="MapAction" type="Label" parent="Card/Margin/Box/Grid"]
 custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
-text = ""
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "FIELD MAP"
+vertical_alignment = 1
 
-[node name="EmptyKey" type="Label" parent="Card/Margin/Box/Grid"]
+[node name="MapKey" type="Label" parent="Card/Margin/Box/Grid"]
 custom_minimum_size = Vector2(260, 36)
 layout_mode = 2
-text = ""
+theme_override_colors/font_color = Color(0.48, 0.86, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "M"
+vertical_alignment = 1
 
 [node name="Callout" type="PanelContainer" parent="Card/Margin/Box"]
 layout_mode = 2

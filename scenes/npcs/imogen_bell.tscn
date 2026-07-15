@@ -1,0 +1,37 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/survivor_npc.gd" id="1_npc"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/imogen_idle.png" id="2_art"]
+[ext_resource type="Resource" path="res://resources/quests/imogen_rescue.tres" id="3_quest"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_npc"]
+radius = 30.0
+
+[node name="ImogenBell" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_npc")
+prompt = "Talk to Imogen"
+story_id = &"imogen_clinic"
+survivor_name = "Imogen"
+quest_data = ExtResource("3_quest")
+follow_flag = &"imogen_escort_started"
+resolved_flag = &"imogen_rescued"
+hidden_if_flag = &"imogen_rescued"
+
+[node name="ContactShadow" type="Polygon2D" parent="."]
+position = Vector2(0, 17)
+color = Color(0.015, 0.02, 0.025, 0.48)
+polygon = PackedVector2Array(-24, 0, -14, -5, 14, -5, 24, 0, 14, 7, -14, 7)
+
+[node name="Visual" type="Sprite2D" parent="."]
+texture = ExtResource("2_art")
+centered = true
+region_enabled = true
+region_rect = Rect2(0, 0, 313.5, 313.5)
+scale = Vector2(0.32, 0.32)
+position = Vector2(0, -24)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_npc")

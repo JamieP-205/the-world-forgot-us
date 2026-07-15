@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player/player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/ui/hud.tscn" id="3_hud"]
 [ext_resource type="PackedScene" path="res://scenes/maps/test_map.tscn" id="4_startlevel"]
 [ext_resource type="Shader" path="res://shaders/memory_chiaroscuro.gdshader" id="5_grade"]
+[ext_resource type="Script" path="res://scripts/visual/day_night_cycle.gd" id="6_cycle"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_grade"]
 shader = ExtResource("5_grade")
@@ -12,6 +13,10 @@ shader_parameter/grade_strength = 0.72
 shader_parameter/grain_strength = 0.018
 shader_parameter/vignette_strength = 0.32
 shader_parameter/memory_fringe = 0.0012
+shader_parameter/night_factor = 0.0
+shader_parameter/dusk_factor = 0.0
+shader_parameter/dawn_factor = 0.0
+shader_parameter/region_tone = Color(0.5, 0.61, 0.56, 1)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -20,6 +25,11 @@ start_spawn = &"from_base"
 
 [node name="WorldTint" type="CanvasModulate" parent="."]
 color = Color(0.76, 0.78, 0.76, 1)
+
+[node name="DayNightCycle" type="Node" parent="."]
+script = ExtResource("6_cycle")
+cycle_duration_seconds = 420.0
+start_phase = 0.18
 
 [node name="LevelHolder" type="Node2D" parent="."]
 

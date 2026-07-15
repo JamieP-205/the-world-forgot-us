@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/scene_exit.gd" id="1_exit"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/base_doorway.png" id="2_door"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
 size = Vector2(82, 88)
@@ -13,26 +14,32 @@ script = ExtResource("1_exit")
 prompt = "Leave"
 
 [node name="RoadThreshold" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.16, 0.14, 0.11, 0.96)
 polygon = PackedVector2Array(-44, 20, 44, 20, 30, 42, -30, 42)
 
 [node name="Frame" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.42, 0.32, 0.19, 0.96)
 polygon = PackedVector2Array(-38, 36, -38, -28, -28, -46, 28, -46, 38, -28, 38, 36)
 
 [node name="Doorway" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.035, 0.055, 0.052, 0.96)
 polygon = PackedVector2Array(-25, 36, -25, -27, -18, -36, 18, -36, 25, -27, 25, 36)
 
 [node name="DoorCrossbar" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.31, 0.24, 0.15, 0.9)
 polygon = PackedVector2Array(-23, 7, 23, 7, 23, 12, -23, 12)
 
 [node name="Handle" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.92, 0.66, 0.28, 0.95)
 polygon = PackedVector2Array(12, -4, 18, -4, 18, 8, 12, 8)
 
 [node name="Beacon" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.96, 0.68, 0.26, 0.58)
 polygon = PackedVector2Array(0, -62, 13, -40, 4, -40, 4, -24, -4, -24, -4, -40, -13, -40)
 
@@ -40,6 +47,12 @@ polygon = PackedVector2Array(0, -62, 13, -40, 4, -40, 4, -24, -4, -24, -4, -40, 
 visible = false
 color = Color(0.66, 0.54, 0.30, 0.36)
 polygon = PackedVector2Array(-16, 4, 6, 4, 6, -8, 24, 14, 6, 36, 6, 24, -16, 24)
+
+[node name="DoorSprite" type="Sprite2D" parent="."]
+texture_filter = 2
+position = Vector2(0, -2)
+scale = Vector2(0.27, 0.27)
+texture = ExtResource("2_door")
 
 [node name="TriggerShape" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_trigger")
