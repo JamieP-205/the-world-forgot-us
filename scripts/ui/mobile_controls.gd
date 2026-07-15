@@ -231,30 +231,41 @@ func _layout_interface() -> void:
 	if _root == null or _stick_zone == null or _action_cluster == null:
 		return
 	var view_size := get_viewport().get_visible_rect().size
+	var window_size := Vector2(DisplayServer.window_get_size())
 	if view_size.x <= 1.0 or view_size.y <= 1.0:
 		return
 
-	var control_scale := 0.84 if view_size.x < 390.0 else 1.0
-	_stick_zone.scale = Vector2.ONE * control_scale
-	_action_cluster.scale = Vector2.ONE * control_scale
-	_tools_panel.scale = Vector2.ONE * control_scale
+	# The project renders through a 1280 x 720 canvas-items stretch. On a phone,
+	# one logical UI pixel can be much smaller than one CSS pixel, especially in
+	# portrait. Scale from the actual window-to-viewport ratio so the buttons stay
+	# around normal thumb-target size instead of shrinking with the game canvas.
+	var render_scale := 1.0
+	if window_size.x > 1.0 and window_size.y > 1.0:
+		render_scale = minf(window_size.x / view_size.x, window_size.y / view_size.y)
+	render_scale = maxf(render_scale, 0.01)
+	var action_scale := clampf(0.95 / render_scale, 0.95, 3.2)
+	var stick_scale := clampf(0.80 / render_scale, 0.95, 2.8)
 
-	_stick_zone.position = Vector2(14.0, view_size.y - 150.0 * control_scale - 16.0)
+	_stick_zone.scale = Vector2.ONE * stick_scale
+	_action_cluster.scale = Vector2.ONE * action_scale
+	_tools_panel.scale = Vector2.ONE * action_scale
+
+	_stick_zone.position = Vector2(14.0, view_size.y - 150.0 * stick_scale - 16.0)
 	_stick_zone.size = Vector2(140, 140)
 	_stick_knob.size = Vector2(54, 54)
 	if _stick_touch < 0 and not _mouse_stick:
 		_center_stick()
 
 	_action_cluster.position = Vector2(
-		view_size.x - 216.0 * control_scale - 10.0,
-		view_size.y - 212.0 * control_scale - 10.0
+		view_size.x - 216.0 * action_scale - 10.0,
+		view_size.y - 212.0 * action_scale - 10.0
 	)
 	_action_cluster.size = Vector2(216, 212)
 
 	_tools_panel.size = Vector2(326, 50)
 	_tools_panel.position = Vector2(
-		maxf(8.0, view_size.x - 336.0 * control_scale),
-		view_size.y - 270.0 * control_scale
+		maxf(8.0, view_size.x - 336.0 * action_scale),
+		view_size.y - 270.0 * action_scale
 	)
 
 
@@ -264,7 +275,7 @@ func _on_stick_gui_input(event: InputEvent) -> void:
 			AudioManager.unlock_audio()
 		if event.pressed and _stick_touch < 0:
 			_stick_touch = event.index
-			_update_stick(event.position)
+			_update_stick(_touch_local_position(event.position))
 			_stick_zone.accept_event()
 		elif not event.pressed and event.index == _stick_touch:
 			_stick_touch = -1
@@ -272,19 +283,23 @@ func _on_stick_gui_input(event: InputEvent) -> void:
 			_center_stick()
 			_stick_zone.accept_event()
 	elif event is InputEventScreenDrag and event.index == _stick_touch:
-		_update_stick(event.position)
+		_update_stick(_touch_local_position(event.position))
 		_stick_zone.accept_event()
 	elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
 		_mouse_stick = event.pressed
 		if _mouse_stick:
-			_update_stick(event.position)
+			_update_stick(_stick_zone.get_local_mouse_position())
 		else:
 			_release_movement()
 			_center_stick()
 		_stick_zone.accept_event()
 	elif event is InputEventMouseMotion and _mouse_stick:
-		_update_stick(event.position)
+		_update_stick(_stick_zone.get_local_mouse_position())
 		_stick_zone.accept_event()
+
+
+func _touch_local_position(viewport_position: Vector2) -> Vector2:
+	return _stick_zone.get_global_transform_with_canvas().affine_inverse() * viewport_position
 
 
 func _update_stick(local_position: Vector2) -> void:
