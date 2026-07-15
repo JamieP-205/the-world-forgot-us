@@ -2,9 +2,7 @@ name: Build and deploy Godot Web
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -14,11 +12,9 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
-  GODOT_VERSION: "4.7"
-  GODOT_RELEASE: "4.7-stable"
   GODOT_TEMPLATE_VERSION: "4.7.stable"
   GODOT_EDITOR_ARCHIVE: "Godot_v4.7-stable_linux.x86_64.zip"
   GODOT_EDITOR_URL: "https://github.com/godotengine/godot-builds/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip"
@@ -35,6 +31,14 @@ jobs:
       - name: Check out source
         uses: actions/checkout@v7
 
+      - name: Verify generated normal maps
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          python3 -m pip install --disable-pip-version-check --no-input --quiet "numpy==2.5.1" "Pillow==12.3.0"
+          python3 tools/generate_normal_maps.py --check
+
       - name: Install Godot 4.7 editor
         shell: bash
         run: |
@@ -48,7 +52,7 @@ jobs:
           curl --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 "$GODOT_EDITOR_URL" --output "$archive"
           curl --fail --location --silent --show-error --retry 5 --retry-all-errors --retry-delay 2 "$GODOT_CHECKSUMS_URL" --output "$checksums"
 
-          expected_line="$(grep "  $GODOT_EDITOR_ARCHIVE$" "$checksums")"
+          expected_line="$(awk -v file="$GODOT_EDITOR_ARCHIVE" '$2 == file { print; exit }' "$checksums")"
           test -n "$expected_line"
           printf '%s\n' "$expected_line" | (cd "$RUNNER_TEMP" && sha512sum --check --strict -)
 
@@ -73,7 +77,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          "$GODOT_BIN" --headless --path . --import
+
+          import_log="$RUNNER_TEMP/godot-import.log"
+          "$GODOT_BIN" --headless --path . --import 2>&1 | tee "$import_log"
+          if grep -Eq 'SCRIPT ERROR:|ERROR:' "$import_log"; then
+            echo "Godot reported an error while importing resources." >&2
+            exit 1
+          fi
+
+      - name: Run structural campaign smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          smoke_data="$RUNNER_TEMP/twfu-smoke-data"
+          smoke_log="$RUNNER_TEMP/godot-smoke.log"
+          mkdir -p "$smoke_data"
+          XDG_DATA_HOME="$smoke_data" "$GODOT_BIN" --headless --path . --scene res://tools/complete_game_smoke.tscn 2>&1 | tee "$smoke_log"
+          if grep -Eq 'SCRIPT ERROR:|ERROR:' "$smoke_log"; then
+            echo "Godot reported an error during the structural campaign smoke." >&2
+            exit 1
+          fi
+          if ! grep -qx 'COMPLETE_GAME_SMOKE: PASS' "$smoke_log"; then
+            echo "The structural campaign smoke did not report a pass." >&2
+            exit 1
+          fi
 
       - name: Export release
         shell: bash
@@ -81,17 +109,21 @@ jobs:
           set -euo pipefail
 
           mkdir -p builds/web
-          "$GODOT_BIN" --headless --path . --export-release "Web" "builds/web/index.html"
+          export_log="$RUNNER_TEMP/godot-export.log"
+          "$GODOT_BIN" --headless --path . --export-release "Web" "builds/web/index.html" 2>&1 | tee "$export_log"
+          if grep -Eq 'SCRIPT ERROR:|ERROR:' "$export_log"; then
+            echo "Godot reported an error while exporting the Web release." >&2
+            exit 1
+          fi
 
       - name: Verify Web artifact
         shell: bash
         run: |
           set -euo pipefail
 
-          test -s builds/web/index.html
-          find builds/web -maxdepth 1 -type f -name '*.wasm' -print -quit | grep -q .
-          find builds/web -maxdepth 1 -type f -name '*.pck' -print -quit | grep -q .
-          find builds/web -maxdepth 1 -type f -name '*.js' -print -quit | grep -q .
+          for artifact in index.html index.js index.wasm index.pck; do
+            test -s "builds/web/$artifact"
+          done
 
           if grep -Eq '\$GODOT_[A-Z_]+' builds/web/index.html; then
             echo "Godot shell placeholders were not expanded." >&2
@@ -109,6 +141,7 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment:

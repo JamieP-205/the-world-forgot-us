@@ -5,8 +5,8 @@
 [resource]
 script = ExtResource("1")
 id = &"scanner_coil"
-title = "Scanner Coil"
-description = "A rewound coil for the Mnemoscope: wider pulses that recharge faster."
+title = "Search Coil"
+description = "A hand-wound aerial for the trace receiver. It reaches farther and cools faster between sweeps."
 cost = {
 "battery": 1,
 "scrap": 2

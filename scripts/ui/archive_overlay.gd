@@ -1,9 +1,10 @@
 class_name ArchiveOverlay
 extends Control
-## In-game archive: recovered memories, campaign progress, and controls.
+## In-game field archive: recovered traces, repair progress, and controls.
 
-@onready var _content: Label = $Center/Panel/Margin/Layout/Scroll/Content
-@onready var _close: Button = $Center/Panel/Margin/Layout/Close
+@onready var _content: RichTextLabel = $Center/Panel/Margin/Layout/Content
+@onready var _count: Label = $Center/Panel/Margin/Layout/HeaderRow/Count
+@onready var _close: Button = $Center/Panel/Margin/Layout/Footer/Close
 
 
 func _ready() -> void:
@@ -38,23 +39,67 @@ func close_archive() -> void:
 
 
 func _refresh() -> void:
-	var lines: Array[String] = [
-		"RECOVERED MEMORY ARCHIVE",
-		"",
-	]
+	var lines: Array[String] = []
 	var recovered := ArchiveSystem.get_recovered()
-	if recovered.is_empty():
-		lines.append("No echoes recovered. Use Q near cyan disturbances.")
-	for echo in recovered:
-		lines.append("%s  |  %s  |  %s" % [echo.title, echo.category, echo.quality])
-		lines.append(echo.memory_text)
-		lines.append("")
-	lines.append("CAMPAIGN")
-	lines.append("Relays restored: %d / 3" % CampaignSystem.get_restored_relay_count())
-	lines.append("Memory Burst: %s" % ("ONLINE [R]" if WorldState.has_flag(&"memory_burst_unlocked") else "LOCKED"))
+	_count.text = "%d %s CATALOGUED" % [
+		recovered.size(), "TRACE" if recovered.size() == 1 else "TRACES"]
+	var objective := CampaignSystem.get_objective()
+	lines.append("[color=#d9aa5b][font_size=12]PRIMARY ROUTE[/font_size][/color]")
+	lines.append("[color=#ded8c2][font_size=18]%s[/font_size][/color]" % _safe_bbcode(objective.get("text", "Find a way forward.")))
+	lines.append("[color=#579b9a][font_size=11]%s[/font_size][/color]" % _safe_bbcode(objective.get("location", "NO VERIFIED LOCATION")))
+	lines.append("[color=#b98b49]%s[/color]" % _safe_bbcode(objective.get("progress", "")))
 	lines.append("")
-	lines.append("FIELD CONTROLS")
-	lines.append("WASD / Arrows move   |   E interact   |   J / Left-click melee")
-	lines.append("Q / Right-click scan   |   Space dodge   |   R Memory Burst")
-	lines.append("F eat ration   |   I archive   |   Esc pause")
+	lines.append("[color=#d9aa5b][font_size=12]RECORDED TRACES[/font_size][/color]")
+	if recovered.is_empty():
+		lines.append("[color=#729e9c][font_size=12]NO FAULT TRACES CATALOGUED[/font_size][/color]")
+		lines.append("")
+		lines.append("Use a receiver sweep with [color=#e8b35c]Q[/color] near blue interference, then catalogue the trace with [color=#e8b35c]E[/color].")
+	for echo in recovered:
+		lines.append("[color=#d8c49a][font_size=20]%s[/font_size][/color]" % _safe_bbcode(echo.title.to_upper()))
+		lines.append("[color=#579b9a][font_size=11]%s  /  %s[/font_size][/color]" % [
+			_safe_bbcode(String(echo.category).to_upper()),
+			_safe_bbcode(String(echo.quality).to_upper()),
+		])
+		lines.append("")
+		lines.append(_safe_bbcode(echo.memory_text))
+		lines.append("")
+		lines.append("[color=#344a47]--------------------------------------------------------[/color]")
+		lines.append("")
+	lines.append("[color=#d9aa5b][font_size=12]FIELD WORK[/font_size][/color]")
+	lines.append("Wrenfield lines reset  [color=#75c4c2]%d / 3[/color]" % CampaignSystem.get_restored_relay_count())
+	lines.append("Receiver discharge  %s" % (
+		"[color=#75c4c2]ONLINE  /  R[/color]"
+		if WorldState.has_flag(&"memory_burst_unlocked")
+		else "[color=#6a6c64]LOCKED[/color]"))
+	lines.append("")
+	lines.append("[color=#d9aa5b][font_size=12]OPTIONAL THREADS[/font_size][/color]")
+	for entry in CampaignSystem.get_optional_progress():
+		var state := String(entry.get("state", "open"))
+		var color := "#8b8d82"
+		var marker := "·"
+		if state == "complete":
+			color = "#75c4c2"
+			marker = "+"
+		elif state == "closed":
+			color = "#b08b68"
+			marker = "-"
+		lines.append("%s [color=#c9c5b5]%s[/color]" % [
+			marker,
+			_safe_bbcode(entry.get("task", entry.get("label", "Optional lead"))),
+		])
+		lines.append("   [color=#579b9a]%s[/color]" % _safe_bbcode(entry.get("location", "LOCATION UNKNOWN")))
+		lines.append("   [color=%s]%s[/color]" % [
+			color,
+			_safe_bbcode(entry.get("progress", entry.get("status", "OPEN"))),
+		])
+		lines.append("")
+	lines.append("")
+	lines.append("[color=#d9aa5b][font_size=12]FIELD CONTROLS[/font_size][/color]")
+	lines.append("WASD move  /  E interact  /  J or left-click strike")
+	lines.append("Q sweep  /  Space dodge  /  F supplies  /  I close archive")
 	_content.text = "\n".join(lines)
+	_content.scroll_to_line(0)
+
+
+func _safe_bbcode(value: Variant) -> String:
+	return String(value).replace("[", "[lb]")

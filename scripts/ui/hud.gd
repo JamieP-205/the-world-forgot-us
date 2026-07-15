@@ -1,24 +1,32 @@
 extends CanvasLayer
 ## In-game HUD: meters, inventory, objectives, interaction prompt, notices.
 
-@onready var _inv_header: Label = $InventoryPanel/Header
-@onready var _inv_list: VBoxContainer = $InventoryPanel/List
-@onready var _prompt_label: Label = $PromptLabel
-@onready var _pause_overlay: ColorRect = $PauseOverlay
-@onready var _pause_box: VBoxContainer = $PauseOverlay/PauseBox
+@onready var _inv_header: Label = $Interface/InventoryPanel/Margin/Content/Header
+@onready var _inv_list: VBoxContainer = $Interface/InventoryPanel/Margin/Content/List
+@onready var _prompt_panel: PanelContainer = $Interface/PromptPanel
+@onready var _prompt_label: Label = $Interface/PromptPanel/Margin/PromptLabel
+@onready var _pause_overlay: Control = $PauseOverlay
+@onready var _pause_panel: PanelContainer = $PauseOverlay/PausePanel
+@onready var _pause_box: VBoxContainer = $PauseOverlay/PausePanel/Margin/PauseBox
 @onready var _pause_controls: Control = $PauseOverlay/PauseControls
-@onready var _notice_label: Label = $NoticeLabel
+@onready var _notice_label: Label = $Interface/NoticeLabel
 @onready var _notice_timer: Timer = $NoticeTimer
-@onready var _health_bar: ProgressBar = $HealthBar
-@onready var _health_label: Label = $HealthBar/HealthLabel
-@onready var _scanner_bar: ProgressBar = $ScannerBar
-@onready var _archive_label: Label = $ArchiveLabel
-@onready var _objective_label: Label = $ObjectiveLabel
-@onready var _compass = $Compass
-@onready var _ability_label: Label = $AbilityLabel
-
-var _scanned_echo := false
-
+@onready var _health_bar: ProgressBar = $Interface/StatusPanel/Margin/Content/HealthBar
+@onready var _health_label: Label = $Interface/StatusPanel/Margin/Content/StatusHeader/HealthLabel
+@onready var _scanner_bar: ProgressBar = $Interface/StatusPanel/Margin/Content/ScannerBar
+@onready var _scanner_value: Label = $Interface/StatusPanel/Margin/Content/ScannerLine/ScannerValue
+@onready var _archive_label: Label = $Interface/ArchiveLabel
+@onready var _objective_chapter: Label = $Interface/ObjectivePanel/Margin/Content/Chapter
+@onready var _objective_label: Label = $Interface/ObjectivePanel/Margin/Content/ObjectiveLabel
+@onready var _objective_location: Label = $Interface/ObjectivePanel/Margin/Content/PrimaryLocation
+@onready var _objective_progress: Label = $Interface/ObjectivePanel/Margin/Content/PrimaryProgress
+@onready var _optional_rule: HSeparator = $Interface/ObjectivePanel/Margin/Content/OptionalRule
+@onready var _optional_header: Label = $Interface/ObjectivePanel/Margin/Content/OptionalHeader
+@onready var _optional_task: Label = $Interface/ObjectivePanel/Margin/Content/OptionalTask
+@onready var _optional_location: Label = $Interface/ObjectivePanel/Margin/Content/OptionalLocation
+@onready var _optional_progress: Label = $Interface/ObjectivePanel/Margin/Content/OptionalProgress
+@onready var _compass = $Interface/Compass
+@onready var _ability_label: Label = $Interface/AbilityPanel/Margin/AbilityLabel
 
 func _ready() -> void:
 	InventorySystem.inventory_changed.connect(_refresh_inventory)
@@ -28,16 +36,15 @@ func _ready() -> void:
 	EventBus.player_health_changed.connect(_on_player_health_changed)
 	EventBus.scanner_energy_changed.connect(_on_scanner_energy_changed)
 	EventBus.level_loaded.connect(_refresh_objectives)
-	EventBus.echo_revealed.connect(_on_echo_revealed)
 	EventBus.game_saved.connect(_refresh_objectives)
 	EventBus.campaign_progress_changed.connect(_refresh_objectives)
 	ArchiveSystem.echo_recorded.connect(_on_echo_recorded)
 	BaseUpgradeSystem.upgrade_built.connect(_on_upgrade_built)
 	_notice_timer.timeout.connect(_on_notice_timeout)
 	_wire_pause_menu()
-	_scanned_echo = ArchiveSystem.has_echo(&"echo_last_signal")
 	_refresh_inventory()
 	_prompt_label.text = ""
+	_prompt_panel.visible = false
 	_notice_label.text = ""
 	_refresh_archive()
 	_refresh_objectives()
@@ -86,50 +93,10 @@ func _current_objective_target() -> Node2D:
 			return candidate as Node2D
 	return null
 
-	var at_base := _current_level_path() == GameManager.BASE_SCENE_PATH
-	var has_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
-	var has_coil := BaseUpgradeSystem.is_built(&"scanner_coil")
-	var radio_built := BaseUpgradeSystem.is_built(&"radio_desk")
-	var rested := SaveManager.has_save()
-	var target_name := ""
-
-	if at_base:
-		if not has_broadcast:
-			target_name = "Outside" if has_coil else "ScannerCoilBench"
-		elif not radio_built:
-			target_name = "RadioDeskStation"
-		elif not rested:
-			target_name = "Bedroll"
-		else:
-			target_name = "Outside"
-	else:
-		if not has_broadcast:
-			if has_coil:
-				target_name = "MemoryEcho"
-			elif _has_coil_materials():
-				target_name = "BaseDoor"
-			elif InventorySystem.get_total_count() == 0:
-				target_name = "RoadsideCrate"
-			else:
-				target_name = "ShedLocker"
-		elif not radio_built or not rested:
-			target_name = "BaseDoor"
-		else:
-			target_name = "NorthSignal"
-
-	return level.find_child(target_name, true, false) as Node2D
-
-
-func _has_coil_materials() -> bool:
-	return InventorySystem.get_count(&"battery") >= 1 and InventorySystem.get_count(&"scrap") >= 2
-
-
-func _has_radio_materials() -> bool:
-	return InventorySystem.get_count(&"battery") >= 1 and InventorySystem.get_count(&"scrap") >= 3
-
 
 func _refresh_inventory() -> void:
-	_inv_header.text = "Items: %d" % InventorySystem.get_total_count()
+	var item_count := InventorySystem.get_total_count()
+	_inv_header.text = "FIELD KIT  /  %d %s" % [item_count, "ITEM" if item_count == 1 else "ITEMS"]
 
 	while _inv_list.get_child_count() > 0:
 		var old := _inv_list.get_child(0)
@@ -153,7 +120,7 @@ func _make_item_row(icon: Texture2D, text: String) -> HBoxContainer:
 
 	var tex := TextureRect.new()
 	tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	tex.custom_minimum_size = Vector2(26, 26)
+	tex.custom_minimum_size = Vector2(20, 20)
 	tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	tex.texture = icon
 	row.add_child(tex)
@@ -161,13 +128,15 @@ func _make_item_row(icon: Texture2D, text: String) -> HBoxContainer:
 	var label := Label.new()
 	label.text = text
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_color", Color(0.73, 0.75, 0.68, 1.0))
+	label.add_theme_font_size_override("font_size", 13)
 	row.add_child(label)
 	return row
 
 
 func _on_prompt_changed(text: String) -> void:
 	_prompt_label.text = text
+	_prompt_panel.visible = not text.strip_edges().is_empty()
 
 
 func _wire_pause_menu() -> void:
@@ -183,13 +152,13 @@ func _wire_pause_menu() -> void:
 
 
 func _on_pause_controls() -> void:
-	_pause_box.visible = false
+	_pause_panel.visible = false
 	_pause_controls.visible = true
 
 
 func _on_pause_controls_closed() -> void:
 	_pause_controls.visible = false
-	_pause_box.visible = true
+	_pause_panel.visible = true
 
 
 func _on_pause_main_menu() -> void:
@@ -213,7 +182,9 @@ func _on_paused_changed(is_paused: bool) -> void:
 	_pause_overlay.visible = is_paused
 	if not is_paused:
 		_pause_controls.visible = false
-		_pause_box.visible = true
+		_pause_panel.visible = true
+	elif not _pause_controls.visible:
+		_pause_box.get_node("Resume").grab_focus()
 
 
 func _on_notice_posted(text: String) -> void:
@@ -238,11 +209,7 @@ func _on_player_health_changed(current: float, maximum: float) -> void:
 func _on_scanner_energy_changed(current: float, maximum: float) -> void:
 	_scanner_bar.max_value = maximum
 	_scanner_bar.value = current
-
-
-func _on_echo_revealed(_data: MemoryEchoData) -> void:
-	_scanned_echo = true
-	_refresh_objectives()
+	_scanner_value.text = "%d%%" % roundi(100.0 * current / maxf(maximum, 0.001))
 
 
 func _on_echo_recorded(_data: MemoryEchoData) -> void:
@@ -255,102 +222,37 @@ func _on_upgrade_built(_data: BaseUpgradeData) -> void:
 
 
 func _refresh_archive() -> void:
-	_archive_label.text = "Echoes recovered: %d" % ArchiveSystem.get_count()
+	_archive_label.text = "ARCHIVE  /  %d TRACES" % ArchiveSystem.get_count()
 
 
 func _refresh_objectives() -> void:
 	var objective := CampaignSystem.get_objective()
 	var chapter := String(objective.get("chapter", "THE WORLD FORGOT US"))
 	var next := String(objective.get("text", "Find a way forward."))
-	var optional: Array[String] = []
-	if not WorldState.is_opened(&"keepsake_shelf_used"):
-		optional.append("[ ] Preserve a keepsake at the Railhome")
-	if not ArchiveSystem.has_echo(&"echo_names_wall"):
-		optional.append("[ ] Find the optional wall of names")
-	if optional.is_empty():
-		optional.append("[x] Optional memories preserved")
-	_objective_label.text = "%s\n\nNEXT\n%s\n\nOPTIONAL\n%s" % [
-		chapter,
-		next,
-		"\n".join(optional),
-	]
-	return
-	var has_supplies := InventorySystem.get_total_count() > 0
-	var has_last_broadcast := ArchiveSystem.has_echo(&"echo_last_signal")
-	var has_coil := BaseUpgradeSystem.is_built(&"scanner_coil")
-	var at_base := _current_level_path() == GameManager.BASE_SCENE_PATH
-	var radio_built := BaseUpgradeSystem.is_built(&"radio_desk")
-	var rested := SaveManager.has_save()
-	var shelf_used := WorldState.is_opened(&"keepsake_shelf_used")
-	var relay_clear := WorldState.is_defeated(&"RelayHollow") or WorldState.is_opened(&"RelayCache")
-	var lantern_lit := BaseUpgradeSystem.is_built(&"base_lantern")
+	_objective_chapter.text = chapter.to_upper()
+	_objective_label.text = next
+	_objective_location.text = String(objective.get("location", "NO VERIFIED LOCATION"))
+	_objective_progress.text = String(objective.get("progress", ""))
 
-	var lines: Array[String] = [
-		"Core Signal",
-		"Next: %s" % _next_objective_text(
-			has_supplies, has_coil, has_last_broadcast, at_base, radio_built, rested),
-		"",
-	]
-	lines.append(_objective_line(has_supplies, "Search first supplies"))
-	lines.append(_objective_line(has_coil, "Build Scanner Coil"))
-	lines.append(_objective_line(_scanned_echo or has_last_broadcast, "Reveal the mast echo"))
-	lines.append(_objective_line(has_last_broadcast, "Recover The Last Broadcast"))
-	lines.append(_objective_line(at_base or radio_built or rested, "Return to the Railhome"))
-	lines.append(_objective_line(radio_built, "Build the Radio Desk"))
-	lines.append(_objective_line(rested, "Rest and save"))
-	lines.append("")
-	lines.append("Useful extras")
-	lines.append(_objective_line(shelf_used, "Tend keepsakes at Memory Shelf"))
-	lines.append(_objective_line(relay_clear, "Clear guarded relay cache"))
-	lines.append(_objective_line(lantern_lit, "Wire the Signal Lantern"))
-	_objective_label.text = "\n".join(lines)
-
-
-func _objective_line(done: bool, text: String) -> String:
-	return "%s %s" % ["[x]" if done else "[ ]", text]
-
-
-func _next_objective_text(
-		has_supplies: bool,
-		has_coil: bool,
-		has_last_broadcast: bool,
-		at_base: bool,
-		radio_built: bool,
-		rested: bool) -> String:
-	if not has_supplies:
-		return "Follow the amber road east. Search the first glowing crate."
-	if not has_coil:
-		if at_base:
-			return "Build the Scanner Coil so the Mnemoscope can hold the mast signal."
-		if _has_coil_materials():
-			return "You have coil parts. Return west to the Railhome and build it."
-		return "Find battery and scrap in the car, kiosk, and shed. Food heals with F."
-	if not has_last_broadcast:
-		if at_base:
-			return "Scanner Coil built. Step outside and return to the fallen mast."
-		if not _scanned_echo:
-			return "Go to the fallen mast and press Q to scan the signal."
-		return "Interact with the revealed echo beside the fallen mast."
-	if not at_base and not radio_built and not rested:
-		return "Carry the memory west to the Railhome."
-	if not radio_built:
-		if _has_radio_materials():
-			return "Build the Radio Desk from the recovered memory and supplies."
-		return "Find enough battery and scrap for the Radio Desk. The relay cache can help."
-	if not rested:
-		return "Radio Desk online. Rest at the bedroll to save and finish the slice."
-	return "Demo endpoint reached. The north signal is an ending hook, not a playable next zone."
+	var optional := CampaignSystem.get_optional_focus()
+	var has_optional := not optional.is_empty()
+	for control in [_optional_rule, _optional_header, _optional_task, _optional_location, _optional_progress]:
+		control.visible = has_optional
+	if has_optional:
+		_optional_task.text = String(optional.get("task", optional.get("label", "Field lead")))
+		_optional_location.text = String(optional.get("location", "LOCATION UNKNOWN"))
+		_optional_progress.text = String(optional.get("progress", optional.get("status", "OPEN")))
 
 
 func _show_opening_hint() -> void:
 	if InventorySystem.get_total_count() == 0 and _current_level_path() != GameManager.BASE_SCENE_PATH:
-		_on_notice_posted("You wake on the dead road with the Railhome behind you.\nFollow the amber road, search supplies with E, and keep food for healing with F.")
+		_on_notice_posted("Cullbrook Services. Carriage 317 is west of the yard.\nFollow the amber lamps east and search the lit service crates.")
 
 
 func _update_ability_label() -> void:
 	var player := get_tree().get_first_node_in_group("player")
 	if player == null:
-		_ability_label.text = "[SPACE] Dodge   [I] Archive"
+		_ability_label.text = "Q SWEEP  /  F SUPPLIES  /  SPACE DODGE  /  I ARCHIVE"
 		return
 	var dodge_text := "READY"
 	var burst_text := "LOCKED"
@@ -362,7 +264,7 @@ func _update_ability_label() -> void:
 		if player.has_method("get_burst_cooldown_ratio"):
 			var burst_ratio := float(player.get_burst_cooldown_ratio())
 			burst_text = "READY" if burst_ratio <= 0.0 else "%d%%" % roundi((1.0 - burst_ratio) * 100.0)
-	_ability_label.text = "[SPACE] Dodge %s    [R] Burst %s    [I] Archive" % [dodge_text, burst_text]
+	_ability_label.text = "Q SWEEP  /  F SUPPLIES  /  SPACE %s  /  R DISCHARGE %s  /  I ARCHIVE" % [dodge_text, burst_text]
 
 
 func _current_level_path() -> String:

@@ -23,7 +23,7 @@ func interact(_player: Node2D) -> void:
 
 	if found.is_empty():
 		EventBus.notice_posted.emit(
-			"The memory shelf is bare. Keepsakes you carry home will rest here.")
+			"The shelf is bare. There are clean outlines where somebody's things used to sit.")
 		return
 
 	AudioManager.play(&"keepsake")
@@ -32,7 +32,7 @@ func interact(_player: Node2D) -> void:
 
 	var line := "On the memory shelf you set down %s." % _join(found)
 	if first_time:
-		line += "\nThe Railhome feels a little less forgotten - and a little more like home."
+		line += "\nCarriage 317 looks less borrowed now."
 	EventBus.notice_posted.emit(line)
 
 

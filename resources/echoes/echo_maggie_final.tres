@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"echo_maggie_final"
+title = "Maggie's Final Service Call"
+category = "Tollard Exchange"
+quality = "Authenticated recording"
+hint = "The tape begins with a house number and ends before the speaker can tidy it up."
+memory_text = "MAGGIE: 'Fourteen B. Nine rays on the lunch tin. This bit is me.' She has isolated Tollard's transmitter but cannot reach the battery room. 'Rafi, if Ellie comes, tell her I got this far. Do not tell her I was brave. I was furious and the stairs were awful.' After a long breath: 'El, check what you can. Say when you cannot. That is enough.'"
+keepsake_item = &""

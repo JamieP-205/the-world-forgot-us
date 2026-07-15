@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="The World Forgot Us"
-config/description="A complete 2D memory-survival story across the ashlands."
+config/description="A top-down road story about repairing a failed civil-warning network across an ash-covered Britain."
 run/main_scene="res://scenes/ui/main_menu.tscn"
 config/features=PackedStringArray("4.7")
 config/icon="res://icon.svg"

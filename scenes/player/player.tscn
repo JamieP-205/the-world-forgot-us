@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
 [ext_resource type="Script" path="res://scripts/scanner/scanner_component.gd" id="3_scanner"]
 [ext_resource type="PackedScene" path="res://scenes/scanner/scanner_pulse.tscn" id="4_pulse"]
-[ext_resource type="SpriteFrames" path="res://resources/spriteframes/player_placeholder_spriteframes.tres" id="6_pframes"]
+[ext_resource type="SpriteFrames" path="res://resources/spriteframes/player_painted_spriteframes.tres" id="6_pframes"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(18, 22)
@@ -43,10 +43,11 @@ color = Color(0.18, 0.2, 0.18, 1)
 polygon = PackedVector2Array(-13, -2, -8, -5, -8, 11, -13, 8)
 
 [node name="Visual" type="AnimatedSprite2D" parent="."]
-modulate = Color(0.72, 0.77, 0.66, 0.94)
+modulate = Color(1, 1, 1, 1)
+scale = Vector2(0.105, 0.105)
 sprite_frames = ExtResource("6_pframes")
 animation = &"idle_down"
-offset = Vector2(0, -5)
+offset = Vector2(0, -170)
 
 [node name="AshVeil" type="Polygon2D" parent="."]
 color = Color(0.08, 0.10, 0.09, 0.16)

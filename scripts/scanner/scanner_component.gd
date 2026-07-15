@@ -1,6 +1,6 @@
 class_name ScannerComponent
 extends Node2D
-## The Mnemoscope -- the player's memory scanner.
+## The trace receiver -- a fault-finding set rebuilt into a field scanner.
 
 ## How far the pulse reaches, in pixels.
 @export var pulse_radius: float = 220.0
@@ -46,7 +46,7 @@ func _on_upgrade_built(data) -> void:
 	if data != null and data.id == &"scanner_coil" and not _coil:
 		_apply_upgrades()
 		EventBus.notice_posted.emit(
-			"Scanner Coil online. The Mnemoscope reaches farther and recharges faster.")
+			"Search coil fitted. The receiver reaches farther and cools faster.")
 
 
 func _process(delta: float) -> void:
@@ -62,16 +62,16 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _try_pulse() -> void:
 	if _energy < energy_cost:
-		EventBus.notice_posted.emit("The Mnemoscope needs to recharge.")
+		EventBus.notice_posted.emit("The receiver coil is still cooling.")
 		return
 	var found := _has_scannable_in_range()
 	_energy -= energy_cost
 	EventBus.scanner_energy_changed.emit(_energy, max_energy)
 	_spawn_pulse_visual()
 	if found:
-		EventBus.notice_posted.emit("Mnemoscope pulse found a signal. Follow the cyan shimmer.")
+		EventBus.notice_posted.emit("The sweep caught a trace. Follow the blue interference.")
 	else:
-		EventBus.notice_posted.emit("Mnemoscope pulse fades. No echo nearby.")
+		EventBus.notice_posted.emit("The sweep comes back clean.")
 	EventBus.scanner_pulsed.emit(global_position, pulse_radius)
 
 

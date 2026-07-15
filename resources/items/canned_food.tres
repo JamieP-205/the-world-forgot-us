@@ -8,6 +8,6 @@ script = ExtResource("1")
 icon = ExtResource("2")
 id = &"canned_food"
 display_name = "Canned Food"
-description = "The label has faded to nothing. Nobody remembers what's inside, but it keeps you alive."
+description = "The label has washed off. The seal is sound and that is what matters."
 stack_size = 20
 category = "food"

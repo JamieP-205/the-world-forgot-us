@@ -1,8 +1,66 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/controls_panel.gd" id="1_ctl"]
 
+[sub_resource type="StyleBoxFlat" id="Style_card"]
+bg_color = Color(0.023, 0.031, 0.031, 0.99)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.62, 0.57, 0.58)
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+shadow_color = Color(0, 0, 0, 0.82)
+shadow_size = 22
+
+[sub_resource type="StyleBoxFlat" id="Style_key"]
+bg_color = Color(0.055, 0.068, 0.066, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.38, 0.59, 0.57, 0.62)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 10.0
+content_margin_top = 7.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+
+[sub_resource type="StyleBoxFlat" id="Style_callout"]
+bg_color = Color(0.04, 0.063, 0.062, 0.82)
+border_width_left = 2
+border_color = Color(0.27, 0.78, 0.78, 0.84)
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.06, 0.064, 0.052, 1)
+border_width_left = 2
+border_color = Color(0.72, 0.5, 0.23, 0.8)
+content_margin_left = 15.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+bg_color = Color(0.1, 0.095, 0.067, 1)
+border_width_left = 4
+border_color = Color(0.96, 0.67, 0.29, 1)
+content_margin_left = 15.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.33, 0.8, 0.8, 0.95)
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
 [node name="ControlsPanel" type="Control"]
+process_mode = 3
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,50 +70,278 @@ grow_vertical = 2
 script = ExtResource("1_ctl")
 
 [node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.05, 0.06, 0.07, 0.92)
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.006, 0.01, 0.01, 0.92)
 
-[node name="Box" type="VBoxContainer" parent="."]
+[node name="TopSignal" type="ColorRect" parent="."]
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -480.0
+offset_top = 48.0
+offset_right = 480.0
+offset_bottom = 50.0
+grow_horizontal = 2
+mouse_filter = 2
+color = Color(0.77, 0.53, 0.24, 0.54)
+
+[node name="Card" type="PanelContainer" parent="."]
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -300.0
-offset_top = -235.0
-offset_right = 300.0
-offset_bottom = 235.0
+offset_left = -480.0
+offset_top = -286.0
+offset_right = 480.0
+offset_bottom = 286.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 18
+theme_override_styles/panel = SubResource("Style_card")
 
-[node name="Title" type="Label" parent="Box"]
-theme_override_colors/font_color = Color(1, 0.86, 0.42, 1)
-theme_override_font_sizes/font_size = 30
-text = "CONTROLS"
-horizontal_alignment = 1
+[node name="Margin" type="MarginContainer" parent="Card"]
+layout_mode = 2
+theme_override_constants/margin_left = 42
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 42
+theme_override_constants/margin_bottom = 30
 
-[node name="List" type="Label" parent="Box"]
-theme_override_colors/font_color = Color(0.86, 0.9, 0.86, 1)
-theme_override_font_sizes/font_size = 20
-text = "Move          WASD  /  Arrow keys
-Interact      E
-Scan / reveal Q  /  Right click
-Attack        Left click  /  J
-Dodge         Space
-Memory Burst  R  (unlocks in Act II)
-Use ration    F
-Archive       I
-Pause         Esc"
+[node name="Box" type="VBoxContainer" parent="Card/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 14
 
-[node name="Hint" type="Label" parent="Box"]
-theme_override_colors/font_color = Color(0.7, 0.92, 0.92, 1)
-theme_override_font_sizes/font_size = 17
-text = "Scanner pulses reveal hidden echoes and Wraiths, and break boss shields. Preserve optional memories to unlock the secret ending."
-horizontal_alignment = 1
+[node name="Eyebrow" type="Label" parent="Card/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.36, 0.78, 0.77, 1)
+theme_override_font_sizes/font_size = 11
+text = "CARRIAGE 317 FIELD MANUAL  /  ISSUE 04"
+
+[node name="Header" type="HBoxContainer" parent="Card/Margin/Box"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Card/Margin/Box/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.9, 0.82, 0.64, 1)
+theme_override_font_sizes/font_size = 34
+text = "FIELD GUIDE"
+
+[node name="DismissHint" type="Label" parent="Card/Margin/Box/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.42, 0.45, 0.41, 1)
+theme_override_font_sizes/font_size = 11
+text = "SELECT RETURN TO CLOSE"
+vertical_alignment = 2
+
+[node name="Divider" type="HSeparator" parent="Card/Margin/Box"]
+layout_mode = 2
+
+[node name="SectionLabel" type="Label" parent="Card/Margin/Box"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.58, 0.34, 1)
+theme_override_font_sizes/font_size = 12
+text = "SURVIVAL INPUTS"
+
+[node name="Grid" type="GridContainer" parent="Card/Margin/Box"]
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 9
+columns = 4
+
+[node name="MoveAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "MOVE"
+vertical_alignment = 1
+
+[node name="MoveKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.85, 0.77, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "WASD  /  ARROW KEYS"
+vertical_alignment = 1
+
+[node name="InteractAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "INTERACT"
+vertical_alignment = 1
+
+[node name="InteractKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.72, 0.36, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "E"
+vertical_alignment = 1
+
+[node name="ScanAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "SCAN / REVEAL"
+vertical_alignment = 1
+
+[node name="ScanKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.86, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "Q  /  RIGHT MOUSE"
+vertical_alignment = 1
+
+[node name="AttackAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "MELEE"
+vertical_alignment = 1
+
+[node name="AttackKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.85, 0.77, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "J  /  LEFT MOUSE"
+vertical_alignment = 1
+
+[node name="DodgeAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "DODGE"
+vertical_alignment = 1
+
+[node name="DodgeKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.72, 0.36, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "SPACE"
+vertical_alignment = 1
+
+[node name="BurstAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "RECEIVER DISCHARGE"
+vertical_alignment = 1
+
+[node name="BurstKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.86, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "R  /  UNLOCKS IN ACT II"
+vertical_alignment = 1
+
+[node name="RationAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "USE RATION"
+vertical_alignment = 1
+
+[node name="RationKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.85, 0.77, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "F"
+vertical_alignment = 1
+
+[node name="ArchiveAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "ARCHIVE"
+vertical_alignment = 1
+
+[node name="ArchiveKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.86, 0.85, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "I"
+vertical_alignment = 1
+
+[node name="PauseAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "PAUSE"
+vertical_alignment = 1
+
+[node name="PauseKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.85, 0.77, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "ESC"
+vertical_alignment = 1
+
+[node name="EmptyAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+text = ""
+
+[node name="EmptyKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+text = ""
+
+[node name="Callout" type="PanelContainer" parent="Card/Margin/Box"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_callout")
+
+[node name="Margin" type="MarginContainer" parent="Card/Margin/Box/Callout"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 10
+
+[node name="Hint" type="Label" parent="Card/Margin/Box/Callout/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.78, 0.74, 1)
+theme_override_font_sizes/font_size = 13
+text = "TRACE RECEIVER  /  Sweeps expose hidden recordings and carrier Bleeds, and can overload insulated relay suits. Complete field records open safer choices at Tollard."
 autowrap_mode = 3
 
-[node name="Back" type="Button" parent="Box"]
-custom_minimum_size = Vector2(170, 42)
-size_flags_horizontal = 4
-text = "Back"
+[node name="Back" type="Button" parent="Card/Margin/Box"]
+custom_minimum_size = Vector2(210, 42)
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_colors/font_color = Color(0.87, 0.82, 0.7, 1)
+theme_override_colors/font_hover_color = Color(1, 0.77, 0.37, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/focus = SubResource("Style_button_focus")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_button_hover")
+text = "RETURN"
+alignment = 0

@@ -70,9 +70,9 @@ func _show_line() -> void:
 		_finish(-1)
 		return
 	_body.text = _lines[_line_index]
-	_progress.text = "%d / %d   [Enter or E]" % [_line_index + 1, _lines.size()]
-	_continue.text = "Continue" if _line_index < _lines.size() - 1 else (
-		"Choose" if not _choice_labels.is_empty() else "Close"
+	_progress.text = "RECORD %02d / %02d     ENTER  /  E" % [_line_index + 1, _lines.size()]
+	_continue.text = "CONTINUE" if _line_index < _lines.size() - 1 else (
+		"CHOOSE" if not _choice_labels.is_empty() else "CLOSE"
 	)
 	_continue.visible = true
 	_choices.visible = false
@@ -100,14 +100,14 @@ func _show_choices() -> void:
 	_clear_choices()
 	for i in _choice_labels.size():
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(0, 42)
-		button.text = "%d.  %s" % [i + 1, _choice_labels[i]]
+		button.custom_minimum_size = Vector2(0, 38)
+		button.text = "%02d  /  %s" % [i + 1, _choice_labels[i]]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		button.pressed.connect(_choose.bind(i))
 		_choices.add_child(button)
 	if _choices.get_child_count() > 0:
 		(_choices.get_child(0) as Button).grab_focus()
-	_progress.text = "Choose with mouse or number key"
+	_progress.text = "SELECT WITH MOUSE  /  NUMBER KEY"
 
 
 func _choose(index: int) -> void:

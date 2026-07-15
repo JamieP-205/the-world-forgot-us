@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"echo_bus_ledger"
+title = "Gwen Doyle's Last Run"
+category = "Ashmere Estate"
+quality = "Analogue record"
+hint = "The driver's ledger lists headcounts, not ticket numbers."
+memory_text = "GWEN DOYLE logs twenty-seven aboard, then crosses out the printed route to Tollard. 'The signs say east. Road control says west. I can see the school from here, so we are going to the school.' A child asks if that is allowed. Gwen says, 'It is my bus.' Twenty-seven names are checked in at Ashmere School."
+keepsake_item = &""

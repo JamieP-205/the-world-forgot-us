@@ -17,21 +17,28 @@ const GENERATED_LIGHT_NAME := "__LightingPoint"
 const PLAYER_LIGHT_NAME := "__LightingPlayerWarm"
 const OCCLUDER_PREFIX := "__LightingOccluder_"
 const NORMAL_META := &"lighting_normal_applied"
+const LOW_EFFECTS_SETTING := "rendering/environment/ashland_low_effects"
+const LIGHT_PRIORITY_META := &"lighting_priority"
+const SHADOW_PRIORITY_META := &"lighting_shadow_priority"
+const CAST_SHADOWS_META := &"lighting_cast_shadows"
 
 @export var player_light_enabled := true
-@export var player_light_radius := 155.0
-@export var player_light_energy := 0.78
-@export var max_level_lights := 18
-@export var max_shadowed_level_lights := 7
-@export var shadow_filter_smooth := 1.5
+@export var player_light_radius := 118.0
+@export var player_light_energy := 0.42
+@export var max_level_lights := 10
+@export var max_shadowed_level_lights := 1
+@export var shadow_filter_smooth := 3.0
 
 var _light_texture: ImageTexture
 var _canvas_texture_cache: Dictionary = {}
 var _sprite_frames_cache: Dictionary = {}
 var _normal_pair_count := 0
+var _polygon_normal_pair_count := 0
 var _occluder_count := 0
 var _level_light_count := 0
+var _shadowed_level_light_count := 0
 var _scanner_light_count := 0
+var _low_effects_enabled := false
 
 
 ## Convenience integration API. Calling this repeatedly is idempotent.
@@ -52,6 +59,7 @@ func _ready() -> void:
 		EventBus.level_loaded.connect(_on_level_loaded)
 	if not EventBus.scanner_pulsed.is_connected(_on_scanner_pulsed):
 		EventBus.scanner_pulsed.connect(_on_scanner_pulsed)
+	_configure_effect_quality()
 	call_deferred("refresh")
 
 
@@ -65,8 +73,10 @@ func _on_level_loaded() -> void:
 ## custom scenes can opt in without needing Main.get_current_level().
 func refresh(level_root: Node = null) -> void:
 	_normal_pair_count = 0
+	_polygon_normal_pair_count = 0
 	_occluder_count = 0
 	_level_light_count = 0
+	_shadowed_level_light_count = 0
 
 	var level := level_root if level_root != null else _find_level_root()
 	var player := get_tree().get_first_node_in_group("player")
@@ -84,32 +94,36 @@ func refresh(level_root: Node = null) -> void:
 func register_light(
 		anchor: Node2D,
 		tone: StringName = &"cyan",
-		radius: float = 135.0,
-		energy: float = 0.9,
+		radius: float = 120.0,
+		energy: float = 0.58,
 		shadows: bool = true) -> PointLight2D:
 	if anchor == null:
 		return null
-	var color := Color(0.32, 0.92, 1.0) if tone == &"cyan" \
-		else Color(1.0, 0.66, 0.28)
+	var color := Color(0.46, 0.82, 0.88) if tone == &"cyan" \
+		else Color(1.0, 0.78, 0.52)
 	var node_name := "__LightingRegistered_%s" % String(tone)
 	return _attach_light(anchor, node_name, color, radius, energy, shadows)
 
 
 ## Public transient-light API; EventBus.scanner_pulsed calls it automatically.
 func spawn_scanner_light(origin: Vector2, radius: float) -> PointLight2D:
+	# Scanner input can repeat while the previous wash is still fading. Keeping
+	# only two washes prevents additive cyan from flattening the whole scene.
+	if _scanner_light_count >= 2:
+		return null
 	var light := PointLight2D.new()
 	light.name = "__LightingScannerPulse"
 	add_child(light)
 	light.global_position = origin
-	_configure_light(light, Color(0.28, 0.94, 1.0), radius, 2.15, true)
+	_configure_light(light, Color(0.46, 0.86, 0.93), radius * 0.82, 0.92, false)
 	var final_scale := light.texture_scale
-	light.texture_scale = final_scale * 0.14
+	light.texture_scale = final_scale * 0.22
 	_scanner_light_count += 1
 
 	var tween := light.create_tween().set_parallel(true)
-	tween.tween_property(light, "texture_scale", final_scale, 0.58)\
+	tween.tween_property(light, "texture_scale", final_scale, 0.52)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tween.tween_property(light, "energy", 0.0, 0.58)\
+	tween.tween_property(light, "energy", 0.0, 0.52)\
 		.set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
 	tween.chain().tween_callback(func() -> void:
 		_scanner_light_count = maxi(_scanner_light_count - 1, 0)
@@ -121,11 +135,14 @@ func spawn_scanner_light(origin: Vector2, radius: float) -> PointLight2D:
 func get_stats() -> Dictionary:
 	return {
 		"normal_pairs": _normal_pair_count,
+		"polygon_normal_pairs": _polygon_normal_pair_count,
 		"occluders": _occluder_count,
 		"level_lights": _level_light_count,
+		"shadowed_level_lights": _shadowed_level_light_count,
 		"scanner_lights": _scanner_light_count,
 		"canvas_cache": _canvas_texture_cache.size(),
 		"animation_cache": _sprite_frames_cache.size(),
+		"low_effects": _low_effects_enabled,
 	}
 
 
@@ -145,6 +162,26 @@ func _find_level_root() -> Node:
 	return null
 
 
+func _configure_effect_quality() -> void:
+	# Web builds default to a single screen sample. Desktop keeps the richer
+	# three-sample wash. Projects can override either default without a UI or a
+	# scene change by defining this ProjectSetting as a boolean.
+	_low_effects_enabled = bool(ProjectSettings.get_setting(
+		LOW_EFFECTS_SETTING,
+		OS.has_feature("web")
+	))
+	var host := get_parent()
+	if host == null:
+		return
+	var grade := host.get_node_or_null("ScreenGrade/Grade") as CanvasItem
+	if grade == null or not (grade.material is ShaderMaterial):
+		return
+	(grade.material as ShaderMaterial).set_shader_parameter(
+		"low_effects",
+		_low_effects_enabled
+	)
+
+
 # --- Normal maps -----------------------------------------------------------
 
 func _apply_normal_maps(root_node: Node) -> void:
@@ -155,6 +192,8 @@ func _apply_normal_maps(root_node: Node) -> void:
 			_upgrade_sprite(current as Sprite2D)
 		elif current is AnimatedSprite2D:
 			_upgrade_animated_sprite(current as AnimatedSprite2D)
+		elif current is Polygon2D:
+			_upgrade_polygon(current as Polygon2D)
 		for child in current.get_children():
 			stack.append(child as Node)
 
@@ -170,7 +209,28 @@ func _upgrade_sprite(sprite: Sprite2D) -> void:
 	if upgraded != sprite.texture:
 		sprite.texture = upgraded
 		_normal_pair_count += 1
+	elif _texture_has_normal(sprite.texture):
+		_normal_pair_count += 1
 	sprite.set_meta(NORMAL_META, true)
+
+
+func _upgrade_polygon(polygon: Polygon2D) -> void:
+	if polygon.texture == null:
+		return
+	if bool(polygon.get_meta(NORMAL_META, false)):
+		if _texture_has_normal(polygon.texture):
+			_normal_pair_count += 1
+			_polygon_normal_pair_count += 1
+		return
+	var upgraded := _upgrade_texture(polygon.texture)
+	if upgraded != polygon.texture:
+		polygon.texture = upgraded
+		_normal_pair_count += 1
+		_polygon_normal_pair_count += 1
+	elif _texture_has_normal(polygon.texture):
+		_normal_pair_count += 1
+		_polygon_normal_pair_count += 1
+	polygon.set_meta(NORMAL_META, true)
 
 
 func _upgrade_animated_sprite(sprite: AnimatedSprite2D) -> void:
@@ -248,9 +308,32 @@ func _upgrade_texture(texture: Texture2D) -> Texture2D:
 		return texture
 	if texture is AtlasTexture:
 		var source_atlas := texture as AtlasTexture
+		var atlas_cache_key := _atlas_cache_key(source_atlas)
+		if _canvas_texture_cache.has(atlas_cache_key):
+			return _canvas_texture_cache[atlas_cache_key] as Texture2D
 		var upgraded_atlas := _upgrade_texture(source_atlas.atlas)
 		if upgraded_atlas == source_atlas.atlas:
 			return texture
+		# CanvasTexture must remain outermost so the renderer sees its normal
+		# channel. Cropping a CanvasTexture inside an AtlasTexture can preserve
+		# the diffuse pixels while silently dropping normal lighting.
+		if upgraded_atlas is CanvasTexture:
+			var upgraded_canvas := upgraded_atlas as CanvasTexture
+			if upgraded_canvas.diffuse_texture == null or upgraded_canvas.normal_texture == null:
+				return texture
+			var diffuse_region := _copy_atlas_region(
+				source_atlas,
+				upgraded_canvas.diffuse_texture
+			)
+			var normal_region := _copy_atlas_region(
+				source_atlas,
+				upgraded_canvas.normal_texture
+			)
+			var region_canvas := CanvasTexture.new()
+			region_canvas.diffuse_texture = diffuse_region
+			region_canvas.normal_texture = normal_region
+			_canvas_texture_cache[atlas_cache_key] = region_canvas
+			return region_canvas
 		var atlas_copy := AtlasTexture.new()
 		atlas_copy.atlas = upgraded_atlas
 		atlas_copy.region = source_atlas.region
@@ -274,6 +357,27 @@ func _upgrade_texture(texture: Texture2D) -> Texture2D:
 	canvas.normal_texture = normal
 	_canvas_texture_cache[diffuse_path] = canvas
 	return canvas
+
+
+func _copy_atlas_region(source: AtlasTexture, atlas: Texture2D) -> AtlasTexture:
+	var copy := AtlasTexture.new()
+	copy.atlas = atlas
+	copy.region = source.region
+	copy.margin = source.margin
+	copy.filter_clip = source.filter_clip
+	return copy
+
+
+func _atlas_cache_key(texture: AtlasTexture) -> String:
+	var atlas_path := ""
+	if texture.atlas != null:
+		atlas_path = texture.atlas.resource_path
+	return "atlas|%s|%s|%s|%s" % [
+		atlas_path,
+		str(texture.region),
+		str(texture.margin),
+		str(texture.filter_clip),
+	]
 
 
 func _normal_path_for(diffuse_path: String) -> String:
@@ -302,7 +406,7 @@ func _ensure_player_light(player: Node) -> void:
 	light.position = Vector2(0, -5)
 	_configure_light(
 		light,
-		Color(1.0, 0.66, 0.31),
+		Color(1.0, 0.80, 0.57),
 		player_light_radius,
 		player_light_energy,
 		true
@@ -310,35 +414,121 @@ func _ensure_player_light(player: Node) -> void:
 
 
 func _generate_level_lights(root_node: Node) -> void:
-	var shadowed := 0
+	var candidates: Array[Dictionary] = []
 	var stack: Array[Node] = [root_node]
-	while not stack.is_empty() and _level_light_count < max_level_lights:
+	while not stack.is_empty():
 		var current: Node = stack.pop_back()
-		if current is Node2D and not (current is PointLight2D) \
-				and not (current is LightOccluder2D):
+		if current is Node2D and not (current is PointLight2D) and not (current is LightOccluder2D):
 			var anchor := current as Node2D
 			var profile := _light_profile(anchor)
 			if not profile.is_empty():
-				var cast_shadows := shadowed < max_shadowed_level_lights
-				var attached := _attach_light(
-					anchor,
-					GENERATED_LIGHT_NAME,
-					profile["color"],
-					float(profile["radius"]),
-					float(profile["energy"]),
-					cast_shadows
-				)
-				if attached != null:
-					_level_light_count += 1
-					if cast_shadows:
-						shadowed += 1
+				candidates.append({
+					"anchor": anchor,
+					"profile": profile,
+					"path": String(root_node.get_path_to(anchor)),
+					"priority": _light_priority(anchor),
+					"shadow_priority": _shadow_priority(anchor),
+				})
 		for child in current.get_children():
 			stack.append(child as Node)
+
+	# Scene sibling order must not decide which practical light casts shadows.
+	candidates.sort_custom(_light_candidate_before)
+	var selected: Array[Dictionary] = []
+	var selected_positions: Array[Vector2] = []
+	for candidate in candidates:
+		if selected.size() >= max_level_lights:
+			break
+		var anchor := candidate["anchor"] as Node2D
+		var separated := true
+		for position in selected_positions:
+			if anchor.global_position.distance_to(position) < 104.0:
+				separated = false
+				break
+		if not separated:
+			continue
+		selected.append(candidate)
+		selected_positions.append(anchor.global_position)
+
+	var shadow_ranked := selected.duplicate()
+	shadow_ranked.sort_custom(_shadow_candidate_before)
+	var shadow_anchors: Array[Node2D] = []
+	for candidate in shadow_ranked:
+		if shadow_anchors.size() >= max_shadowed_level_lights:
+			break
+		var profile := candidate["profile"] as Dictionary
+		if bool(profile.get("shadow_eligible", false)):
+			shadow_anchors.append(candidate["anchor"] as Node2D)
+	_shadowed_level_light_count = shadow_anchors.size()
+
+	for candidate in selected:
+		var anchor := candidate["anchor"] as Node2D
+		var profile := candidate["profile"] as Dictionary
+		var attached := _attach_light(
+			anchor,
+			GENERATED_LIGHT_NAME,
+			profile["color"],
+			float(profile["radius"]),
+			float(profile["energy"]),
+			anchor in shadow_anchors
+		)
+		if attached != null:
+			_level_light_count += 1
+
+
+func _light_candidate_before(a: Dictionary, b: Dictionary) -> bool:
+	var a_priority := float(a.get("priority", 0.0))
+	var b_priority := float(b.get("priority", 0.0))
+	if not is_equal_approx(a_priority, b_priority):
+		return a_priority > b_priority
+	return String(a.get("path", "")) < String(b.get("path", ""))
+
+
+func _shadow_candidate_before(a: Dictionary, b: Dictionary) -> bool:
+	var a_priority := float(a.get("shadow_priority", 0.0))
+	var b_priority := float(b.get("shadow_priority", 0.0))
+	if not is_equal_approx(a_priority, b_priority):
+		return a_priority > b_priority
+	return String(a.get("path", "")) < String(b.get("path", ""))
+
+
+func _light_priority(anchor: Node2D) -> float:
+	if anchor.has_meta(LIGHT_PRIORITY_META):
+		return float(anchor.get_meta(LIGHT_PRIORITY_META))
+	var lower := String(anchor.name).to_lower()
+	var priority := 100.0
+	if anchor.is_in_group("lighting_hero"):
+		priority += 1000.0
+	if "lantern" in lower:
+		priority += 500.0
+	elif "mnemoscope" in lower or "console" in lower or "radio" in lower:
+		priority += 400.0
+	elif "relay" in lower or "signal" in lower or "firsttone" in lower:
+		priority += 300.0
+	elif "echo" in lower or "warden" in lower:
+		priority += 200.0
+	elif "glow" in lower:
+		priority += 100.0
+	return priority
+
+
+func _shadow_priority(anchor: Node2D) -> float:
+	if anchor.has_meta(SHADOW_PRIORITY_META):
+		return float(anchor.get_meta(SHADOW_PRIORITY_META))
+	var lower := String(anchor.name).to_lower()
+	var priority := _light_priority(anchor)
+	if anchor.is_in_group("lighting_shadow_hero"):
+		priority += 2000.0
+	if "lantern" in lower:
+		priority += 700.0
+	elif "console" in lower or "radio" in lower:
+		priority += 350.0
+	return priority
 
 
 func _light_profile(anchor: Node2D) -> Dictionary:
 	var lower := String(anchor.name).to_lower()
-	if lower.begins_with("__lighting"):
+	if lower.begins_with("__lighting") or not anchor.is_visible_in_tree():
 		return {}
 
 	var explicit_cyan := anchor.is_in_group("lighting_cyan")
@@ -377,25 +567,41 @@ func _light_profile(anchor: Node2D) -> Dictionary:
 	if explicit_amber or "lantern" in lower:
 		cyan = false
 
-	var radius := 118.0
-	var energy := 0.72
+	var radius := 102.0
+	var energy := 0.38
 	if "glow" in lower:
-		radius = 155.0
-		energy = 0.82
+		radius = 132.0
+		energy = 0.43
 	if "relay" in lower or "signal" in lower:
-		radius = 168.0
-		energy = 0.92
+		radius = 145.0
+		energy = 0.50
 	if "echo" in lower or "wraith" in lower:
-		radius = 112.0
-		energy = 0.86
+		radius = 96.0
+		energy = 0.46
 	if "warden" in lower:
-		radius = 185.0
-		energy = 1.05
+		radius = 154.0
+		energy = 0.56
+
+	var shadow_preferred := (
+		not cyan
+		and (
+			explicit_amber
+			or "lantern" in lower
+			or "console" in lower
+			or "radio" in lower
+			or "glow" in lower
+		)
+	)
+	var shadow_eligible := bool(anchor.get_meta(
+		CAST_SHADOWS_META,
+		shadow_preferred
+	))
 
 	return {
-		"color": Color(0.30, 0.91, 1.0) if cyan else Color(1.0, 0.62, 0.24),
+		"color": Color(0.45, 0.82, 0.88) if cyan else Color(1.0, 0.77, 0.50),
 		"radius": radius,
 		"energy": energy,
+		"shadow_eligible": shadow_eligible,
 	}
 
 
@@ -408,7 +614,9 @@ func _attach_light(
 		shadows: bool) -> PointLight2D:
 	var existing := anchor.get_node_or_null(NodePath(node_name))
 	if existing is PointLight2D:
-		return existing as PointLight2D
+		var existing_light := existing as PointLight2D
+		_configure_light(existing_light, color, radius, energy, shadows)
+		return existing_light
 	var light := PointLight2D.new()
 	light.name = node_name
 	anchor.add_child(light)
@@ -425,7 +633,9 @@ func _configure_light(
 		shadows: bool) -> void:
 	light.texture = _get_light_texture()
 	light.texture_scale = maxf(radius * 2.0 / float(LIGHT_TEXTURE_SIZE), 0.05)
-	light.height = maxf(radius * 0.52, 34.0)
+	# A higher virtual lamp keeps normal relief broad and painterly instead of
+	# embossing every sprite edge into a metallic-looking ridge.
+	light.height = maxf(radius * 0.78, 48.0)
 	light.color = color
 	light.energy = energy
 	light.shadow_enabled = shadows
@@ -444,11 +654,16 @@ func _get_light_texture() -> ImageTexture:
 		Image.FORMAT_RGBA8
 	)
 	var center := Vector2(LIGHT_TEXTURE_SIZE - 1, LIGHT_TEXTURE_SIZE - 1) * 0.5
-	var max_distance := center.length()
+	# Normalize to the nearest edge, not the corner. The previous corner-based
+	# radius left visible energy on the texture's square edges, which read as a
+	# giant polygon when several lights overlapped.
+	var max_distance := center.x
 	for y in LIGHT_TEXTURE_SIZE:
 		for x in LIGHT_TEXTURE_SIZE:
 			var distance := Vector2(x, y).distance_to(center) / max_distance
-			var falloff := pow(clampf(1.0 - distance, 0.0, 1.0), 1.65)
+			var linear := clampf(1.0 - distance, 0.0, 1.0)
+			var falloff := smoothstep(0.0, 1.0, linear)
+			falloff = pow(falloff, 1.22)
 			image.set_pixel(x, y, Color(1.0, 1.0, 1.0, falloff))
 	_light_texture = ImageTexture.create_from_image(image)
 	return _light_texture
@@ -467,14 +682,22 @@ func _generate_occluders(root_node: Node) -> void:
 
 
 func _add_body_occluders(body: StaticBody2D) -> void:
-	# CollisionShape2D children authored directly under StaticBody2D cover the
-	# project's runtime obstacles and world bounds. Their local transform is
-	# copied so rotation/scale/offset remain pixel-perfect with physics.
+	# Shadow casting is structural, not a mirror of physics collision. Loot
+	# crates contain a nested SolidBody, while exits and interactables may also
+	# grow blocking children at runtime; all of those make implausibly large
+	# trapezoids when lit from nearby. Limit occlusion to authored buildings and
+	# substantial world masses.
+	if not _body_is_structural(body):
+		return
+	# Direct children preserve authored transforms while avoiding trigger
+	# volumes elsewhere in the subtree.
 	for child in body.get_children():
 		if not (child is CollisionShape2D):
 			continue
 		var collision := child as CollisionShape2D
 		if collision.disabled or collision.shape == null:
+			continue
+		if not _shape_is_structural(collision.shape):
 			continue
 		var points := _occluder_points(collision.shape)
 		if points.is_empty():
@@ -483,6 +706,7 @@ func _add_body_occluders(body: StaticBody2D) -> void:
 		var existing := body.get_node_or_null(NodePath(occluder_name))
 		if existing is LightOccluder2D:
 			_occluder_count += 1
+			_suppress_baked_footprint(body)
 			continue
 
 		var polygon := OccluderPolygon2D.new()
@@ -496,6 +720,65 @@ func _add_body_occluders(body: StaticBody2D) -> void:
 		body.add_child(occluder)
 		occluder.transform = collision.transform
 		_occluder_count += 1
+		_suppress_baked_footprint(body)
+
+
+func _suppress_baked_footprint(body: StaticBody2D) -> void:
+	# Procedural campaign buildings have a soft fallback footprint for scenes
+	# without live lighting. Once a real occluder exists, drawing both produces
+	# an opaque double shadow. Only exact opt-in names/metadata are suppressed;
+	# authored contact shadows such as vehicle undersides remain untouched.
+	for child in body.get_children():
+		if not (child is CanvasItem):
+			continue
+		var lower := String(child.name).to_lower()
+		if lower == "footprintshadow" or bool(child.get_meta("lighting_baked_shadow", false)):
+			(child as CanvasItem).visible = false
+
+
+func _body_is_structural(body: StaticBody2D) -> bool:
+	# Any StaticBody nested under an interaction trigger is implementation
+	# detail (not level architecture), most notably LootContainer/SolidBody.
+	var ancestor := body.get_parent()
+	while ancestor != null:
+		if ancestor is Area2D:
+			return false
+		ancestor = ancestor.get_parent()
+
+	var lower := String(body.name).to_lower()
+	for fragment in ["solidbody", "loot", "crate", "cache", "exit", "trigger", "beacon"]:
+		if fragment in lower:
+			return false
+
+	# Collision-only nodes are invisible map bounds; small visible bodies are
+	# props. A qualifying body must have both a visible authored representation
+	# and at least one building-scale collision shape.
+	var has_visible_geometry := false
+	for child in body.get_children():
+		if child is CollisionShape2D or child is LightOccluder2D:
+			continue
+		if child is CanvasItem and (child as CanvasItem).visible:
+			has_visible_geometry = true
+			break
+	if not has_visible_geometry:
+		return false
+	for child in body.get_children():
+		if child is CollisionShape2D:
+			var collision := child as CollisionShape2D
+			if not collision.disabled and _shape_is_structural(collision.shape):
+				return true
+	return false
+
+
+func _shape_is_structural(shape: Shape2D) -> bool:
+	if shape is RectangleShape2D:
+		var size := (shape as RectangleShape2D).size
+		# Both dimensions matter: thin walls/canopies project the longest and
+		# hardest wedges, despite covering very little visible mass.
+		return minf(size.x, size.y) >= 60.0 and maxf(size.x, size.y) >= 145.0
+	if shape is CircleShape2D:
+		return (shape as CircleShape2D).radius >= 72.0
+	return false
 
 
 func _occluder_points(shape: Shape2D) -> PackedVector2Array:

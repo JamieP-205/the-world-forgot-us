@@ -1,75 +1,78 @@
 # The World Forgot Us
 
-[![Godot 4.7](https://img.shields.io/badge/Godot-4.7-478CBF?logo=godot-engine&logoColor=white)](https://godotengine.org/)
-[![Deploy to GitHub Pages](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml/badge.svg)](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml)
-[![MIT License](https://img.shields.io/badge/license-MIT-d6a95d.svg)](LICENSE)
+[![Build and deploy Godot Web](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml/badge.svg)](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml)
 
-> In this world, survival is not enough. Someone has to remember.
+**[Play the browser build](https://jamiep-205.github.io/the-world-forgot-us/)** — keyboard and mouse recommended.
 
-**The World Forgot Us** is a complete compact 2D memory-survival game created by Jamie Parr. Explore an ash-covered Britain, fight signal-corrupted enemies, recover memories the world has erased, rebuild the Railhome, and decide what humanity should do with the machine that caused the Forgetting.
+A top-down Godot game set around a failed British civil-warning network. You play Ellie Ward, following recordings left by her sister through Cullbrook Services, Ashmere Estate, Wrenfield Relay Station and Tollard Exchange.
 
-[Play in your browser](https://jamiep-205.github.io/the-world-forgot-us/) · [Read the design bible](master-design-bible.md) · [Report a bug](https://github.com/JamieP-205/the-world-forgot-us/issues)
+I started this as a small vertical slice while learning Godot. It has grown into a playable four-area campaign with saving, combat, upgrades, optional records and three endings. It is still a personal project in active development: the systems and browser build are further along than the art, level composition and amount of optional content.
 
-![The World Forgot Us art direction](assets/source/generated/style/style_board.png)
+## Why I built it
 
-## The game
+I wanted the exploration, combat and story to depend on the same tool. The Trace Receiver reveals recordings in the environment, interrupts enemy shielding and helps Ellie work out which messages can be trusted. Back at Carriage 317, recovered parts repair the shortwave desk and open the road north.
 
-This repository contains the full source and browser build pipeline for a handcrafted 35-50 minute narrative campaign:
+The setting also gave me a useful technical problem to work through: campaign state has to survive scene changes, saves and a browser export without turning every map into a separate set of one-off systems.
 
-- **Act I - Rustway:** scavenge a ruined petrol-station road, build the Scanner Coil, recover The Last Broadcast, and bring the Radio Desk online.
-- **Act II - Ashmere Verge:** answer Mara Venn's delayed signal and uncover why the missing posters know the protagonist's name.
-- **Act III - Broadcast Fields:** restore three memory relays while fighting Hollows, scan-dependent Static Wraiths, and the shielded Relay Husk.
-- **Finale - Choir Core:** survive the Choir Warden and choose the Archive, Silence, or secret Choir ending.
+## What is in it
 
-Progress saves between sessions. Optional echoes, keepsakes, and the Memory Shelf determine whether the third ending is available.
+- Four connected areas, from the service road at Cullbrook to the controls under Tollard Exchange
+- Directional melee, a dodge, healing supplies, Trace Receiver sweeps and an unlockable receiver discharge
+- Ten recoverable traces, two optional radio repairs and three ending routes
+- A small base with a shortwave desk, receiver upgrades, lighting and a keepsake shelf
+- Local save/load, death recovery, objectives, dialogue and an in-game trace archive
+- Real-time 2D lights, generated normal maps and shadow occluders
+- A single-threaded Web export preset with an automated GitHub Actions build and check pipeline
 
-## Highlights
+## The thing that shaped the code
 
-- Four authored regions with backtracking, route landmarks, loot loops, environmental storytelling, optional discoveries, and boss arenas.
-- Responsive top-down combat with directional melee, invulnerable dodge, healing rations, scanner reveals, boss shield breaks, and the unlockable Memory Burst.
-- Three enemy archetypes: Hollow, Static Wraith, and the phased Relay Husk / Choir Warden boss.
-- Five recoverable memory echoes, a readable in-game Archive, staged dialogue, explicit objectives, compass guidance, save/load, death recovery, and three endings.
-- Railhome upgrades including the Scanner Coil, Radio Desk, Signal Lantern, Memory Shelf, storage, and rest/save point.
-- Real-time Godot 2D lighting with normal-mapped sprites, dynamic PointLight2D sources, scanner flashes, geometry-derived LightOccluder2D shadows, and chapter-specific colour palettes.
-- A custom memory-lantern chiaroscuro grade: cold ash shadows, warm survivor light, cyan echo illumination, restrained grain, vignette, and memory-only chromatic fracture.
-- Procedural sound design and atmospheric drone generated in-engine, with distinct cues for combat, scanning, dialogue, relays, memories, building, and endings.
-- Mouse and keyboard support, visible telegraphs, objective guidance, fullscreen Web mode, and a custom accessible browser launch shell.
+Cullbrook is an authored Godot scene. The other three areas are assembled by a shared runtime builder so I could iterate on the campaign without copying the same placement code into several scenes.
+
+That kept the project moving, but it is also one reason the later maps can feel more repeated than Cullbrook. Replacing shared shapes with more authored landmarks and environmental routes is one of the main jobs left.
 
 ## Controls
 
 | Action | Input |
 | --- | --- |
-| Move | WASD or Arrow keys |
+| Move | WASD or arrow keys |
 | Interact / advance dialogue | E |
-| Melee attack | J or Left-click |
-| Mnemoscope scan | Q or Right-click |
+| Melee attack | J or left-click |
+| Trace Receiver sweep | Q or right-click |
 | Dodge | Space |
-| Memory Burst | R, unlocked in Act II |
-| Eat a ration | F |
-| Open Archive | I |
+| Receiver discharge | R, after the Ashmere workshop repair |
+| Use healing supplies | F |
+| Open trace archive | I |
 | Pause | Esc |
 
-Scanner pulses reveal memory echoes and Static Wraiths. They also disable boss shields for a short damage window.
+The Trace Receiver reveals nearby traces and exposed enemies. Its sweep also interrupts the Linesman and Custodian shields for a short damage window.
 
-## Run locally
+## Files
 
-Requirements:
+- `scenes/` maps, player, enemies, world objects and UI
+- `scripts/` gameplay, campaign state, saving, procedural audio and rendering
+- `resources/` items, upgrades, traces and animation data
+- `assets/source/generated/` source image sheets and concept references
+- `assets/processed/` sliced props, painted character concepts, fallback sheets and normal maps used by the game
+- `tools/` asset-processing scripts and the deterministic campaign smoke test
+- `web/` the browser shell and Web-template installer
 
-- [Godot 4.7](https://github.com/godotengine/godot-builds/releases/tag/4.7-stable)
+Asset origins and processing steps are listed in [ASSET_CREDITS.md](ASSET_CREDITS.md).
 
-Open [project.godot](project.godot) in Godot and press **F6**, or run:
+## Running it
+
+The project currently targets [Godot 4.7](https://godotengine.org/). Open [project.godot](project.godot) and press **F5**, or run it from PowerShell:
 
 ```powershell
 & "C:\path\to\Godot_v4.7-stable_win64_console.exe" --path .
 ```
 
-The project starts at the title screen. Saves live in Godot's per-user `user://savegame.json` location.
+The configured main scene is the title screen. Desktop saves use Godot's per-user `user://savegame.json`; browser saves stay in that browser's site storage.
 
-## Build and serve the Web edition
+## Building the Web version
 
-The committed `Web` export preset is single-threaded, so a normal static host works without cross-origin isolation headers.
+The committed Web preset uses Godot's single-threaded browser template, so it can run from a normal static host without cross-origin isolation headers.
 
-Install only the official Web template from Godot's release archive:
+Install the official Godot 4.7 Web templates once:
 
 ```powershell
 python web/install_godot_web_template.py `
@@ -79,7 +82,7 @@ python web/install_godot_web_template.py `
   --template web_nothreads_release.zip
 ```
 
-Export and host:
+Export and serve the build:
 
 ```powershell
 New-Item -ItemType Directory -Force builds\web
@@ -87,50 +90,59 @@ New-Item -ItemType Directory -Force builds\web
 python -m http.server 8060 --bind 127.0.0.1 --directory builds\web
 ```
 
-Open <http://127.0.0.1:8060/>.
+Then open <http://127.0.0.1:8060/> in a current browser with WebGL 2 and hardware acceleration enabled.
 
-## Quality checks
+## Checks
 
-Run the complete deterministic campaign smoke test with an isolated user-data directory:
+The main deterministic check loads the required scenes and resources, walks the four campaign areas, verifies the persistent HUD and endings, and checks live normal-map, light and shadow-occluder setup.
 
 ```powershell
 $env:APPDATA = "$PWD\.godot\complete_smoke_appdata"
 & "C:\path\to\Godot_v4.7-stable_win64_console.exe" --headless --path . --scene res://tools/complete_game_smoke.tscn
 ```
 
-Expected output:
+Expected result:
 
 ```text
 COMPLETE_GAME_SMOKE: PASS
 ```
 
-The test loads every required scene and resource, traverses all four chapters, verifies both bosses and the persistent HUD, checks runtime normal-map pairing plus generated shadow lights/occluders, and resolves a complete ending.
+Normal maps are deterministic and can be checked separately after installing Pillow and NumPy:
 
-## Project structure
-
-```text
-assets/                 Source and processed game art
-resources/              Items, upgrades, echoes, and animation data
-scenes/                 Maps, player, enemies, world objects, and UI
-scripts/                Modular gameplay, campaign, rendering, and UI code
-shaders/                Memory-lantern screen grade
-tools/                  Asset and end-to-end verification tooling
-web/                    Custom browser shell and template installer
-.github/workflows/      Automated GitHub Pages export and deployment
+```powershell
+python tools/generate_normal_maps.py --check
 ```
 
-Key systems are deliberately modular: `CampaignSystem`, `SaveManager`, `WorldState`, `InventorySystem`, `ArchiveSystem`, `BaseUpgradeSystem`, `LightingDirector`, player abilities, enemy AI, and reusable interactables communicate through a small event bus.
+GitHub Pages is configured to deploy through GitHub Actions. The workflow's default `GITHUB_TOKEN` builds and publishes the browser release on each push to `main`.
 
-## GitHub Pages
+Pushes to `main` verify generated normal maps, import the project, run the smoke test, export the Web build, check the expected HTML/JavaScript/WebAssembly/PCK files and then publish them through GitHub Pages.
 
-Every push to `main` or `master` runs the Pages workflow. It downloads the verified Godot 4.7 editor, extracts only the single-threaded Web template from the official archive, imports the project, exports the custom Web shell, validates the `.wasm`, `.pck`, and JavaScript artifacts, and deploys them to GitHub Pages.
+## Known limitations
 
-## Contributing and security
+- Keyboard and mouse are the tested controls. There is no finished controller or touch layout.
+- The Web build requires WebGL 2. Browser or driver settings can still prevent it from starting.
+- Several source sheets were generated with image tools. Painted player/enemy concepts are live, but their directional and action sets remain limited and the wider visual style is not final.
+- Ashmere, Wrenfield and Tollard still share a runtime construction system and need more hand-authored routes, landmarks and side stories.
+- Audio is generated in-engine. There is no recorded voice work or composed soundtrack.
+- Browser progress is one local save and can be lost when site data is cleared or private browsing ends.
+- The launcher has keyboard and reduced-motion considerations, but the canvas game has not had a manual screen-reader accessibility pass.
+- Campaign pacing, balance and playtime need more external playtesting before I would call this a finished release.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow. Please report security issues privately as described in [SECURITY.md](SECURITY.md).
+## AI-assisted development
 
-## Credits
+I used AI tooling while working on parts of the campaign implementation, runtime map builder, lighting and normal-map pipeline, Web export and automated smoke tests. I also used image-generation tools for prototype source sheets. I revised the generated material, kept its provenance documented and tested the project through Godot's import, smoke-test and Web-export paths.
 
-Created by **Jamie Parr**.
+## Next
 
-Built with [Godot Engine](https://godotengine.org/). Game source and project-owned assets are released under the [MIT License](LICENSE).
+- Expand the limited directional/action character frames into one consistent final animation set
+- Hand-author more routes, environmental details and optional discoveries in the later areas
+- Add more enemy behaviour and encounter variation
+- Finish controller support and broader accessibility testing
+- Replace the generated audio bed with a deliberate sound and music pass
+- Run several timed external playtests before assigning a release version
+
+## Licence and project notes
+
+Built and maintained by Jamie Parr using Godot 4.7. The code and project documentation are available under the [MIT License](LICENSE); image provenance and processing notes are separate in [ASSET_CREDITS.md](ASSET_CREDITS.md).
+
+Project history is in [CHANGELOG.md](CHANGELOG.md). Contributions are covered by [CONTRIBUTING.md](CONTRIBUTING.md), and bugs can be reported through [GitHub Issues](https://github.com/JamieP-205/the-world-forgot-us/issues).

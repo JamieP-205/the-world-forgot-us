@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"echo_driver_call"
+title = "Caller on Line Seven"
+category = "Wrenfield Relay Station"
+quality = "Damaged call"
+hint = "Two evacuation instructions occupy the same strip of tape."
+memory_text = "CALLER: 'The radio used my wife's voice. She died in February.' The operator asks for his location. A second voice, also his wife, gives a different junction and tells him not to trust the operator. In the background a real person says, very quietly, 'Turn every speaker off.'"
+keepsake_item = &""

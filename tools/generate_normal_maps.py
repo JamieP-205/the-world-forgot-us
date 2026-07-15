@@ -43,6 +43,7 @@ NORMAL_ROOT = PROCESSED_ROOT / "normals"
 DEFAULT_FOLDERS = (
     "decals",
     "demo_ground_tiles",
+    "environment",
     "hollow_topdown",
     "loot_containers",
     "petrol_station_props",

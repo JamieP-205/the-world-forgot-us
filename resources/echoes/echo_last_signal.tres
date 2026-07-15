@@ -5,9 +5,9 @@
 [resource]
 script = ExtResource("1")
 id = &"echo_last_signal"
-title = "The Last Broadcast"
-category = "Broadcasts"
-quality = "Clear Echo"
-hint = "A memory stirs here. A voice, caught mid-sentence, from the night everyone left."
-memory_text = "\"...if you can still hear this, take the north road. We waited as long as we could.\" The last transmission from this place settles into you -- and a photograph you were carrying remembers its faces."
+title = "Mast Call, 02:13"
+category = "Cullbrook Services"
+quality = "Damaged recording"
+hint = "A call is caught under the fallen mast's automatic warning."
+memory_text = "MAGGIE: 'Ellie Ward. Eight. Red coat, blue inhaler in the left pocket.' A controller tells her to clear the channel. Maggie says, 'Then write it down properly,' and reads the details again. A photograph is folded inside the radio casing."
 keepsake_item = &"old_photo"

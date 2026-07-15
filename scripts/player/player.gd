@@ -21,8 +21,10 @@ extends CharacterBody2D
 ## Seconds of invulnerability after taking a hit (stops instant multi-hits).
 @export var hurt_invuln_time: float = 0.5
 
-## Health restored by eating one canned ration (F).
+## Health restored by field supplies (F). Rations cover smaller wounds; the
+## rarer clinic kit is kept for serious injuries when both are available.
 @export var food_heal: float = 45.0
+@export var medical_kit_heal: float = 75.0
 
 ## Fast evasive step with brief invulnerability.
 @export var dodge_speed: float = 560.0
@@ -139,21 +141,53 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("attack"):
 		_try_attack()
 	elif event.is_action_pressed("consume"):
-		_try_consume_food()
+		_try_consume_healing()
 
 
-## Eats one canned ration to heal in the field (a real use for food loot).
-func _try_consume_food() -> void:
+## Uses one healing supply. A ration handles a wound it can cover; otherwise a
+## first-aid kit takes priority so a badly hurt player gets the larger heal.
+func _try_consume_healing() -> void:
 	if _health.current_health >= _health.max_health:
-		EventBus.notice_posted.emit("Already at full health.")
+		EventBus.notice_posted.emit("Already at full health. No supplies used.")
 		return
-	if InventorySystem.get_count(&"canned_food") <= 0:
-		EventBus.notice_posted.emit("No canned food to eat. (Search crates for rations.)")
+	var has_food := InventorySystem.get_count(&"canned_food") > 0
+	var has_kit := InventorySystem.get_count(&"medical_kit") > 0
+	if not has_food and not has_kit:
+		EventBus.notice_posted.emit("No healing supplies. Search cupboards and clinic stores.")
 		return
-	InventorySystem.remove_item(&"canned_food", 1)
+
+	var missing_health := _health.max_health - _health.current_health
+	if has_kit and (not has_food or missing_health > food_heal):
+		_use_medical_kit()
+	else:
+		_use_ration()
+
+
+## Kept as a compatibility shim for old smoke scripts that called the former
+## private helper directly.
+func _try_consume_food() -> void:
+	_try_consume_healing()
+
+
+func _use_medical_kit() -> void:
+	if not InventorySystem.remove_item(&"medical_kit", 1):
+		return
+	var before := _health.current_health
+	_health.heal(medical_kit_heal)
+	var restored := roundi(_health.current_health - before)
+	AudioManager.play(&"pickup", -4.0, 0.82)
+	EventBus.notice_posted.emit(
+		"You clean and dress the wound with a clinic first-aid kit. +%d health." % restored)
+
+
+func _use_ration() -> void:
+	if not InventorySystem.remove_item(&"canned_food", 1):
+		return
+	var before := _health.current_health
 	_health.heal(food_heal)
+	var restored := roundi(_health.current_health - before)
 	AudioManager.play(&"eat")
-	EventBus.notice_posted.emit("You force down a cold ration. +%d health." % int(food_heal))
+	EventBus.notice_posted.emit("You force down a cold ration. +%d health." % restored)
 
 
 func _handle_movement(_delta: float) -> void:
@@ -218,10 +252,10 @@ func _try_dodge() -> void:
 
 func _try_memory_burst() -> void:
 	if not WorldState.has_flag(&"memory_burst_unlocked"):
-		EventBus.notice_posted.emit("Memory Burst is locked. Follow Mara's frequency in Ashmere.")
+		EventBus.notice_posted.emit("The receiver cannot discharge safely yet. Find Maggie's bench at Ashmere.")
 		return
 	if _burst_cd > 0.0:
-		EventBus.notice_posted.emit("Memory Burst recharging: %.1fs" % _burst_cd)
+		EventBus.notice_posted.emit("Receiver discharge recharging: %.1fs" % _burst_cd)
 		return
 	_burst_cd = burst_cooldown
 	AudioManager.play(&"memory_burst")
@@ -240,7 +274,7 @@ func _try_memory_burst() -> void:
 			enemy.take_damage(burst_damage)
 			hits += 1
 	EventBus.notice_posted.emit(
-		"Memory Burst overloads %d signal%s." % [hits, "" if hits == 1 else "s"]
+		"Receiver discharge overloads %d signal%s." % [hits, "" if hits == 1 else "s"]
 	)
 
 

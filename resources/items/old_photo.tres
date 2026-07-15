@@ -8,6 +8,6 @@ script = ExtResource("1")
 icon = ExtResource("2")
 id = &"old_photo"
 display_name = "Old Photo"
-description = "A family in front of a house. Their faces are gone. For now."
+description = "Two girls outside number 14B. Rain has lifted most of the emulsion."
 stack_size = 1
 category = "keepsake"

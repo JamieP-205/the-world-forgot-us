@@ -1,0 +1,49 @@
+# Keep source and documentation stable across Windows and CI.
+* text=auto eol=lf
+
+*.gd text eol=lf
+*.tscn text eol=lf
+*.tres text eol=lf
+*.godot text eol=lf
+*.gdshader text eol=lf
+*.cfg text eol=lf
+*.uid text eol=lf
+*.import text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf
+*.sh text eol=lf
+*.svg text eol=lf
+
+# These scripts are intended to be launched directly by Windows.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binary assets and build artefacts.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.gif binary
+*.ico binary
+*.wav binary
+*.ogg binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.wasm binary
+*.pck binary
+*.zip binary
+*.tpz binary
+*.exe binary
+*.dll binary

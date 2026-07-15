@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_hollow.gd" id="1_hollow"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
-[ext_resource type="SpriteFrames" path="res://resources/spriteframes/hollow_placeholder_spriteframes.tres" id="3_hframes"]
+[ext_resource type="SpriteFrames" path="res://resources/spriteframes/hollow_painted_spriteframes.tres" id="3_hframes"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(22, 30)
@@ -48,9 +48,10 @@ polygon = PackedVector2Array(-4, -1, 4, -1, 6, 10, -6, 10)
 
 [node name="Visual" type="AnimatedSprite2D" parent="."]
 modulate = Color(0.58, 0.78, 0.72, 0.84)
+scale = Vector2(0.16, 0.16)
 sprite_frames = ExtResource("3_hframes")
 animation = &"idle_down"
-offset = Vector2(0, -8)
+offset = Vector2(0, -20)
 
 [node name="HollowAsh" type="Polygon2D" parent="."]
 color = Color(0.02, 0.06, 0.06, 0.18)

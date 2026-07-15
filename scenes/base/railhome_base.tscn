@@ -1,4 +1,4 @@
-[gd_scene load_steps=26 format=3]
+[gd_scene load_steps=28 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/scene_exit.tscn" id="1_exit"]
 [ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="14_ash"]
@@ -18,6 +18,8 @@
 [ext_resource type="Texture2D" path="res://assets/processed/railhome_props/workbench_tools.png" id="10_workbench"]
 [ext_resource type="Texture2D" path="res://assets/processed/decals/metal_floor.png" id="11_grime"]
 [ext_resource type="Texture2D" path="res://assets/processed/decals/dirt_debris.png" id="12_dirt"]
+[ext_resource type="Texture2D" path="res://assets/processed/decals/wood_floor.png" id="19_wood"]
+[ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/mnemoscope_device.png" id="20_scope"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
 size = Vector2(820, 30)
@@ -51,20 +53,78 @@ area = Vector2(1200, 700)
 drift = Vector2(-7, 4)
 
 [node name="Floor" type="Polygon2D" parent="."]
-color = Color(0.14, 0.12, 0.105, 1)
+z_index = -8
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("12_dirt")
+uv = PackedVector2Array(0, 0, 320, 0, 320, 240, 0, 240)
+color = Color(0.22, 0.22, 0.19, 1)
 polygon = PackedVector2Array(-600, -350, 600, -350, 600, 350, -600, 350)
 
+[node name="RailBed" type="Polygon2D" parent="."]
+z_index = -7
+color = Color(0.30, 0.28, 0.23, 1)
+polygon = PackedVector2Array(-600, -220, 600, -220, 600, 220, -600, 220)
+
+[node name="CarriageShadow" type="Polygon2D" parent="."]
+z_index = -5
+color = Color(0.015, 0.018, 0.017, 0.92)
+polygon = PackedVector2Array(-420, -166, 410, -166, 438, -132, 438, 148, 402, 178, -424, 178, -444, 140, -444, -132)
+
+[node name="CarriageFloor" type="Polygon2D" parent="."]
+z_index = -4
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("11_grime")
+uv = PackedVector2Array(0, 0, 320, 0, 320, 240, 0, 240)
+color = Color(0.42, 0.39, 0.32, 1)
+polygon = PackedVector2Array(-400, -160, 400, -160, 400, 160, -400, 160)
+
 [node name="Runner" type="Polygon2D" parent="."]
-color = Color(0.30, 0.20, 0.13, 1)
+z_index = -2
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("19_wood")
+uv = PackedVector2Array(0, 0, 320, 0, 320, 240, 0, 240)
+color = Color(0.48, 0.34, 0.22, 0.72)
 polygon = PackedVector2Array(-380, -34, 380, -34, 380, 34, -380, 34)
 
 [node name="ColdInteriorTint" type="Polygon2D" parent="."]
-color = Color(0.06, 0.10, 0.11, 0.10)
+color = Color(0.06, 0.10, 0.11, 0.16)
 polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
 
 [node name="Bunks" type="Polygon2D" parent="."]
 color = Color(0.13, 0.14, 0.13, 1)
 polygon = PackedVector2Array(-374, -134, -250, -134, -250, -104, -374, -104)
+
+[node name="TrackNorth" type="Polygon2D" parent="."]
+z_index = -6
+color = Color(0.12, 0.13, 0.12, 1)
+polygon = PackedVector2Array(-590, -244, 590, -244, 590, -232, -590, -232)
+
+[node name="TrackSouth" type="Polygon2D" parent="."]
+z_index = -6
+color = Color(0.12, 0.13, 0.12, 1)
+polygon = PackedVector2Array(-590, 232, 590, 232, 590, 244, -590, 244)
+
+[node name="CarriageRibs" type="Node2D" parent="."]
+z_index = -1
+modulate = Color(0.40, 0.32, 0.25, 0.24)
+
+[node name="RibA" type="Polygon2D" parent="CarriageRibs"]
+polygon = PackedVector2Array(-280, -136, -275, -136, -275, 136, -280, 136)
+
+[node name="RibB" type="Polygon2D" parent="CarriageRibs"]
+polygon = PackedVector2Array(-142, -136, -137, -136, -137, 136, -142, 136)
+
+[node name="RibC" type="Polygon2D" parent="CarriageRibs"]
+polygon = PackedVector2Array(4, -136, 9, -136, 9, 136, 4, 136)
+
+[node name="RibD" type="Polygon2D" parent="CarriageRibs"]
+polygon = PackedVector2Array(150, -136, 155, -136, 155, 136, 150, 136)
+
+[node name="RibE" type="Polygon2D" parent="CarriageRibs"]
+polygon = PackedVector2Array(286, -136, 291, -136, 291, 136, 286, 136)
 
 [node name="FloorDecals" type="Node2D" parent="."]
 modulate = Color(1, 1, 1, 0.5)
@@ -84,19 +144,27 @@ collision_layer = 1
 collision_mask = 0
 
 [node name="TopVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.25, 0.19, 0.15, 1)
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("19_wood")
+uv = PackedVector2Array(0, 0, 320, 0, 320, 24, 0, 24)
+color = Color(0.44, 0.34, 0.25, 1)
 polygon = PackedVector2Array(-400, -160, 400, -160, 400, -136, -400, -136)
 
 [node name="BottomVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.25, 0.19, 0.15, 1)
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("19_wood")
+uv = PackedVector2Array(0, 0, 320, 0, 320, 24, 0, 24)
+color = Color(0.44, 0.34, 0.25, 1)
 polygon = PackedVector2Array(-400, 136, 400, 136, 400, 160, -400, 160)
 
 [node name="LeftVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.25, 0.19, 0.15, 1)
+color = Color(0.34, 0.27, 0.21, 1)
 polygon = PackedVector2Array(-400, -160, -376, -160, -376, 160, -400, 160)
 
 [node name="RightVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.25, 0.19, 0.15, 1)
+color = Color(0.34, 0.27, 0.21, 1)
 polygon = PackedVector2Array(376, -160, 400, -160, 400, 160, 376, 160)
 
 [node name="TopShape" type="CollisionShape2D" parent="Walls"]
@@ -124,7 +192,8 @@ script = ExtResource("2_save")
 prompt = "Rest at bedroll"
 
 [node name="SafeGlow" type="Polygon2D" parent="Bedroll"]
-color = Color(1, 0.70, 0.34, 0.34)
+visible = false
+color = Color(0.88, 0.62, 0.28, 0.025)
 polygon = PackedVector2Array(-58, -32, 52, -32, 62, 28, -52, 34)
 
 [node name="Visual" type="Sprite2D" parent="Bedroll"]
@@ -173,7 +242,8 @@ scale = Vector2(0.16, 0.16)
 texture = ExtResource("10_workbench")
 
 [node name="LanternGlow" type="Polygon2D" parent="."]
-color = Color(1, 0.66, 0.30, 0.30)
+visible = false
+color = Color(0.92, 0.62, 0.26, 0.025)
 polygon = PackedVector2Array(210, -150, 300, -150, 320, -60, 190, -60)
 
 [node name="Lantern" type="Sprite2D" parent="."]
@@ -183,7 +253,8 @@ texture = ExtResource("8_lantern")
 
 [node name="Outside" parent="." instance=ExtResource("1_exit")]
 position = Vector2(340, 0)
-prompt = "Step outside into the wasteland"
+scale = Vector2(0.68, 0.68)
+prompt = "Go out to Cullbrook Service Station"
 target_scene_path = "res://scenes/maps/test_map.tscn"
 target_spawn = &"from_base"
 
@@ -192,7 +263,7 @@ position = Vector2(280, 0)
 
 [node name="WarmOverlay" type="Polygon2D" parent="."]
 visible = false
-color = Color(1, 0.66, 0.30, 0.22)
+color = Color(0.92, 0.62, 0.28, 0.055)
 polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
 
 [node name="ScannerCoilBench" type="Area2D" parent="."]
@@ -203,13 +274,15 @@ monitoring = false
 script = ExtResource("15_bench")
 prompt = "Build Scanner Coil"
 upgrade_data = ExtResource("17_coil")
-payoff_notice = "Scanner Coil built. Wider Mnemoscope pulses that recharge faster."
+payoff_notice = "Scanner Coil built. Receiver sweeps now reach farther and recharge faster."
 
-[node name="Visual" type="Polygon2D" parent="ScannerCoilBench"]
-color = Color(0.13, 0.19, 0.20, 1)
-polygon = PackedVector2Array(-16, -13, 16, -13, 16, 12, -16, 12)
+[node name="Visual" type="Sprite2D" parent="ScannerCoilBench"]
+position = Vector2(0, -5)
+scale = Vector2(0.11, 0.11)
+texture = ExtResource("20_scope")
 
 [node name="Coil" type="Polygon2D" parent="ScannerCoilBench/Visual"]
+visible = false
 color = Color(0.34, 0.82, 0.88, 0.9)
 polygon = PackedVector2Array(-9, -6, 9, -6, 9, 5, -9, 5)
 
@@ -228,6 +301,7 @@ payoff_notice = "Signal Lantern lit. The carriage glows warm - the base feels aw
 reveal_on_build = NodePath("../WarmOverlay")
 
 [node name="Visual" type="Polygon2D" parent="SignalLantern"]
+visible = false
 color = Color(0.36, 0.25, 0.14, 1)
 polygon = PackedVector2Array(-12, -13, 12, -13, 12, 12, -12, 12)
 
@@ -272,9 +346,10 @@ collision_mask = 0
 monitoring = false
 script = ExtResource("13_lore")
 prompt = "Read the carving by the door"
-notice = "Scratched into the door frame, half-sanded away: 'M.V. kept this carriage warm. Whoever's next - keep it warm.' The Railhome was someone's home before it was yours."
+notice = "Scratched into the door frame, half-sanded away: 'M.W. kept this carriage warm. Whoever's next - keep it warm.' Carriage 317 was someone's home before it was yours."
 
 [node name="Visual" type="Polygon2D" parent="CarvedInitials"]
+visible = false
 color = Color(0.32, 0.28, 0.24, 1)
 polygon = PackedVector2Array(-12, -14, 12, -14, 12, 14, -12, 14)
 
@@ -283,4 +358,28 @@ color = Color(0.62, 0.55, 0.4, 1)
 polygon = PackedVector2Array(-8, -6, 8, -6, 8, -3, -8, -3)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="CarvedInitials"]
+shape = SubResource("RectangleShape2D_lore")
+
+[node name="CountyRouteLedger" type="Area2D" parent="."]
+position = Vector2(92, 92)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("13_lore")
+prompt = "Check the route notebook"
+notice = "Four places are written on the inside cover: Cullbrook Services. Bellwether. Long Acre. Tollard County Exchange. The last two match Maggie Ward's repair notes."
+
+[node name="Visual" type="Polygon2D" parent="CountyRouteLedger"]
+color = Color(0.48, 0.38, 0.24, 0.92)
+polygon = PackedVector2Array(-20, -13, 20, -13, 18, 14, -18, 14)
+
+[node name="Page" type="Polygon2D" parent="CountyRouteLedger/Visual"]
+color = Color(0.67, 0.62, 0.49, 0.88)
+polygon = PackedVector2Array(-15, -9, 15, -9, 14, 9, -14, 9)
+
+[node name="RouteLine" type="Polygon2D" parent="CountyRouteLedger/Visual/Page"]
+color = Color(0.26, 0.36, 0.35, 0.72)
+polygon = PackedVector2Array(-11, -4, 8, -4, 8, -2, -11, -2)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="CountyRouteLedger"]
 shape = SubResource("RectangleShape2D_lore")
