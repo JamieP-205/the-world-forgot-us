@@ -19,6 +19,7 @@ const DEFAULTS := {
 	},
 	"gameplay": {
 		"day_night_cycle": true,
+		"mobile_tutorial_seen": false,
 	},
 	"accessibility": {
 		"reduced_effects": false,
