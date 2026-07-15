@@ -87,6 +87,7 @@ func _apply_layout() -> void:
 		ui_scale
 	)
 
+	var notice_y := edge + 148.0 * ui_scale
 	if portrait:
 		var objective_y := edge + 90.0 * ui_scale
 		_set_scaled_rect(_objective, Vector2(edge, objective_y), Vector2(352.0, 136.0), ui_scale)
@@ -97,17 +98,18 @@ func _apply_layout() -> void:
 			ui_scale
 		)
 		_set_scaled_rect(
-			_inventory,
-			Vector2(edge, objective_y + 146.0 * ui_scale),
-			Vector2(235.0, 128.0),
-			ui_scale
-		)
-		_set_scaled_rect(
 			_field_hint,
 			Vector2(edge, objective_y + 146.0 * ui_scale),
 			Vector2(330.0, 22.0),
 			ui_scale * 0.9
 		)
+		_set_scaled_rect(
+			_inventory,
+			Vector2(edge, objective_y + 178.0 * ui_scale),
+			Vector2(235.0, 128.0),
+			ui_scale
+		)
+		notice_y = objective_y + 178.0 * ui_scale
 	else:
 		_set_scaled_rect(
 			_objective,
@@ -138,7 +140,7 @@ func _apply_layout() -> void:
 	var notice_width := minf(560.0, maxf(260.0, (view.x - edge * 2.0) / notice_scale))
 	_set_scaled_rect(
 		_notice,
-		Vector2((view.x - notice_width * notice_scale) * 0.5, edge),
+		Vector2((view.x - notice_width * notice_scale) * 0.5, notice_y),
 		Vector2(notice_width, 66.0),
 		notice_scale
 	)
@@ -153,12 +155,11 @@ func _apply_layout() -> void:
 		prompt_scale
 	)
 
-	var menu_scale := minf(
-		ui_scale,
+	var menu_fit := minf(
 		(view.x - edge * 2.0) / 420.0,
 		(view.y - edge * 2.0) / 600.0
 	)
-	menu_scale = maxf(0.72, menu_scale)
+	var menu_scale := maxf(0.72, minf(ui_scale, menu_fit))
 	_set_scaled_rect(
 		_pause_menu,
 		Vector2((view.x - 420.0 * menu_scale) * 0.5, (view.y - 600.0 * menu_scale) * 0.5),
