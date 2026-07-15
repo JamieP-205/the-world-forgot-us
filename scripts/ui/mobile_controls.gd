@@ -18,6 +18,8 @@ const CYAN := Color(0.42, 0.84, 0.82, 0.92)
 const INK := Color(0.94, 0.91, 0.82, 0.94)
 const MUTED := Color(0.73, 0.76, 0.71, 0.82)
 const TUTORIAL_SETTING := "mobile_tutorial_seen"
+const NORMAL_LAYER := 90
+const TUTORIAL_LAYER := 110
 
 var _device_enabled := false
 var _layout_scale := 1.0
@@ -35,6 +37,8 @@ var _utility_backdrop := Rect2()
 var _tutorial_rect := Rect2()
 var _tutorial_visible := false
 var _tutorial_seen := false
+var _tutorial_owns_lock := false
+var _tutorial_ready_after_msec := 0
 
 
 func _ready() -> void:
@@ -43,10 +47,18 @@ func _ready() -> void:
 	set_process_input(true)
 	_device_enabled = _should_enable()
 	_tutorial_seen = SettingsManager.get_bool("gameplay", TUTORIAL_SETTING, false)
+	_tutorial_ready_after_msec = Time.get_ticks_msec() + 900
 	resized.connect(_rebuild_layout)
 	get_viewport().size_changed.connect(_rebuild_layout)
 	_rebuild_layout()
 	_sync_visibility()
+
+
+func _exit_tree() -> void:
+	_release_all()
+	if _tutorial_owns_lock:
+		_tutorial_owns_lock = false
+		GameManager.set_dialogue_active(false)
 
 
 func _process(_delta: float) -> void:
@@ -62,13 +74,14 @@ func _should_enable() -> bool:
 
 
 func _sync_visibility() -> void:
-	var should_show := _device_enabled and not GameManager.is_input_locked()
+	var should_show := _device_enabled and (_tutorial_visible or not GameManager.is_input_locked())
 	if visible != should_show:
 		visible = should_show
 		if not visible:
 			_release_all()
 		queue_redraw()
-	if should_show and not _tutorial_seen and not _tutorial_visible:
+	if should_show and not _tutorial_seen and not _tutorial_visible \
+			and Time.get_ticks_msec() >= _tutorial_ready_after_msec:
 		_show_tutorial()
 
 
@@ -329,13 +342,27 @@ func _button_at(position: Vector2) -> StringName:
 
 
 func _show_tutorial() -> void:
+	if _tutorial_visible:
+		return
 	_tutorial_visible = true
 	_release_all()
+	if not GameManager.is_input_locked():
+		_tutorial_owns_lock = true
+		GameManager.set_dialogue_active(true)
+	var canvas := get_parent() as CanvasLayer
+	if canvas != null:
+		canvas.layer = TUTORIAL_LAYER
 	queue_redraw()
 
 
 func _dismiss_tutorial() -> void:
 	_tutorial_visible = false
+	var canvas := get_parent() as CanvasLayer
+	if canvas != null:
+		canvas.layer = NORMAL_LAYER
+	if _tutorial_owns_lock:
+		_tutorial_owns_lock = false
+		GameManager.set_dialogue_active(false)
 	if not _tutorial_seen:
 		_tutorial_seen = true
 		SettingsManager.set_value("gameplay", TUTORIAL_SETTING, true)
@@ -365,9 +392,9 @@ func _draw_tutorial(font: Font, label_size: int, primary_size: int) -> void:
 	draw_string(font, Vector2(left, top + 28.0 * _layout_scale), "THE ROAD USES TWO THUMBS", HORIZONTAL_ALIGNMENT_LEFT, width, label_size, CYAN)
 
 	var first_y := top + 78.0 * _layout_scale
-	_draw_tutorial_step(font, Vector2(left, first_y), "01", "MOVE", "Drag in the lower-left field. The stick follows your thumb.", width, body_size)
-	_draw_tutorial_step(font, Vector2(left, first_y + step_gap), "02", "ACT", "USE, HIT, SCAN and DODGE sit under your right thumb.", width, body_size)
-	_draw_tutorial_step(font, Vector2(left, first_y + step_gap * 2.0), "03", "TOOLS", "HELP, MENU, MAP and LOG stay at the top. HEAL and BURST sit beside the action cluster.", width, body_size)
+	_draw_tutorial_step(font, Vector2(left, first_y), "01", "MOVE", "Drag lower-left. The stick follows your thumb.", width, body_size)
+	_draw_tutorial_step(font, Vector2(left, first_y + step_gap), "02", "ACT", "Right side: USE, HIT, SCAN and DODGE.", width, body_size)
+	_draw_tutorial_step(font, Vector2(left, first_y + step_gap * 2.0), "03", "TOOLS", "Top: HELP, MENU, MAP and LOG. Side: HEAL and BURST.", width, body_size)
 
 	var footer_y := _tutorial_rect.end.y - 34.0 * _layout_scale
 	var footer := "TURN THE PHONE SIDEWAYS FOR THE FULL VIEW  /  TAP ANYWHERE TO START"
