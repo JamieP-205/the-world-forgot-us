@@ -107,6 +107,7 @@ jobs:
             'map_flow_collision_smoke.tscn|MAP FLOW + COLLISION SMOKE: PASS'
             'interior_identity_smoke.tscn|INTERIOR IDENTITY CONTRACT: PASS'
             'secondary_ui_contract_smoke.tscn|SECONDARY_UI_CONTRACT: PASS'
+            'save_corruption_smoke.tscn|SAVE_CORRUPTION_SMOKE: PASS'
             'complete_game_smoke.tscn|COMPLETE_GAME_SMOKE: PASS'
           )
 

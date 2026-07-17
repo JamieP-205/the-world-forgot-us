@@ -115,16 +115,25 @@ func get_state() -> Dictionary:
 
 func restore(data: Dictionary) -> void:
 	clear()
-	for id in data.get("opened", []):
-		_opened[StringName(id)] = true
-	var ch: Dictionary = data.get("choices", {})
-	for g in ch:
-		_choices[StringName(g)] = String(ch[g])
-	for id in data.get("defeated", []):
-		_defeated[StringName(id)] = true
-	var saved_flags: Dictionary = data.get("flags", {})
-	for id in saved_flags:
-		_flags[StringName(id)] = saved_flags[id]
+	# Each block is type-guarded so a hand-edited save with a wrong field type
+	# is skipped rather than crashing the restore. Ids are read through str() so
+	# a malformed element can never abort the loop either.
+	var opened: Variant = data.get("opened", [])
+	if opened is Array:
+		for id in opened:
+			_opened[StringName(str(id))] = true
+	var ch: Variant = data.get("choices", {})
+	if ch is Dictionary:
+		for g in ch:
+			_choices[StringName(str(g))] = String(ch[g])
+	var defeated: Variant = data.get("defeated", [])
+	if defeated is Array:
+		for id in defeated:
+			_defeated[StringName(str(id))] = true
+	var saved_flags: Variant = data.get("flags", {})
+	if saved_flags is Dictionary:
+		for id in saved_flags:
+			_flags[StringName(str(id))] = saved_flags[id]
 	ending_hook_shown = bool(data.get("ending_hook_shown", false))
 
 

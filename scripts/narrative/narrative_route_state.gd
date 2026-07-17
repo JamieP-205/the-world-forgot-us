@@ -321,8 +321,11 @@ func to_dict() -> Dictionary:
 
 func restore(data: Dictionary, _source_save_version: int = 0) -> void:
 	reset()
-	var anchor := StringName(data.get("route_anchor", data.get("anchor", "")))
-	var strategy := StringName(data.get("network_strategy", data.get("strategy", "")))
+	# Every field is read through the type-guarded helpers below so a locally
+	# edited save with a wrong field type is ignored rather than crashing the
+	# restore or leaving the campaign half-loaded.
+	var anchor := _as_string_name(data.get("route_anchor", data.get("anchor", "")))
+	var strategy := _as_string_name(data.get("network_strategy", data.get("strategy", "")))
 	if anchor != &"":
 		commit_anchor(anchor)
 	if strategy != &"":
@@ -331,34 +334,55 @@ func restore(data: Dictionary, _source_save_version: int = 0) -> void:
 	var evidence_source: Variant = data.get("evidence_ids", data.get("evidence", []))
 	if evidence_source is Array:
 		for revelation_id in evidence_source:
-			add_evidence(StringName(revelation_id))
+			add_evidence(_as_string_name(revelation_id))
 
-	var npc_source: Dictionary = data.get("npc_states", {})
-	for npc_id in npc_source:
-		set_npc_state(StringName(npc_id), StringName(npc_source[npc_id]))
-	for npc_id in data.get("rescued_npcs", []):
-		rescue_npc(StringName(npc_id))
+	var npc_source: Variant = data.get("npc_states", {})
+	if npc_source is Dictionary:
+		for npc_id in npc_source:
+			set_npc_state(_as_string_name(npc_id), _as_string_name(npc_source[npc_id]))
+	var rescued_source: Variant = data.get("rescued_npcs", [])
+	if rescued_source is Array:
+		for npc_id in rescued_source:
+			rescue_npc(_as_string_name(npc_id))
 
-	for trace_id in data.get("fed_trace_ids", data.get("fed_traces", [])):
-		record_trace_fed(StringName(trace_id))
+	var fed_source: Variant = data.get("fed_trace_ids", data.get("fed_traces", []))
+	if fed_source is Array:
+		for trace_id in fed_source:
+			record_trace_fed(_as_string_name(trace_id))
 
-	var hollow_source: Dictionary = data.get("hollow_outcomes", {})
+	var hollow_source: Variant = data.get("hollow_outcomes", {})
 	var restored_hollows := false
-	for outcome in HOLLOW_OUTCOMES:
-		var amount := int(hollow_source.get(String(outcome), hollow_source.get(outcome, 0)))
-		if amount > 0:
-			record_hollow_outcome(outcome, amount)
-			restored_hollows = true
+	if hollow_source is Dictionary:
+		for outcome in HOLLOW_OUTCOMES:
+			var amount := _as_int(hollow_source.get(String(outcome), hollow_source.get(outcome, 0)))
+			if amount > 0:
+				record_hollow_outcome(outcome, amount)
+				restored_hollows = true
 	if not restored_hollows:
-		var policy := StringName(data.get("hollow_policy", ""))
+		var policy := _as_string_name(data.get("hollow_policy", ""))
 		if policy != &"" and policy != &"undecided":
 			set_hollow_policy(policy)
 
-	var mission_source: Dictionary = data.get("mission_states", {})
-	for mission_id in mission_source:
-		_restore_mission_state(StringName(mission_id), StringName(mission_source[mission_id]))
-	for mission_id in data.get("completed_missions", []):
-		_restore_mission_state(StringName(mission_id), &"complete")
+	var mission_source: Variant = data.get("mission_states", {})
+	if mission_source is Dictionary:
+		for mission_id in mission_source:
+			_restore_mission_state(_as_string_name(mission_id), _as_string_name(mission_source[mission_id]))
+	var completed_source: Variant = data.get("completed_missions", [])
+	if completed_source is Array:
+		for mission_id in completed_source:
+			_restore_mission_state(_as_string_name(mission_id), &"complete")
+
+
+# Converts a save value to a StringName only when it is already text; anything
+# else (number, dictionary, null from a hand-edited save) collapses to the empty
+# id, which every setter treats as a no-op.
+func _as_string_name(value: Variant) -> StringName:
+	return StringName(value) if (value is String or value is StringName) else &""
+
+
+# Coerces a save value to an int without crashing on a container/object value.
+func _as_int(value: Variant) -> int:
+	return int(value) if (value is float or value is int or value is bool or value is String) else 0
 
 
 func _restore_mission_state(mission_id: StringName, state: StringName) -> void:

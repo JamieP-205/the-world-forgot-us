@@ -61,16 +61,24 @@ func load_game() -> bool:
 	var text := file.get_as_text()
 	file.close()
 
-	var data: Variant = JSON.parse_string(text)
-	if typeof(data) != TYPE_DICTIONARY:
-		push_error("SaveManager: save file is corrupt.")
+	# Parse through a JSON instance rather than JSON.parse_string() so an
+	# unparseable local save is reported as a recoverable condition instead of
+	# spamming the engine error log.
+	var json := JSON.new()
+	if json.parse(text) != OK or typeof(json.data) != TYPE_DICTIONARY:
+		push_warning("SaveManager: save file is corrupt; keeping the current session.")
 		return false
+	var data: Dictionary = json.data
 
-	# Validate the destination before changing any live run state. A stale or
-	# hand-edited level path must not half-restore inventory, story flags, or a
-	# player transform into the current session.
+	# Validate the destination and payload shape before changing any live run
+	# state. A stale or hand-edited level path -- or a locally edited field with
+	# the wrong type -- must not half-restore inventory, story flags, or a player
+	# transform into the current session.
 	var level_path := String(data.get("level", ""))
 	if not _is_loadable_level(level_path):
+		return false
+	if not _has_restorable_shape(data):
+		push_warning("SaveManager: save file has malformed fields; keeping the current session.")
 		return false
 
 	var source_version := int(data.get("version", 0))
@@ -119,6 +127,23 @@ func _is_loadable_level(level_path: String) -> bool:
 	if level_path.is_empty() or not ResourceLoader.exists(level_path, "PackedScene"):
 		return false
 	return load(level_path) is PackedScene
+
+
+# Rejects a locally edited save whose top-level fields carry the wrong container
+# type, so a malformed payload can never crash a strictly-typed restore or be
+# half-applied to the live session. Missing fields are fine -- older saves omit
+# them and each restore falls back to its empty default. The nested contents of
+# "world"/"narrative" are validated defensively by their own restore functions.
+func _has_restorable_shape(data: Dictionary) -> bool:
+	for key in ["inventory", "archive_dispositions", "world", "narrative", "player"]:
+		if data.has(key) and not (data[key] is Dictionary):
+			return false
+	for key in ["archive", "upgrades"]:
+		if data.has(key) and not (data[key] is Array):
+			return false
+	if data.has("version") and not (data["version"] is float or data["version"] is int):
+		return false
+	return true
 
 
 func _cancel_pending_player_restore() -> void:
