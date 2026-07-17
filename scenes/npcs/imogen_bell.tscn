@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/npcs/survivor_npc.gd" id="1_npc"]
 [ext_resource type="Texture2D" path="res://assets/generated/npcs/imogen_idle.png" id="2_art"]
 [ext_resource type="Resource" path="res://resources/quests/imogen_rescue.tres" id="3_quest"]
+[ext_resource type="Resource" path="res://resources/npcs/imogen_bell.tres" id="4_profile"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_npc"]
 radius = 30.0
@@ -19,6 +20,7 @@ quest_data = ExtResource("3_quest")
 follow_flag = &"imogen_escort_started"
 resolved_flag = &"imogen_rescued"
 hidden_if_flag = &"imogen_rescued"
+world_profile = ExtResource("4_profile")
 
 [node name="ContactShadow" type="Polygon2D" parent="."]
 position = Vector2(0, 17)

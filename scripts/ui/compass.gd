@@ -1,9 +1,10 @@
 extends Control
-## Small HUD compass: a stable objective arrow. It is intentionally not a
-## minimap; it only answers "which way is the next useful thing?".
+## The receiver's road bearing. By default it points to a broad octant and
+## drops out near the site; a powered route beacon can provide a precise pin.
 
 var _has_target := false
 var _dir := Vector2.ZERO
+var _precise := false
 
 
 func _ready() -> void:
@@ -12,9 +13,13 @@ func _ready() -> void:
 
 
 ## Called by the HUD each frame. `dir` is (target_world - player_world).
-func set_aim(has_target: bool, dir: Vector2) -> void:
+func set_aim(has_target: bool, dir: Vector2, precise := false) -> void:
 	_has_target = has_target
 	_dir = dir
+	_precise = precise
+	var label := get_node_or_null("CompassLabel") as Label
+	if label != null:
+		label.text = "pin" if precise else "bearing"
 	queue_redraw()
 
 
@@ -38,6 +43,8 @@ func _draw() -> void:
 
 	if _has_target and _dir.length() > 0.001:
 		var d := _dir.normalized()
+		if not _precise:
+			d = Vector2.from_angle(snappedf(d.angle(), PI / 4.0))
 		var tip := c + d * (r - 10.0)
 		var tail := c - d * 8.0
 		var perp := Vector2(-d.y, d.x)

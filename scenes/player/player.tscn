@@ -26,23 +26,6 @@ script = ExtResource("1_player")
 color = Color(0.015, 0.02, 0.02, 0.36)
 polygon = PackedVector2Array(-15, 12, -9, 8, 9, 8, 15, 12, 9, 18, -9, 18)
 
-[node name="PlaceholderVisual" type="Polygon2D" parent="."]
-visible = false
-color = Color(0.64, 0.55, 0.38, 1)
-polygon = PackedVector2Array(-8, -5, -13, 7, -6, 14, 6, 14, 13, 7, 8, -5)
-
-[node name="Coat" type="Polygon2D" parent="PlaceholderVisual"]
-color = Color(0.23, 0.29, 0.27, 1)
-polygon = PackedVector2Array(-7, 0, 7, 0, 10, 13, -10, 13)
-
-[node name="Head" type="Polygon2D" parent="PlaceholderVisual"]
-color = Color(0.78, 0.68, 0.52, 1)
-polygon = PackedVector2Array(-6, -16, 6, -16, 8, -9, 5, -4, -5, -4, -8, -9)
-
-[node name="Backpack" type="Polygon2D" parent="PlaceholderVisual"]
-color = Color(0.18, 0.2, 0.18, 1)
-polygon = PackedVector2Array(-13, -2, -8, -5, -8, 11, -13, 8)
-
 [node name="Visual" type="AnimatedSprite2D" parent="."]
 texture_filter = 2
 modulate = Color(1, 1, 1, 1)

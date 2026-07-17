@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/owen_pryce_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"owen"
+display_name = "Owen Pryce"
+role = "County linesman"
+story_reason = "Owen knows which buried cables are copper, which are dead fibre and which were quietly patched into Continuity Mode. His hand-drawn grid makes physical network choices legible."
+home_region = &"broadcast_fields"
+service_id = &"grid_survey"
+service_name = "grid survey"
+service_description = "Translates the active route into a physical circuit risk and marks the next safe manual access point."
+service_flag = &"npc_service_owen_grid"
+service_choice = "MARK A SAFE GRID ACCESS"
+service_notice = "Owen scores a bypass onto the county map. It avoids the automatic exchange and one very live trench."
+helped_flag = &"npc_owen_helped"
+ignored_flag = &"npc_owen_ignored"
+voice_signature = "short worksite instructions followed by one reluctant sentence of context"
+greeting = "Boots off the black cable. That one still bites."
+intro_lines = Array[String](["OWEN - The west trench should be dead. It rang my house while I was standing over it.", "I can map the manual bypass, but somebody has to hold the lamp while I pull the survey pegs."])
+helped_lines = Array[String](["OWEN - Your wall map was decorative. It is a circuit diagram now. Try not to spill tea on the substations."])
+ignored_lines = Array[String](["OWEN - I pulled the pegs alone. Missed one. The ground answered before I touched it."])
+service_lines = Array[String](["OWEN - Red chalk is live. White is tested. Nothing means I did not come back to check."])
+anchor_lines = {"clinic": "OWEN - The clinic spur can be isolated without killing the wells. Barely.", "radio": "OWEN - A transmitter is just a load with opinions. Show me its draw.", "witness": "OWEN - Cable routes do not remember motives, but they do remember who lied about being disconnected.", "copy": "OWEN - If it lives in the trunk, make it cross a manual breaker where we can see it."}
+strategy_lines = {"restore": "OWEN - Energise one feeder, test the return, then the next. Anyone says 'all at once', send them home.", "sever": "OWEN - I can cut Tollard clean. Clean does not mean reversible.", "mesh": "OWEN - Local loops will work if every loop has a knife switch and a person beside it."}
+help_choice = "HOLD THE LAMP AND TAKE THE SURVEY"
+ignore_choice = "LEAVE HIM IN THE TRENCH"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "cream hard cap / diagonal cable coil / voltage tester / yellow-laced boots"
+visual_notes = "Owen's wiry linesman's frame carries the county grid with him: dull reflective workwear, a heavy cable coil, tester and chalk-loaded belt."
+identity_accent = Color(0.94, 0.53, 0.20, 1)

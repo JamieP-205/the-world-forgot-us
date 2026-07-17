@@ -2,88 +2,84 @@
 
 [![Build and deploy Godot Web](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml/badge.svg)](https://github.com/JamieP-205/the-world-forgot-us/actions/workflows/pages.yml)
 
-**[Play the browser build](https://jamiep-205.github.io/the-world-forgot-us/)** — keyboard and mouse or the on-screen phone controls; landscape is recommended on smaller screens.
+**[Play the browser build](https://jamiep-205.github.io/the-world-forgot-us/)** — keyboard and mouse or the on-screen phone controls. Landscape is best on a small screen.
 
-A top-down Godot game set around a failed British civil-warning network. You play Ellie Ward, following recordings left by her sister through Cullbrook Services, Ashmere Estate, Wrenfield Relay Station and Tollard Exchange.
+The World Forgot Us is a top-down mystery and survival game set around a failed British civil-warning network. Ellie Ward follows the repair trail left by her sister through Cullbrook Services, Ashmere Estate, Wrenfield Relay Station and Tollard Exchange. The messages know too much about Ellie, but knowing a fact and remembering a life are not the same thing.
 
-I started this as a small vertical slice while learning Godot. It has grown into a playable four-area campaign with saving, combat, upgrades, NPC assignments, environmental puzzles, optional records and three endings. It is still a personal project in active development, and its pacing and balance need external playtesting.
+I started the project as a small Godot exercise. It is now a complete four-region campaign with exploration, investigation, combat, crafting, enterable buildings, a working shelter, persistent choices and twelve route outcomes. It is still a personal project in active development, so balance and pacing will keep changing as I get more playtest results.
 
-## Why I built it
+## What is in the current build
 
-I wanted the exploration, combat and story to depend on the same tool. The Trace Receiver reveals recordings in the environment, interrupts enemy shielding and helps Ellie work out which messages can be trusted. Back at Carriage 317, recovered parts repair the shortwave desk and open the road north.
+- Four connected regions with loops, shortcuts, side routes, sightline landmarks and optional scavenging away from the main job
+- Nineteen enterable locations, each with one to three rooms, its own purpose, evidence, loot and a real exterior return point
+- Carriage 317 rebuilt as a proper three-zone survival shelter with recovery, operations, workbench, radio, storage and living areas
+- Four-direction locomotion for Ellie and all six enemy families, with shared turning, foot placement and animation timing
+- Directional melee, dodge, healing, receiver sweeps, an unlockable discharge and enemies that react differently to light, noise, range and scanning
+- A twelve-recipe crafting notebook with unique item art, unlock conditions, resource costs and effects that matter in exploration or combat
+- Ten physical Trace Anchors built around ordinary objects rather than magic stones: detect, focus, reveal, compare, then file the evidence or feed it to the network
+- Ten in-world profiles — nine survivors plus Continuity — with distinct silhouettes, schedules, services with gameplay effects, personal assignments, relationships and route consequences; Ellie and the real Maggie bring the narrative registry to twelve figures
+- Twelve route combinations built from four relationship anchors and three shared Tollard operations — restore, mesh and sever — with anchor-specific assignments, modifiers and consequences
+- Twenty-four route-exclusive assignments, fourteen corroborated revelations and an explorable aftermath
+- A playable flooded-cutting discovery for Maggie's body and analogue recorder before the Tollard operation
+- An eight-shot illustrated opening, rewritten dialogue surfaces, a field notebook archive, a folded route map and a quieter instrument-panel HUD
+- A seven-minute day/night cycle, region-aware lighting, normal-mapped art, adaptive procedural music and a prioritised sound-effect mix
+- Local saves, save migration, display/audio/accessibility options and responsive touch controls with safe-edge and portrait handling
+- A single-threaded Web build checked and deployed by GitHub Actions
 
-The setting also gave me a useful technical problem to work through: campaign state has to survive scene changes, saves and a browser export without turning every map into a separate set of one-off systems.
+## How the campaign works
 
-## What is in it
+The Trace Receiver ties the main systems together. It locates physical evidence, exposes or interrupts some enemies and can share what Ellie finds with the voice on the line. Sharing makes the voice more capable and more convincing. Keeping a trace isolated protects the witness chain, but gives up useful guidance.
 
-- Four connected areas, from the service road at Cullbrook to the controls under Tollard Exchange
-- Directional melee, a dodge, healing supplies, Trace Receiver sweeps, an unlockable receiver discharge and a four-direction walk cycle
-- A responsive phone interface with a floating movement field, four permanent road actions, an expandable field-kit tray, a first-run touch guide and adapted title, HUD, dialogue, pause and settings layouts
-- Ten recoverable traces, NPC assignments, a road-record investigation, a signal defence, a circuit rerouting puzzle and three ending routes
-- Hollows, Linesmen, a Custodian, ranged Signal Leeches and ambushing Mimic Stalkers with night and scanner reactions
-- A small base with a shortwave desk, receiver upgrades, lighting and a keepsake shelf
-- Local save/load, death recovery, objectives, dialogue, an in-game trace archive and a schematic field map
-- A short opening cinematic, a seven-minute day/night cycle, region-aware lighting and adaptive procedural music
-- Persistent display, audio and accessibility settings, including reduced effects and day/night controls
-- Authored landmarks, clearer routes, real-time 2D lights, generated normal maps and shadow occluders
-- A single-threaded Web export preset with an automated GitHub Actions build and check pipeline
+The campaign does not choose an ending from one final menu. Work done for Imogen, Rafi, Leena, Owen, Gwen, Idris, Mara, Tom and Nia changes who reaches Carriage 317 and which approaches to Tollard remain possible. Ellie commits to a clinic, radio, witness or copy anchor, completes that anchor's two assignments, then carries out one of three physical switch operations at Tollard: restore the warning network, break it into a local mesh or sever it. Those choices make twelve stateful route combinations, not twelve separate finale maps. Earlier evidence, rescues, service work, trace sharing, the recoverable-Hollow decision and Maggie's flooded-cutting recorder alter the operation and its aftermath.
 
-## The thing that shaped the code
-
-Cullbrook is an authored Godot scene. The other three areas use a shared runtime builder so campaign rules stay consistent without copying the same placement code into several scenes. The builder now combines region-specific route grammar, structures, prop clusters, landmarks, quest pockets and lighting rather than repeating one generic blockout.
-
-The phone controls deliberately feed the existing Godot input actions. Movement still uses `move_left`, `move_right`, `move_up` and `move_down`; the buttons emit the same interact, attack, scan, dodge, healing, burst, map, archive and pause actions used by desktop input. A touch-only adapter repositions and scales the existing HUD instead of maintaining a second gameplay interface. This keeps the player, scanner, dialogue and campaign scripts as the single implementation for desktop and mobile.
-
-The project uses an expanded 1280 x 720 canvas. Phone UI is therefore sized from the real browser window as well as the logical game viewport; otherwise a button that looks large in Godot can end up only a few physical pixels high on a portrait phone.
+The full story and clue structure are documented in [docs/NARRATIVE_WORLD_REWRITE.md](docs/NARRATIVE_WORLD_REWRITE.md). Art scale, collision, animation and interface rules live in [docs/ART_DIRECTION_AND_ASSET_MANIFEST.md](docs/ART_DIRECTION_AND_ASSET_MANIFEST.md).
 
 ## Controls
 
 | Action | Keyboard / mouse | Phone or tablet |
 | --- | --- | --- |
-| Move | WASD or arrow keys | Floating lower-left movement field |
-| Interact / advance dialogue | E | USE button or the large dialogue button |
-| Melee attack | J or left-click | HIT button |
-| Trace Receiver sweep | Q or right-click | SCAN button |
-| Dodge | Space | DODGE button |
-| Open secondary controls | — | KIT button |
-| Receiver discharge | R, after the Ashmere workshop repair | KIT → BURST, after the repair |
-| Use healing supplies | F | KIT → HEAL |
-| Open trace archive | I | KIT → LOG |
-| Open field map | M | KIT → MAP |
-| Pause | Esc | KIT → MENU |
-| Reopen touch explanation | Field Guide menu | KIT → HELP |
+| Move | WASD or arrow keys | Lower-left movement field |
+| Use / advance dialogue | E | `use` pad or dialogue button |
+| Strike | J or left-click | `strike` pad |
+| Receiver sweep | Q or right-click | `sweep` pad |
+| Dodge | Space | `step` pad |
+| Open field kit | — | `kit` tab |
+| Craft | C | `kit` → `make` |
+| Heal | F | `kit` → `dress` |
+| Receiver discharge | R, after its repair | `kit` → `burst` |
+| Trace archive | I | `kit` → `traces` |
+| Field map | M | `kit` → `map` |
+| Pause | Esc | `kit` → `pause` |
+| Touch help | Field Guide menu | `kit` → `guide` |
 
-The first phone session opens a short three-step guide after the opening cinematic. It pauses the road while it is visible and records completion in the normal settings file. HELP reopens it later. The full Touch Guide remains available from the title and pause menus. The field-kit tray closes after an action so the road remains visible during normal play.
+The first touch session opens a short field guide after the opening. The kit closes after an action so it does not sit over the road. The default navigation bearing points broadly rather than acting as GPS; the precise-bearing accessibility option restores an exact pointer.
 
-The Trace Receiver reveals nearby traces and exposed enemies. Its sweep also interrupts the Linesman and Custodian shields for a short damage window.
+## Project layout
 
-## Files
+- `scenes/` maps, interiors, player, enemies, world objects and interface scenes
+- `scripts/` gameplay, campaign state, dialogue, audio, rendering and world systems
+- `resources/` items, recipes, traces, upgrades and animation data
+- `assets/source/generated/` source sheets and visual references excluded from the Web export
+- `assets/processed/` transparent game art, cinematic frames and deterministic normal maps
+- `docs/` narrative, world, asset, scale and implementation rules
+- `tools/` asset-processing utilities and deterministic contract tests
+- `web/` browser shell and Web-template installer
 
-- `scenes/` maps, player, enemies, world objects and UI
-- `scripts/` gameplay, campaign state, saving, procedural audio and rendering
-- `resources/` items, upgrades, traces and animation data
-- `assets/source/generated/` source image sheets and concept references
-- `assets/processed/` sliced props, painted character concepts, fallback sheets and normal maps used by the game
-- `tools/` asset-processing scripts and the deterministic campaign smoke test
-- `web/` the browser shell and Web-template installer
-
-Asset origins and processing steps are listed in [ASSET_CREDITS.md](ASSET_CREDITS.md).
+Asset origins and processing steps are recorded in [ASSET_CREDITS.md](ASSET_CREDITS.md).
 
 ## Running it
 
-The project currently targets [Godot 4.7](https://godotengine.org/). Open [project.godot](project.godot) and press **F5**, or run it from PowerShell:
+The project targets [Godot 4.7](https://godotengine.org/). Open [project.godot](project.godot) and press **F5**, or run it from PowerShell:
 
 ```powershell
 & "C:\path\to\Godot_v4.7-stable_win64_console.exe" --path .
 ```
 
-The configured main scene is the title screen. Desktop saves use Godot's per-user `user://savegame.json`; browser saves stay in that browser's site storage.
+The title screen is the configured main scene. Desktop saves use Godot's `user://savegame.json`; browser saves remain in that browser's site storage.
 
 ## Building the Web version
 
-The committed Web preset uses Godot's single-threaded browser template, so it can run from a normal static host without cross-origin isolation headers.
-
-Install the official Godot 4.7 Web templates once:
+The committed preset uses Godot's single-threaded Web template, so a normal static host can serve it without cross-origin isolation headers. Install the official Godot 4.7 templates once:
 
 ```powershell
 python web/install_godot_web_template.py `
@@ -93,7 +89,7 @@ python web/install_godot_web_template.py `
   --template web_nothreads_release.zip
 ```
 
-Export and serve the build:
+Export and serve it locally:
 
 ```powershell
 New-Item -ItemType Directory -Force builds\web
@@ -105,7 +101,7 @@ Then open <http://127.0.0.1:8060/> in a current browser with WebGL 2 and hardwar
 
 ## Checks
 
-The main deterministic check loads the required scenes and resources, walks the four campaign areas, verifies the persistent HUD and endings, and checks live normal-map, light and shadow-occluder setup.
+The main smoke walks the campaign, loads every required scene and checks live lighting, audio, saves, routes and presentation resources:
 
 ```powershell
 $env:APPDATA = "$PWD\.godot\complete_smoke_appdata"
@@ -118,41 +114,39 @@ Expected result:
 COMPLETE_GAME_SMOKE: PASS
 ```
 
-Normal maps are deterministic and can be checked separately after installing Pillow and NumPy:
+Focused contracts cover crafting, crafted effects, route combinations, NPC population, Trace Anchors, animation, touch controls, the Railhome shelter, world layout/collision, all nineteen building identities and the main interface surfaces. Normal maps are deterministic and can be checked separately after installing Pillow and NumPy:
 
 ```powershell
 python tools/generate_normal_maps.py --check
 ```
 
-GitHub Pages is configured to deploy through GitHub Actions. Pull requests run the import, smoke and Web-export checks without deploying. Pushes to `main` verify generated normal maps, import the project, run the smoke test, export the Web build, check the expected HTML/JavaScript/WebAssembly/PCK files and then publish them through GitHub Pages.
+Pull requests run the import, contract and Web-export checks. The eight cinematic masters stay at full resolution, while Godot applies a visually conservative Web texture import that keeps the current package at roughly 59 MiB. CI rejects a PCK over 64 MiB or a complete browser artifact over 100 MiB. Pushes to `main` also publish the verified artifact through GitHub Pages.
 
 ## Known limitations
 
-- Keyboard and mouse remain the most extensively tested controls. The phone UI is built for current touch browsers and supports portrait, but landscape remains the intended play layout and still needs hands-on tuning across more Android and iOS devices.
-- Finished controller support is not yet included.
-- The Web build requires WebGL 2. Browser or driver settings can still prevent it from starting.
-- Several source sheets were generated with image tools. The live walk cycle, characters and landmarks are production-pass prototypes, and combat action frames still have less variation than locomotion.
-- Ashmere, Wrenfield and Tollard share a runtime construction system. Their routes and landmarks are now region-specific, but content density and navigation still need observation in external playtests.
-- Music and sound effects are synthesised in-engine. There is no recorded voice work or live-performed score.
-- Browser progress and the touch-guide preference are local to that browser and can be lost when site data is cleared or private browsing ends.
-- The launcher has keyboard and reduced-motion considerations, but the canvas game has not had a manual screen-reader accessibility pass.
-- Campaign pacing, balance and playtime need more external playtesting before I would call this a finished release.
+- Keyboard and mouse remain the most extensively tested controls. The touch layout has deterministic size and overlap checks, but still needs hands-on testing across more Android and iOS browsers.
+- Finished controller support is not included yet.
+- The Web build requires WebGL 2; browser or driver settings can still stop it from starting.
+- Locomotion now has complete directional coverage, but some combat actions have fewer unique frames.
+- Music and effects are synthesised in-engine. There is no recorded voice work or live-performed score.
+- Browser saves and touch preferences can be lost when site data is cleared or private browsing ends.
+- The canvas game has keyboard and reduced-effects work, but has not had a manual screen-reader audit.
+- Route balance, combat difficulty and total playtime still need wider external playtesting.
 
-## AI-assisted development
+## Development notes
 
-I used AI tooling while working on parts of the campaign implementation, runtime map builder, lighting and normal-map pipeline, Web export and automated smoke tests. I also used image-generation tools for prototype source sheets. I revised the generated material, kept its provenance documented and tested the project through Godot's import, smoke-test and Web-export paths.
+I used AI-assisted coding and image-generation tools during development, including for prototype source sheets, parts of the runtime world system and some automated checks. I revised the output in the project, kept source/processed asset provenance documented and validated the finished paths in Godot and the exported browser build. The repository does not present generated images as hand-drawn work.
 
 ## Next
 
-- Run timed external playtests and tune encounter, quest and travel pacing from the results
-- Test the responsive phone UI across more Android and iOS browser sizes
-- Expand combat reactions and action animation to the same coverage as locomotion
-- Add further NPC branches and optional discoveries without obscuring the main route
-- Finish controller support and broader accessibility testing
-- Evaluate recorded voice work and a commissioned or live-performed score
+- Run timed external playtests and tune route, encounter and resource pacing from the results
+- Test the responsive touch layout on a broader set of real phones and tablets
+- Expand combat reactions and action frames to match the locomotion coverage
+- Finish controller support and a broader accessibility pass
+- Evaluate recorded voice work and a live-performed or commissioned score
 
-## Licence and project notes
+## Licence
 
-Built and maintained by Jamie Parr using Godot 4.7. The code and project documentation are available under the [MIT License](LICENSE); image provenance and processing notes are separate in [ASSET_CREDITS.md](ASSET_CREDITS.md).
+Built and maintained by Jamie Parr using Godot 4.7. Code and project documentation are available under the [MIT License](LICENSE); image provenance and processing notes are separate in [ASSET_CREDITS.md](ASSET_CREDITS.md).
 
 Project history is in [CHANGELOG.md](CHANGELOG.md). Contributions are covered by [CONTRIBUTING.md](CONTRIBUTING.md), and bugs can be reported through [GitHub Issues](https://github.com/JamieP-205/the-world-forgot-us/issues).

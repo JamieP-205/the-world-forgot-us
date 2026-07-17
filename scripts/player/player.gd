@@ -8,6 +8,11 @@ extends CharacterBody2D
 
 ## Movement speed in pixels per second.
 @export var move_speed: float = 220.0
+@export var movement_acceleration: float = 1450.0
+@export var movement_deceleration: float = 1850.0
+@export_range(0.0, 0.5, 0.01) var facing_hysteresis: float = 0.18
+@export var moving_animation_threshold: float = 12.0
+@export_range(0.0, 0.2, 0.005) var locomotion_blend_time: float = 0.075
 
 ## Damage dealt per melee swing.
 @export var attack_damage: float = 34.0
@@ -58,8 +63,11 @@ var _burst_cd: float = 0.0
 var _shake_time: float = 0.0
 var _shake_duration: float = 0.0
 var _shake_strength: float = 0.0
+var _face := "down"
+var _active_visual: AnimatedSprite2D
+var _visual_blend: Tween
 
-## Seconds during which a one-shot animation (attack/hurt) keeps priority over
+## Seconds during which a one-shot animation (attack/hit/death) keeps priority over
 ## the idle/walk locomotion animation. Purely visual.
 var _anim_lock: float = 0.0
 
@@ -86,8 +94,13 @@ func _ready() -> void:
 	_swing_timer.timeout.connect(func() -> void: _swing_visual.visible = false)
 	_swing_visual.visible = false
 	_walk_visual.visible = false
+	_walk_visual.self_modulate.a = 0.0
+	_visual.self_modulate.a = 1.0
 	_walk_visual.frame_changed.connect(_on_walk_frame_changed)
-	_visual.play(&"idle_down")
+	_visual.frame_changed.connect(_on_visual_frame_changed)
+	_active_visual = _visual
+	DirectionalAnimation.play(_visual, &"idle_down")
+	DirectionalAnimation.apply_registration(_walk_visual)
 
 	# Push the starting health to the HUD now that listeners are wired up.
 	EventBus.player_health_changed.emit(_health.current_health, _health.max_health)
@@ -108,19 +121,16 @@ func _physics_process(delta: float) -> void:
 
 ## Maps the continuous facing vector to one of the four sprite directions.
 func _facing_dir() -> String:
-	if absf(facing.x) > absf(facing.y):
-		return "right" if facing.x > 0.0 else "left"
-	return "down" if facing.y >= 0.0 else "up"
+	return _face
 
 
-## Plays a one-shot animation (attack/hurt) and holds it for `lock` seconds so
+## Plays a one-shot animation and holds it for `lock` seconds so
 ## locomotion doesn't immediately override it. Guards against missing anims.
 func _play_action(anim: StringName, lock: float) -> void:
-	if _visual.sprite_frames != null and _visual.sprite_frames.has_animation(anim):
-		_walk_visual.visible = false
-		_visual.visible = true
-		_visual.play(anim)
-		_anim_lock = lock
+	if DirectionalAnimation.play(_visual, anim):
+		_transition_visual(_visual, minf(locomotion_blend_time, 0.05))
+		_anim_lock = maxf(lock, DirectionalAnimation.animation_duration(
+			_visual.sprite_frames, anim, _visual.speed_scale))
 
 
 ## Chooses idle vs walk for the current facing, unless a one-shot is playing.
@@ -128,26 +138,59 @@ func _update_locomotion(moving: bool) -> void:
 	if _anim_lock > 0.0:
 		return
 	if moving:
-		_visual.visible = false
-		_walk_visual.visible = true
+		_transition_visual(_walk_visual, locomotion_blend_time)
 		var walk_anim := StringName("walk_" + _facing_dir())
-		if _walk_visual.animation != walk_anim or not _walk_visual.is_playing():
-			_walk_visual.play(walk_anim)
+		DirectionalAnimation.play(_walk_visual, walk_anim, true)
 		return
-	_walk_visual.visible = false
-	_visual.visible = true
+	_transition_visual(_visual, locomotion_blend_time)
 	var idle_anim := StringName("idle_" + _facing_dir())
-	if _visual.animation != idle_anim or not _visual.is_playing():
-		_visual.play(idle_anim)
+	DirectionalAnimation.play(_visual, idle_anim)
+
+
+## A short alpha hand-off masks the unavoidable crop/pose difference between
+## the painted action set and the registered four-frame walk sheet.
+func _transition_visual(target: AnimatedSprite2D, duration: float) -> void:
+	if _active_visual == target:
+		target.visible = true
+		target.self_modulate.a = 1.0
+		return
+	if _visual_blend != null and _visual_blend.is_valid():
+		_visual_blend.kill()
+	var previous := _active_visual
+	_active_visual = target
+	target.visible = true
+	if previous == null or not previous.visible or duration <= 0.0:
+		target.self_modulate.a = 1.0
+		if previous != null:
+			previous.visible = false
+			previous.self_modulate.a = 1.0
+		return
+	target.self_modulate.a = 0.0
+	previous.visible = true
+	_visual_blend = create_tween().set_parallel(true)
+	_visual_blend.tween_property(target, "self_modulate:a", 1.0, duration)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_visual_blend.tween_property(previous, "self_modulate:a", 0.0, duration)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	_visual_blend.chain().tween_callback(func() -> void:
+		if is_instance_valid(previous) and previous != _active_visual:
+			previous.visible = false
+			previous.self_modulate.a = 1.0
+	)
 
 
 ## The generated four-direction walk cycle has two planted-foot beats per
 ## loop. Driving footsteps from those frames keeps sound and motion locked
 ## together at every movement speed without a second timer.
 func _on_walk_frame_changed() -> void:
-	if not _walk_visual.visible or _walk_visual.frame not in [0, 2]:
+	DirectionalAnimation.apply_registration(_walk_visual)
+	if _active_visual != _walk_visual or _walk_visual.frame not in [0, 2]:
 		return
 	AudioManager.play_footstep(global_position, velocity)
+
+
+func _on_visual_frame_changed() -> void:
+	DirectionalAnimation.apply_registration(_visual)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -162,6 +205,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		# The interactable may have changed state, so refresh immediately.
 		_update_current_interactable()
 	elif event.is_action_pressed("attack"):
+		# Browsers mirror touch presses as synthetic left clicks by default.
+		# MobileControls already emits the deliberate attack action, so accepting
+		# the mirrored mouse event would make every joystick/UI tap swing too.
+		if event is InputEventMouseButton \
+				and event.device == InputEvent.DEVICE_ID_EMULATION:
+			return
 		_try_attack()
 	elif event.is_action_pressed("consume"):
 		_try_consume_healing()
@@ -196,7 +245,7 @@ func _use_medical_kit() -> void:
 	if not InventorySystem.remove_item(&"medical_kit", 1):
 		return
 	var before := _health.current_health
-	_health.heal(medical_kit_heal)
+	_health.heal(medical_kit_heal * CampaignSystem.get_gameplay_value(&"healing"))
 	var restored := roundi(_health.current_health - before)
 	AudioManager.play(&"pickup", -4.0, 0.82)
 	EventBus.notice_posted.emit(
@@ -207,28 +256,32 @@ func _use_ration() -> void:
 	if not InventorySystem.remove_item(&"canned_food", 1):
 		return
 	var before := _health.current_health
-	_health.heal(food_heal)
+	_health.heal(food_heal * CampaignSystem.get_gameplay_value(&"healing"))
 	var restored := roundi(_health.current_health - before)
 	AudioManager.play(&"eat")
 	EventBus.notice_posted.emit("You force down a cold ration. +%d health." % restored)
 
 
-func _handle_movement(_delta: float) -> void:
+func _handle_movement(delta: float) -> void:
 	if _dodge_time > 0.0:
-		velocity = _dodge_dir * dodge_speed
+		velocity = _dodge_dir * dodge_speed * CampaignSystem.get_gameplay_value(&"dodge_speed")
 		move_and_slide()
 		_update_locomotion(true)
 		return
 	var input_dir: Vector2 = Input.get_vector(
 		"move_left", "move_right", "move_up", "move_down"
 	)
-	velocity = input_dir * move_speed
+	var target_velocity := input_dir * move_speed * CampaignSystem.get_gameplay_value(&"move_speed")
+	velocity = DirectionalAnimation.smooth_velocity(
+		velocity, target_velocity, movement_acceleration, movement_deceleration, delta)
 	move_and_slide()
 
-	if input_dir != Vector2.ZERO:
+	if not input_dir.is_zero_approx():
 		facing = input_dir.normalized()
+		_face = DirectionalAnimation.select_direction(
+			input_dir, _face, facing_hysteresis)
 		_facing_indicator.rotation = facing.angle()
-	_update_locomotion(input_dir != Vector2.ZERO)
+	_update_locomotion(velocity.length() > moving_animation_threshold)
 
 
 # --- Combat -----------------------------------------------------------------
@@ -253,7 +306,7 @@ func _try_attack() -> void:
 	# Hit everything the hitbox currently overlaps that knows how to be hurt.
 	for body in _attack_area.get_overlapping_bodies():
 		if body.has_method("take_damage"):
-			body.take_damage(attack_damage)
+			body.take_damage(attack_damage * CampaignSystem.get_gameplay_value(&"outgoing_damage"))
 
 
 func _try_dodge() -> void:
@@ -264,6 +317,8 @@ func _try_dodge() -> void:
 	if _dodge_dir == Vector2.ZERO:
 		_dodge_dir = Vector2.DOWN
 	facing = _dodge_dir
+	_face = DirectionalAnimation.select_direction(
+		_dodge_dir, _face, facing_hysteresis)
 	_dodge_time = dodge_duration
 	_dodge_cd = dodge_cooldown
 	_invuln = maxf(_invuln, dodge_duration + 0.08)
@@ -294,7 +349,7 @@ func _try_memory_burst() -> void:
 		if enemy.has_method("on_signal_burst"):
 			enemy.on_signal_burst(global_position, burst_radius)
 		if enemy.has_method("take_damage"):
-			enemy.take_damage(burst_damage)
+			enemy.take_damage(burst_damage * CampaignSystem.get_gameplay_value(&"outgoing_damage"))
 			hits += 1
 	EventBus.notice_posted.emit(
 		"Receiver discharge overloads %d signal%s." % [hits, "" if hits == 1 else "s"]
@@ -302,7 +357,7 @@ func _try_memory_burst() -> void:
 
 
 func _spawn_motion_echo() -> void:
-	var active_visual: AnimatedSprite2D = _walk_visual if _walk_visual.visible else _visual
+	var active_visual: AnimatedSprite2D = _active_visual if _active_visual != null else _visual
 	if active_visual.sprite_frames == null:
 		return
 	var texture := active_visual.sprite_frames.get_frame_texture(
@@ -346,10 +401,10 @@ func _spawn_burst_visual() -> void:
 func take_damage(amount: float) -> void:
 	if _invuln > 0.0 or not _health.is_alive():
 		return
-	_health.take_damage(amount)
+	_health.take_damage(amount * CampaignSystem.get_gameplay_value(&"damage_taken"))
 	_invuln = hurt_invuln_time
 	_flash_hurt()
-	_play_action(StringName("hurt_" + _facing_dir()), 0.24)
+	_play_action(StringName("hit_" + _facing_dir()), 0.24)
 
 
 func _flash_hurt() -> void:
@@ -389,6 +444,7 @@ func _on_health_changed(current: float, maximum: float) -> void:
 
 
 func _on_died() -> void:
+	_play_action(StringName("death_" + _facing_dir()), 0.5)
 	EventBus.player_died.emit()
 	# "Wake at the base": heal to full here; GameManager handles the trip
 	# home in response to player_died.

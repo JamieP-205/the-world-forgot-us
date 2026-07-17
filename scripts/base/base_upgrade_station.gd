@@ -15,12 +15,7 @@ var _time := 0.0
 
 
 func _ready() -> void:
-	if upgrade_data != null and BaseUpgradeSystem.is_built(upgrade_data.id):
-		_built = true
-		_apply_built_visual()
-	else:
-		# Powered-down: cold and dim until built.
-		_desk_sprite.modulate = Color(0.5, 0.55, 0.62)
+	apply_built_state(upgrade_data != null and BaseUpgradeSystem.is_built(upgrade_data.id))
 
 
 func _process(delta: float) -> void:
@@ -60,7 +55,7 @@ func interact(_player: Node2D) -> void:
 	if BaseUpgradeSystem.build(upgrade_data):
 		_built = true
 		_apply_built_visual()
-		# Audio placeholder: visible feedback stands in until real radio audio exists.
+		# The short receiver cue confirms the desk has taken the line.
 		EventBus.notice_posted.emit(
 			"%s built.\nA weak signal repeats: NORTH ROAD... ANOTHER VOICE..."
 			% _title())
@@ -68,10 +63,22 @@ func interact(_player: Node2D) -> void:
 
 func _apply_built_visual() -> void:
 	_desk_sprite.modulate = Color(1, 1, 1)
+	_power_light.visible = true
 	_power_light.color = Color(0.4, 1.0, 0.55)
 	_radio_body.color = Color(0.2, 0.32, 0.32)
 	_dial.color = Color(0.78, 1.0, 0.88)
 	_signal_glow.visible = true
+
+
+## Re-applies the desk state when a save is restored after the scene exists.
+func apply_built_state(built: bool) -> void:
+	_built = built
+	if built:
+		_apply_built_visual()
+		return
+	_desk_sprite.modulate = Color(0.5, 0.55, 0.62)
+	_power_light.visible = false
+	_signal_glow.visible = false
 
 
 func _title() -> String:

@@ -5,6 +5,9 @@ extends CharacterBody2D
 ## a scanner pulse reveals and stuns it long enough for a focused attack.
 
 @export var move_speed: float = 76.0
+@export var movement_acceleration: float = 430.0
+@export var movement_deceleration: float = 620.0
+@export_range(0.0, 0.5, 0.01) var facing_hysteresis: float = 0.24
 @export var detection_radius: float = 300.0
 @export var attack_range: float = 28.0
 @export var contact_damage: float = 11.0
@@ -42,7 +45,8 @@ func _ready() -> void:
 	add_to_group("scannables")
 	_health.died.connect(_on_died)
 	EventBus.scanner_pulsed.connect(on_signal_burst)
-	_visual.play(&"idle_down")
+	_visual.frame_changed.connect(_on_animation_frame_changed)
+	DirectionalAnimation.play(_visual, &"idle_down")
 	_apply_phase_visual(false)
 
 
@@ -68,23 +72,25 @@ func _physics_process(delta: float) -> void:
 
 	var player := get_tree().get_first_node_in_group("player")
 	if player == null:
-		velocity = Vector2.ZERO
+		velocity = DirectionalAnimation.smooth_velocity(
+			velocity, Vector2.ZERO, movement_acceleration, movement_deceleration, delta)
+		move_and_slide()
 		_update_anim()
 		return
 
 	var to_player: Vector2 = player.global_position - global_position
 	var distance := to_player.length()
+	var target_velocity := Vector2.ZERO
 	if distance <= attack_range:
-		velocity = Vector2.ZERO
 		if _attack_cd <= 0.0 and player.has_method("take_damage"):
 			player.take_damage(contact_damage)
 			_attack_cd = attack_cooldown
 			_play_action(StringName("attack_" + _face), 0.32)
 	elif distance <= detection_radius:
-		velocity = to_player.normalized() * move_speed
-	else:
-		velocity = Vector2.ZERO
+		target_velocity = to_player.normalized() * move_speed
 
+	velocity = DirectionalAnimation.smooth_velocity(
+		velocity, target_velocity, movement_acceleration, movement_deceleration, delta)
 	move_and_slide()
 	_update_anim()
 
@@ -148,22 +154,20 @@ func _update_anim() -> void:
 		return
 	var moving := velocity.length() > 1.0
 	if moving:
-		_face = _dir_from(velocity)
+		_face = DirectionalAnimation.select_direction(
+			velocity, _face, facing_hysteresis)
 	var wanted := StringName(("walk_" if moving else "idle_") + _face)
-	if _visual.animation != wanted or not _visual.is_playing():
-		_visual.play(wanted)
-
-
-func _dir_from(direction: Vector2) -> String:
-	if absf(direction.x) > absf(direction.y):
-		return "right" if direction.x > 0.0 else "left"
-	return "down" if direction.y >= 0.0 else "up"
+	DirectionalAnimation.play(_visual, wanted, moving)
 
 
 func _play_action(animation: StringName, lock: float) -> void:
-	if _visual.sprite_frames != null and _visual.sprite_frames.has_animation(animation):
-		_visual.play(animation)
-		_anim_lock = lock
+	if DirectionalAnimation.play(_visual, animation):
+		_anim_lock = maxf(lock, DirectionalAnimation.animation_duration(
+			_visual.sprite_frames, animation, _visual.speed_scale))
+
+
+func _on_animation_frame_changed() -> void:
+	DirectionalAnimation.apply_registration(_visual)
 
 
 func _draw() -> void:

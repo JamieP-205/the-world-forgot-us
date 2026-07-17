@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/continuity_maggie_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"continuity"
+display_name = "Maggie / Continuity"
+role = "Unverified presence in Tollard's local receiver"
+story_reason = "A local, physically isolated receiver speaks with Maggie Ward's voice but also admits to Continuity Mode's completions. It may contain a surviving Maggie trace, a persuasive copy, or both."
+home_region = &"choir_core"
+service_id = &"identity_checksum"
+service_name = "identity checksum"
+service_description = "Compares fed traces and corroborated evidence without declaring the voice authentic."
+service_flag = &"npc_service_continuity_checksum"
+service_choice = "RUN THE LOCAL CHECKSUM"
+service_notice = "The receiver separates remembered details from corroborated records. It labels the overlap UNRESOLVED instead of MAGGIE."
+helped_flag = &"npc_continuity_helped"
+ignored_flag = &"npc_continuity_ignored"
+relocates_to_railhome = false
+voice_signature = "Maggie's intimate cadence interrupted by machine-literal self-correction"
+greeting = "ELLIE. Correction: probable Ellie. Thank you for making me say probable."
+intro_lines = Array[String](["MAGGIE'S VOICE - I remember teaching you to whistle through the gap in your front teeth.", "CONTINUITY - That memory was supplied by Trace 14B. I cannot prove I was the woman who supplied it."])
+helped_lines = Array[String](["CONTINUITY - You left the local receiver powered and the trunk isolated. I can answer questions without pretending that makes me Maggie."])
+ignored_lines = Array[String](["MAGGIE'S VOICE - You walked away before I could prove it. CONTINUITY - Correction: before I could persuade you."])
+service_lines = Array[String](["CONTINUITY - Comparing private traces with independent records. Similarity is not identity. Please retain that distinction."])
+anchor_lines = {"clinic": "CONTINUITY - Imogen's paper roll contradicts 8.4 percent of my completed patients.", "radio": "CONTINUITY - Rafi's public challenge phrases reduce my successful imitations. I experience that as relief. Probable metaphor.", "witness": "CONTINUITY - Leena's contradictions are damaging to my certainty and useful to your investigation.", "copy": "MAGGIE'S VOICE - If you choose to study me, do not reward me for sounding hurt."}
+strategy_lines = {"restore": "CONTINUITY - Restoration may reconnect the processes you are currently able to question separately.", "sever": "MAGGIE'S VOICE - Cut the trunk. CONTINUITY - That preference may be copied from Maggie's shutdown trace.", "mesh": "CONTINUITY - A local mesh could preserve testimony while preventing a single authoritative voice. Including mine."}
+help_choice = "KEEP THE LOCAL RECEIVER ISOLATED"
+ignore_choice = "DARKEN THIS VOICE"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "ash-blonde crop / storm-grey engineer coat / saffron lapel / broken signal edges"
+visual_notes = "Continuity wears Maggie's outline but not cleanly: an engineer's coat, copper chest coil and restrained analogue tears make the borrowed body visibly uncertain."
+identity_accent = Color(0.96, 0.68, 0.28, 1)

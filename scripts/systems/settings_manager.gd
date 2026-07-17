@@ -20,6 +20,7 @@ const DEFAULTS := {
 	"gameplay": {
 		"day_night_cycle": true,
 		"mobile_tutorial_seen": false,
+		"precise_bearings": false,
 	},
 	"accessibility": {
 		"reduced_effects": false,

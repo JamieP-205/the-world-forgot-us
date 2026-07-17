@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_childs_lunchbox.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_sun_lid"
 title = "The Sun on the Lunch Tin"
 category = "Ashmere Estate"
 quality = "Personal recording"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Nine-ray enamel lunch tin"
+artifact_semantics = &"nine_ray_lunch_tin"
+evidence_class = "physical"
+confidence = 88
+signal_profile = "short domestic voiceprint / soot-damped"
+observation_text = "Nine rays cut through the enamel; blue inhaler dust remains in the left compartment."
+contradiction_text = "The estate index calls the tin unassigned, while the hand-cut mark and inhaler pocket identify Ellie."
+verification_text = "Compare the nine-ray lid with Maggie's service note and the inhaler pocket."
+feed_warning = "The copied voice would gain a private family marker used to authenticate Ellie."
 hint = "Yellow enamel shows through the soot. A sun has been scratched into the lid."
 memory_text = "MAGGIE: 'Mum drew one sun because you said the yellow was boring.' A child objects that it has nine rays, not eight. 'Fine. Nine. Put your inhaler inside and do not swap tins with Callum again.' The voice is ordinary enough to hurt."
 keepsake_item = &""

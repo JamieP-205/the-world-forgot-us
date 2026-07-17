@@ -17,6 +17,8 @@ var _defeated: Dictionary = {}   # enemy id -> true
 var _flags: Dictionary = {}      # campaign / quest id -> JSON-safe value
 var ending_hook_shown := false
 
+const NON_CACHE_OPENED_IDS: Array[StringName] = [&"keepsake_shelf_used"]
+
 
 # --- Loot containers ---
 func mark_opened(id: StringName) -> void:
@@ -27,6 +29,17 @@ func mark_opened(id: StringName) -> void:
 
 func is_opened(id: StringName) -> bool:
 	return _opened.get(id, false)
+
+
+## Route-parts drawers use this as a coarse proof that the player has actually
+## searched the road before asking for emergency stock. At present the only
+## non-loot entry in the opened set is the Railhome keepsake shelf.
+func get_searched_cache_count() -> int:
+	var count := 0
+	for raw_id in _opened:
+		if StringName(raw_id) not in NON_CACHE_OPENED_IDS:
+			count += 1
+	return count
 
 
 # --- Either/or choices ---
@@ -56,7 +69,7 @@ func is_defeated(id: StringName) -> bool:
 
 
 # --- Campaign flags ---
-## Small, deliberately generic state store used by the complete campaign.
+## Compact persistent state store used by campaign routes and world changes.
 ## Values must stay JSON-safe because SaveManager persists this dictionary.
 func set_flag(id: StringName, value: Variant = true) -> void:
 	if id == &"":

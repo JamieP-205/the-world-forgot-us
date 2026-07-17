@@ -1,4 +1,4 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/base/base_upgrade_station.gd" id="1_station"]
 [ext_resource type="Texture2D" path="res://assets/processed/railhome_props/radio_desk.png" id="2_desk"]
@@ -6,11 +6,19 @@
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_prop"]
 size = Vector2(74, 46)
 
-[node name="BaseUpgradeStation" type="Area2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_solid"]
+size = Vector2(66, 42)
+
+[sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_solid"]
+polygon = PackedVector2Array(-33, -21, 33, -21, 33, 21, -33, 21)
+
+[node name="BaseUpgradeStation" type="Area2D" groups=["railhome_solid_fixtures", "railhome_upgrade_benches"]]
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("1_station")
+metadata/fixture_id = &"radio_investigation_desk"
+metadata/zone_id = &"operations"
 
 [node name="Visual" type="Polygon2D" parent="."]
 color = Color(0.25, 0.29, 0.3, 0)
@@ -53,3 +61,15 @@ polygon = PackedVector2Array(-20, 10, -12, 10, -12, 18, -20, 18)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_prop")
+
+[node name="SolidFootprint" type="StaticBody2D" parent="."]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape" type="CollisionShape2D" parent="SolidFootprint"]
+position = Vector2(0, 3)
+shape = SubResource("RectangleShape2D_solid")
+
+[node name="Occluder" type="LightOccluder2D" parent="SolidFootprint"]
+position = Vector2(0, 3)
+occluder = SubResource("OccluderPolygon2D_solid")

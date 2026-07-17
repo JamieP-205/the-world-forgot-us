@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"signal_decoy"
+display_name = "Signal Decoy"
+description = "Wind a deliberately rough coil around a tin body and key it from a tired battery."
+category = &"signal"
+station_id = &"signal_bench"
+station_label = "signal bench"
+sort_order = 40
+ingredients = {
+"battery": 1,
+"copper_wire": 2,
+"scrap": 2
+}
+output_item_id = &"signal_decoy"
+required_flags = Array[StringName]([&"memory_burst_unlocked"])
+required_echoes = Array[StringName]([&"echo_last_signal"])
+unlock_note = "Maggie's mast call reveals the pulse spacing that draws a carrier-seeking Hollow off a human trail."

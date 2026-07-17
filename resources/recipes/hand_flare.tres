@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"hand_flare"
+display_name = "Hand Flare"
+description = "Pack a vented sleeve with oil-soaked cloth and fit a dry pull strip under the cap."
+category = &"fieldcraft"
+station_id = &"field_kit"
+station_label = "field kit"
+sort_order = 70
+ingredients = {
+"clean_cloth": 1,
+"lamp_oil": 1,
+"scrap": 1
+}
+output_item_id = &"hand_flare"
+output_amount = 2
+required_echoes = Array[StringName]([&"echo_driver_call"])
+unlock_note = "The driver's call describes the hand flares used when road signs could no longer be trusted."

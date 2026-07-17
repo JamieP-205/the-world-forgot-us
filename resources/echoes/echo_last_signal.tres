@@ -1,6 +1,8 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/trace_anchors/trace_last_signal.png" id="2_artifact"]
+[ext_resource type="Texture2D" path="res://assets/processed/trace_anchors/trace_last_signal_afterimage.png" id="3_afterimage"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +10,17 @@ id = &"echo_last_signal"
 title = "Mast Call, 02:13"
 category = "Cullbrook Services"
 quality = "Damaged recording"
+artifact_texture = ExtResource("2_artifact")
+afterimage_texture = ExtResource("3_afterimage")
+artifact_name = "Fallen-mast receiver and folded photograph"
+artifact_semantics = &"mast_receiver_photo"
+evidence_class = "physical"
+confidence = 92
+signal_profile = "02:13 carrier flutter / east-bearing sideband"
+observation_text = "Soot lies over the casing, but the photograph fold is clean; somebody opened the set after the mast fell."
+contradiction_text = "Control marks Ellie safe before Maggie names the child physically holding her hand."
+verification_text = "Match the photograph, inhaler note and mast timecode against a living witness before filing."
+feed_warning = "The copied voice would learn Ellie's childhood identifiers and Maggie's cadence."
 hint = "A call is caught under the fallen mast's automatic warning."
 memory_text = "MAGGIE: 'Ellie Ward. Eight. Red coat, blue inhaler in the left pocket.' Control says Ellie's record is already closed: caller confirmed safe. Maggie answers, 'She is holding my hand and she has not spoken to you.' The channel cuts while she is still reading the details. A photograph is folded inside the radio casing."
 keepsake_item = &"old_photo"

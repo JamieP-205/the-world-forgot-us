@@ -43,14 +43,19 @@ NORMAL_ROOT = PROCESSED_ROOT / "normals"
 DEFAULT_FOLDERS = (
     "decals",
     "demo_ground_tiles",
+    "enemy_walk_rebuild",
     "environment",
     "environment_landmarks_v2",
+    "environment_rebuild",
     "hollow_topdown",
+    "interior_identity",
     "loot_containers",
     "petrol_station_props",
     "player_topdown",
+    "player_walk_v2",
     "railhome_props",
     "roadside_props",
+    "trace_anchors",
 )
 DEFAULT_EXTRA_FILES = (
     "scanner_memory_effects/memory_echo_core.png",

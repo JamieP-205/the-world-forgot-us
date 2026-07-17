@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"carrier_grounder"
+display_name = "Carrier Grounder"
+description = "Bolt an isolator behind a weighted earth clamp and braid a lead long enough to throw clear."
+category = &"signal"
+station_id = &"signal_bench"
+station_label = "signal bench"
+sort_order = 120
+ingredients = {
+"analogue_isolator": 1,
+"copper_wire": 3,
+"scrap": 3
+}
+output_item_id = &"carrier_grounder"
+required_flags = Array[StringName]([&"wrenfield_route_verified"])
+required_echoes = Array[StringName]([&"echo_relay_warning"])
+unlock_note = "The verified Wrenfield warning marks the carrier band and the safe throw distance for a field earth."

@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/nia_calder_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"nia"
+display_name = "Nia Calder"
+role = "Hunter and former overhead lineswoman"
+story_reason = "Nia tracks the carrier patterns that pull Hollows along old overhead routes. Her lures can protect a settlement, but her certainty that force is safer than recovery makes every use a moral choice."
+home_region = &"wrenfield"
+service_id = &"field_defence"
+service_name = "lineswoman's bench"
+service_description = "Sets carrier lures, route tripwires and a durable Hollow-tracking warning around Railhome."
+service_flag = &"npc_service_nia_defence"
+service_choice = "STRING NIA'S FIELD DEFENCE"
+service_notice = "Nia grounds a carrier lure beyond the tripline. Railhome can now see the next Hollow approach before it reaches the door."
+helped_flag = &"npc_nia_helped"
+ignored_flag = &"npc_nia_ignored"
+voice_signature = "command first, terrain second, explanation last; anger becomes quiet"
+greeting = "Stay off the gravel. It hears the line through its boots."
+intro_lines = Array[String](["NIA - Two walking. One dragging cable. The mud says they crossed after the rain.", "I can move the lure bench or keep this road clear alone. Decide before the next carrier wakes."])
+helped_lines = Array[String](["NIA - Railhome's perimeter has three quiet warnings now. Quiet matters more than clever."])
+ignored_lines = Array[String](["NIA - The road stayed clear. Ask me what I used when you are ready to dislike the answer."])
+service_lines = Array[String](["NIA - Tripwire there. Carrier lure beyond it. Do not stand between them."])
+anchor_lines = {"clinic": "NIA - You call them patients. Fine. Keep them breathing while I keep them away from the door.", "radio": "NIA - A broadcast is a lure whether you mean it or not. Choose where the teeth point.", "witness": "NIA - Tracks are a witness that cannot be threatened. They can still be read wrong.", "copy": "NIA - If the copy wants a body, make it cross ground we prepared first."}
+strategy_lines = {"restore": "NIA - Restore a live line and I will mark every approach it wakes.", "sever": "NIA - Cut the trunk, then hunt what keeps walking after the carrier dies.", "mesh": "NIA - Local lures, named hands, one kill switch at every bench. That I can defend."}
+help_choice = "MOVE THE LURE BENCH TO RAILHOME"
+ignore_choice = "LEAVE HER HOLDING THE WRENFIELD ROAD"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "high copper-wrapped locs / short russet line jacket / ochre climbing harness / three stakes"
+visual_notes = "Nia's high locs, compact lineswoman jacket, heavy climbing harness, lure horn and three shoulder stakes create an agile defensive silhouette without a firearm."
+identity_accent = Color(0.86, 0.45, 0.20, 1)

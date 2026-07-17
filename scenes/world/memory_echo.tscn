@@ -1,27 +1,97 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/memory_echo.gd" id="1_echo"]
 [ext_resource type="Script" path="res://scripts/scanner/scannable.gd" id="2_scan"]
-[ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/memory_echo_core.png" id="3_core"]
+[ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/cyan_dust.png" id="3_dust"]
+[ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/recovery_burst.png" id="4_recovery"]
+[ext_resource type="PackedScene" path="res://scenes/ui/trace_anchor_overlay.tscn" id="5_overlay"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_reach"]
-radius = 28.0
+radius = 42.0
+
+[sub_resource type="Gradient" id="Gradient_trace_light"]
+offsets = PackedFloat32Array(0, 0.38, 0.74, 1)
+colors = PackedColorArray(1, 1, 1, 0.92, 0.82, 0.9, 0.86, 0.56, 0.3, 0.42, 0.38, 0.14, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture_trace_light"]
+gradient = SubResource("Gradient_trace_light")
+width = 192
+height = 192
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Shader" id="Shader_artifact_detail"]
+code = "shader_type canvas_item;\n\nuniform float shadow_lift : hint_range(0.0, 1.0) = 0.0;\nuniform float exposure : hint_range(0.4, 1.8) = 1.0;\n\nvoid fragment() {\n\tvec4 source = texture(TEXTURE, UV);\n\tfloat gamma = mix(1.0, 0.42, shadow_lift);\n\tvec3 lifted = pow(max(source.rgb, vec3(0.0)), vec3(gamma)) * exposure;\n\tCOLOR = vec4(lifted, source.a) * COLOR;\n}\n"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_artifact_detail"]
+resource_local_to_scene = true
+shader = SubResource("Shader_artifact_detail")
+shader_parameter/shadow_lift = 0.04
+shader_parameter/exposure = 0.72
+
+[sub_resource type="Shader" id="Shader_afterimage"]
+code = "shader_type canvas_item;\nrender_mode unshaded;\n\nuniform float alignment : hint_range(0.0, 1.0) = 0.0;\nuniform float motion_strength : hint_range(0.0, 1.0) = 1.0;\nuniform vec4 trace_tone : source_color = vec4(0.54, 0.74, 0.66, 1.0);\n\nvoid fragment() {\n\tfloat clock = TIME * motion_strength;\n\tfloat fault_line = smoothstep(0.86, 0.98, 0.5 + 0.5 * sin(UV.y * 117.0 + clock * 4.1));\n\tfloat unsettled = 1.0 - alignment;\n\tfloat shear = sin(UV.y * 31.0 + clock * 2.7) * fault_line * (0.008 * unsettled + 0.0012 * motion_strength);\n\tvec2 sample_uv = clamp(UV + vec2(shear, 0.0), vec2(0.002), vec2(0.998));\n\tvec4 source = texture(TEXTURE, sample_uv);\n\tfloat luma = dot(source.rgb, vec3(0.299, 0.587, 0.114));\n\tvec3 paper_memory = mix(vec3(luma), source.rgb, 0.42);\n\tvec3 memory_detail = pow(max(paper_memory, vec3(0.0)), vec3(0.72));\n\tvec3 remembered_colour = memory_detail * mix(vec3(1.0), trace_tone.rgb, 0.30);\n\tremembered_colour = mix(remembered_colour, memory_detail, alignment * 0.28);\n\tfloat dropout = mix(0.82 + 0.18 * sin(UV.y * 173.0 + clock * 3.3), 1.0, alignment);\n\tCOLOR = vec4(remembered_colour * 1.20, source.a * dropout) * COLOR;\n}\n"
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_afterimage"]
+resource_local_to_scene = true
+shader = SubResource("Shader_afterimage")
+shader_parameter/alignment = 0.0
+shader_parameter/motion_strength = 1.0
+shader_parameter/trace_tone = Color(0.54, 0.74, 0.66, 1)
 
 [node name="MemoryEcho" type="Area2D"]
 collision_layer = 4
 collision_mask = 0
 monitoring = false
 script = ExtResource("1_echo")
+metadata/lighting_ignore = true
 
-[node name="Halo" type="Polygon2D" parent="."]
-color = Color(0.32, 0.92, 1, 0.28)
-polygon = PackedVector2Array(0, -28, 24, -10, 24, 10, 0, 28, -24, 10, -24, -10)
+[node name="Visual" type="Node2D" parent="."]
 
-[node name="Visual" type="Sprite2D" parent="."]
-texture = ExtResource("3_core")
+[node name="MemoryLight" type="PointLight2D" parent="Visual"]
+enabled = false
+texture = SubResource("GradientTexture_trace_light")
+texture_scale = 0.52
+energy = 0.0
+height = 62.0
+shadow_enabled = false
+z_index = -1
+
+[node name="EdgeLight" type="Sprite2D" parent="Visual"]
+texture_filter = 2
+z_index = 1
+
+[node name="Artifact" type="Sprite2D" parent="Visual"]
+material = SubResource("ShaderMaterial_artifact_detail")
+texture_filter = 2
+z_index = 2
+
+[node name="Afterimage" type="Sprite2D" parent="Visual"]
+visible = false
+material = SubResource("ShaderMaterial_afterimage")
+texture_filter = 2
+z_index = 3
+
+[node name="SignalDust" type="Sprite2D" parent="Visual"]
+visible = false
+modulate = Color(0.62, 0.78, 0.68, 0.1)
+texture_filter = 2
+texture = ExtResource("3_dust")
+scale = Vector2(0.11, 0.11)
+z_index = 0
+
+[node name="RecoveryBurst" type="Sprite2D" parent="Visual"]
+visible = false
+texture_filter = 2
+texture = ExtResource("4_recovery")
+scale = Vector2(0.075, 0.075)
+z_index = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_reach")
 
 [node name="Scannable" type="Node2D" parent="."]
 script = ExtResource("2_scan")
+
+[node name="TraceAnchorOverlay" parent="." instance=ExtResource("5_overlay")]

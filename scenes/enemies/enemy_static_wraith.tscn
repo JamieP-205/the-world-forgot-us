@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_static_wraith.gd" id="1_wraith"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
-[ext_resource type="SpriteFrames" path="res://resources/spriteframes/hollow_painted_spriteframes.tres" id="3_frames"]
+[ext_resource type="SpriteFrames" path="res://resources/spriteframes/enemy_static_wraith_directional_spriteframes.tres" id="3_frames"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(20, 28)
@@ -19,7 +19,7 @@ polygon = PackedVector2Array(-21, 20, -12, 17, 12, 17, 21, 20, 13, 27, -13, 27)
 
 [node name="Visual" type="AnimatedSprite2D" parent="."]
 modulate = Color(0.35, 0.9, 1, 0.075)
-scale = Vector2(0.15, 0.15)
+scale = Vector2(0.235, 0.235)
 sprite_frames = ExtResource("3_frames")
 animation = &"idle_down"
 offset = Vector2(0, -20)

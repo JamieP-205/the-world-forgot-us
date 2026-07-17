@@ -6,9 +6,9 @@ extends Node
 ## built base upgrades.
 
 const SAVE_PATH := "user://savegame.json"
-## Bumped when the save schema changes. Missing/older values are read with
-## safe defaults, so pre-version saves still load (just without world flags).
-const SAVE_VERSION := 2
+## Version three separated narrative decisions; version four adds per-trace
+## filing decisions while preserving the legacy archive id array.
+const SAVE_VERSION := 4
 
 ## Player state waiting to be applied once the loaded level is ready.
 var _pending_player: Dictionary = {}
@@ -32,8 +32,10 @@ func save_game(notice: String = "Progress saved.") -> bool:
 		},
 		"inventory": _keys_to_strings(InventorySystem.get_items()),
 		"archive": _ids_to_strings(ArchiveSystem.get_recovered_ids()),
+		"archive_dispositions": ArchiveSystem.get_dispositions(),
 		"upgrades": _ids_to_strings(BaseUpgradeSystem.get_built_ids()),
 		"world": WorldState.get_state(),
+		"narrative": CampaignSystem.get_narrative_state(),
 	}
 
 	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
@@ -49,6 +51,7 @@ func save_game(notice: String = "Progress saved.") -> bool:
 
 
 func load_game() -> bool:
+	_cancel_pending_player_restore()
 	if not has_save():
 		return false
 	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
@@ -63,19 +66,33 @@ func load_game() -> bool:
 		push_error("SaveManager: save file is corrupt.")
 		return false
 
+	# Validate the destination before changing any live run state. A stale or
+	# hand-edited level path must not half-restore inventory, story flags, or a
+	# player transform into the current session.
+	var level_path := String(data.get("level", ""))
+	if not _is_loadable_level(level_path):
+		return false
+
+	var source_version := int(data.get("version", 0))
+	CraftedItemEffects.clear_runtime_state()
 	InventorySystem.set_items(data.get("inventory", {}))
-	ArchiveSystem.restore(data.get("archive", []))
+	ArchiveSystem.restore(
+		data.get("archive", []),
+		data.get("archive_dispositions", {}),
+	)
 	BaseUpgradeSystem.restore(data.get("upgrades", []))
 	# Older saves have no "world" key; restore() handles the empty default.
 	WorldState.restore(data.get("world", {}))
+	# Version 3 stores route decisions separately from legacy world flags.
+	# CampaignSystem reconstructs safe evidence/rescue defaults for older saves.
+	CampaignSystem.restore_narrative_state(data.get("narrative", {}), source_version)
 
-	_pending_player = data.get("player", {})
+	var player_data: Variant = data.get("player", {})
+	_pending_player = Dictionary(player_data).duplicate(true) \
+		if typeof(player_data) == TYPE_DICTIONARY else {}
 	if not EventBus.level_loaded.is_connected(_on_level_loaded):
 		EventBus.level_loaded.connect(_on_level_loaded, CONNECT_ONE_SHOT)
 
-	var level_path := String(data.get("level", ""))
-	if level_path.is_empty():
-		return false
 	GameManager.travel_to(level_path, &"")
 	return true
 
@@ -88,11 +105,26 @@ func delete_save() -> void:
 ## Wipes the save file and all in-memory run state, for a clean New Game.
 ## Leaves no stale WorldState/inventory/echo/upgrade flags behind.
 func clear_run_state() -> void:
+	_cancel_pending_player_restore()
 	delete_save()
+	CraftedItemEffects.clear_runtime_state()
 	InventorySystem.set_items({})
 	ArchiveSystem.restore([])
 	BaseUpgradeSystem.restore([])
 	WorldState.clear()
+	CampaignSystem.clear_narrative_state(false)
+
+
+func _is_loadable_level(level_path: String) -> bool:
+	if level_path.is_empty() or not ResourceLoader.exists(level_path, "PackedScene"):
+		return false
+	return load(level_path) is PackedScene
+
+
+func _cancel_pending_player_restore() -> void:
+	_pending_player = {}
+	if EventBus.level_loaded.is_connected(_on_level_loaded):
+		EventBus.level_loaded.disconnect(_on_level_loaded)
 
 
 func _on_level_loaded() -> void:

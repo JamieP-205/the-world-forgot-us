@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"wire_splicer"
+effect_kind = &"repair"
+action_label = "SPLICE LINE"
+use_summary = "Repairs torn field wire, antenna leads and small mechanical linkages at the break."
+consequence = "The tool is reusable, but the repaired line carries whatever signal reaches it next."
+consumes_on_use = false
+cooldown_seconds = 2.0
+target_group = &"craft_repair_targets"
+target_prompt = "Stand beside a torn cable, antenna lead or repairable linkage."
+values = {"range": 100.0}

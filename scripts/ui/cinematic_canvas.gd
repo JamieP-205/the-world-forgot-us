@@ -1,139 +1,105 @@
 extends Control
+## Image-led opening with a restrained dissolve and camera drift.
 
-var beat := 0
-var elapsed := 0.0
+const STILLS := [
+	"res://assets/processed/cinematic_rebuild/cin01_receiver_photo.png",
+	"res://assets/processed/cinematic_rebuild/cin02_same_switch.png",
+	"res://assets/processed/cinematic_rebuild/cin03_carriage_depot.png",
+	"res://assets/processed/cinematic_rebuild/cin04_blank_night.png",
+	"res://assets/processed/cinematic_rebuild/cin05_dead_cafe_phone.png",
+	"res://assets/processed/cinematic_rebuild/cin06_other_ellie.png",
+	"res://assets/processed/cinematic_rebuild/cin07_false_safe_print.png",
+	"res://assets/processed/cinematic_rebuild/cin08_playable_choice.png",
+]
+
+var _current: TextureRect
+var _incoming: TextureRect
+var _veil: ColorRect
+var _transition: Tween
+var _beat := -1
+var _elapsed := 0.0
+
+
+func _ready() -> void:
+	clip_contents = true
+	_current = _make_layer("CurrentStill")
+	_incoming = _make_layer("IncomingStill")
+	_incoming.modulate.a = 0.0
+	_veil = ColorRect.new()
+	_veil.name = "RainVeil"
+	_veil.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_veil.color = Color(0.025, 0.04, 0.038, 0.08)
+	add_child(_veil)
 
 
 func set_beat(index: int) -> void:
-	beat = index
-	elapsed = 0.0
-	queue_redraw()
+	var next_beat := clampi(index, 0, STILLS.size() - 1)
+	var texture := load(STILLS[next_beat]) as Texture2D
+	if texture == null:
+		push_warning("Opening still missing: %s" % STILLS[next_beat])
+		return
+	_elapsed = 0.0
+	if _beat < 0:
+		_current.texture = texture
+		_current.modulate = Color.WHITE
+	else:
+		# Rapid keyboard or controller advance can arrive before the dissolve
+		# finishes. Commit that visible destination first so an old callback can
+		# never clear the newer still or leave the illustration blank.
+		if _transition != null and _transition.is_valid():
+			_transition.kill()
+		if _incoming.texture != null:
+			_commit_incoming()
+		_incoming.texture = texture
+		_incoming.modulate = Color(1, 1, 1, 0)
+		_incoming.scale = Vector2(1.025, 1.025)
+		_transition = create_tween().set_parallel(true)
+		_transition.set_pause_mode(Tween.TWEEN_PAUSE_PROCESS)
+		_transition.tween_property(_incoming, "modulate:a", 1.0, 0.72)
+		_transition.tween_property(_current, "modulate:a", 0.0, 0.72)
+		_transition.chain().tween_callback(_commit_incoming)
+	_beat = next_beat
 
 
 func _process(delta: float) -> void:
-	elapsed += delta
-	queue_redraw()
+	_elapsed += delta
+	# The stills stay composed; this sub-pixel drift is enough to keep rain and
+	# depth alive without turning a quiet image into a slideshow template.
+	var direction := -1.0 if _beat % 2 == 0 else 1.0
+	var drift := clampf(_elapsed / 9.0, 0.0, 1.0)
+	_current.scale = Vector2.ONE * (1.018 + drift * 0.018)
+	_current.position = Vector2(direction * drift * 9.0, -drift * 4.0)
+	_veil.color.a = 0.065 + sin(_elapsed * 0.72) * 0.012
 
 
-func _draw() -> void:
-	var w := size.x
-	var h := size.y
-	draw_rect(Rect2(Vector2.ZERO, size), Color(0.008, 0.01, 0.009, 1.0))
-	if beat == 0:
-		_draw_static(w, h, 0.018)
-	elif beat == 1:
-		_draw_carriage(w, h)
-	elif beat == 2:
-		_draw_sign(w, h)
-	elif beat == 3:
-		_draw_tape(w, h)
-	elif beat == 4:
-		_draw_tower(w, h)
-	else:
-		_draw_road(w, h)
-	_draw_static(w, h, 0.025)
+func _make_layer(node_name: String) -> TextureRect:
+	var layer := TextureRect.new()
+	layer.name = node_name
+	layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	layer.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	layer.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.pivot_offset = size * 0.5
+	add_child(layer)
+	return layer
 
 
-func _draw_carriage(w: float, h: float) -> void:
-	var window := Rect2(w * 0.12, h * 0.13, w * 0.48, h * 0.46)
-	draw_rect(window, Color(0.045, 0.055, 0.051, 1.0))
-	for pane in 4:
-		var x := window.position.x + pane * window.size.x / 4.0
-		draw_line(Vector2(x, window.position.y), Vector2(x + 8, window.end.y), Color(0.14, 0.16, 0.14, 0.8), 5.0)
-	# Cold dawn catches one edge of the abandoned carriage.
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(window.position.x, window.end.y), Vector2(window.end.x, window.position.y),
-		Vector2(window.end.x, window.end.y),
-	]), Color(0.23, 0.32, 0.31, 0.16))
-	var table := Rect2(w * 0.58, h * 0.58, w * 0.25, 12)
-	draw_rect(table, Color(0.22, 0.19, 0.13, 0.92))
-	draw_rect(Rect2(w * 0.64, h * 0.48, 128, 72), Color(0.07, 0.085, 0.079, 1.0))
-	draw_rect(Rect2(w * 0.655, h * 0.5, 78, 22), Color(0.12, 0.16, 0.15, 1.0))
-	draw_circle(Vector2(w * 0.75, h * 0.52), 11, Color(0.57, 0.42, 0.22, 0.72))
-	# The cable ends visibly short of the socket.
-	var cable := PackedVector2Array([
-		Vector2(w * 0.72, h * 0.57), Vector2(w * 0.75, h * 0.64),
-		Vector2(w * 0.82, h * 0.66), Vector2(w * 0.86, h * 0.62),
-	])
-	draw_polyline(cable, Color(0.15, 0.17, 0.15, 1), 4.0)
-	draw_circle(Vector2(w * 0.87, h * 0.615), 5.0, Color(0.46, 0.34, 0.2, 0.9))
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED:
+		if _current != null:
+			_current.pivot_offset = size * 0.5
+		if _incoming != null:
+			_incoming.pivot_offset = size * 0.5
 
 
-func _draw_sign(w: float, h: float) -> void:
-	var post_x := w * 0.48
-	draw_line(Vector2(post_x, h * 0.18), Vector2(post_x, h * 0.82), Color(0.18, 0.18, 0.14, 1), 10.0)
-	var jitter := sin(elapsed * 8.0) * 5.0
-	_draw_arrow_sign(Vector2(post_x - 285, h * 0.28 + jitter), Vector2(310, 66), "NORTH / SHELTERS", true)
-	_draw_arrow_sign(Vector2(post_x - 8, h * 0.44 - jitter), Vector2(350, 66), "SOUTH / EXCHANGE", false)
-	_draw_arrow_sign(Vector2(post_x - 250, h * 0.61 + jitter * 0.5), Vector2(285, 66), "EVACUATION", true)
-	for arc in 5:
-		draw_arc(Vector2(post_x + 38, h * 0.22), 28 + arc * 18, -2.2, 0.55, 24, Color(0.33, 0.78, 0.77, 0.16), 1.3)
-
-
-func _draw_arrow_sign(position: Vector2, dimensions: Vector2, text: String, left: bool) -> void:
-	var rect := Rect2(position, dimensions)
-	draw_rect(rect, Color(0.36, 0.32, 0.19, 0.92))
-	var tip_x := rect.position.x - 28 if left else rect.end.x + 28
-	var base_x := rect.position.x if left else rect.end.x
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(base_x, rect.position.y), Vector2(tip_x, rect.position.y + rect.size.y * 0.5),
-		Vector2(base_x, rect.end.y),
-	]), Color(0.36, 0.32, 0.19, 0.92))
-	draw_string(ThemeDB.fallback_font, rect.position + Vector2(25, 41), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(0.82, 0.76, 0.55, 1))
-
-
-func _draw_tape(w: float, h: float) -> void:
-	var tilt := sin(elapsed * 0.3) * 0.01
-	var centre := Vector2(w * 0.5, h * 0.43)
-	var tape := Transform2D(tilt, centre)
-	var body := PackedVector2Array([
-		Vector2(-245, -105), Vector2(245, -105), Vector2(245, 105), Vector2(-245, 105)
-	])
-	for i in body.size(): body[i] = tape * body[i]
-	draw_colored_polygon(body, Color(0.13, 0.14, 0.12, 1.0))
-	draw_rect(Rect2(centre + Vector2(-205, -70), Vector2(410, 100)), Color(0.66, 0.61, 0.43, 0.92))
-	draw_circle(centre + Vector2(-112, 58), 32, Color(0.035, 0.04, 0.036, 1))
-	draw_circle(centre + Vector2(112, 58), 32, Color(0.035, 0.04, 0.036, 1))
-	draw_string(ThemeDB.fallback_font, centre + Vector2(-175, -18), "ELLIE - DO NOT ANSWER ME", HORIZONTAL_ALIGNMENT_LEFT, -1, 23, Color(0.12, 0.105, 0.075, 1))
-	draw_string(ThemeDB.fallback_font, centre + Vector2(-118, 13), "14B / M. WARD", HORIZONTAL_ALIGNMENT_LEFT, -1, 14, Color(0.19, 0.16, 0.1, 1))
-
-
-func _draw_tower(w: float, h: float) -> void:
-	var base := Vector2(w * 0.62, h * 0.82)
-	var top := Vector2(w * 0.62, h * 0.13)
-	for i in 7:
-		var t := float(i) / 6.0
-		var y := lerpf(base.y, top.y, t)
-		var half := lerpf(100.0, 12.0, t)
-		draw_line(Vector2(base.x - half, y), Vector2(base.x + half, y), Color(0.15, 0.17, 0.15, 1), 3.0)
-		if i < 6:
-			var next_t := float(i + 1) / 6.0
-			var next_y := lerpf(base.y, top.y, next_t)
-			var next_half := lerpf(100.0, 12.0, next_t)
-			draw_line(Vector2(base.x - half, y), Vector2(base.x + next_half, next_y), Color(0.12, 0.14, 0.13, 1), 3.0)
-			draw_line(Vector2(base.x + half, y), Vector2(base.x - next_half, next_y), Color(0.12, 0.14, 0.13, 1), 3.0)
-	var pulse := 0.45 + sin(elapsed * 3.0) * 0.22
-	draw_circle(top, 8, Color(0.95, 0.43, 0.23, pulse))
-	for ring in 4:
-		draw_arc(top, 34 + ring * 42 + sin(elapsed * 1.4 + ring) * 4, -2.8, -0.34, 42, Color(0.32, 0.77, 0.76, 0.21 - ring * 0.035), 1.4)
-	draw_string(ThemeDB.fallback_font, Vector2(w * 0.12, h * 0.26), "02:17", HORIZONTAL_ALIGNMENT_LEFT, -1, 48, Color(0.79, 0.49, 0.23, 0.78))
-	draw_string(ThemeDB.fallback_font, Vector2(w * 0.12, h * 0.32), "TOLLARD EXCHANGE / CARRIER WAKE", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(0.39, 0.61, 0.58, 0.82))
-
-
-func _draw_road(w: float, h: float) -> void:
-	draw_colored_polygon(PackedVector2Array([
-		Vector2(w * 0.43, h), Vector2(w * 0.57, h), Vector2(w * 0.515, h * 0.18), Vector2(w * 0.485, h * 0.18)
-	]), Color(0.07, 0.076, 0.066, 1))
-	for i in 8:
-		var y := h * (0.88 - i * 0.095)
-		var width := 34.0 * (1.0 - i / 10.0)
-		draw_line(Vector2(w * 0.5 - width * 0.12, y), Vector2(w * 0.5 + width * 0.12, y - 18), Color(0.65, 0.55, 0.31, 0.34), 3.0)
-	for side in [-1, 1]:
-		var x: float = w * (0.5 + float(side) * 0.24)
-		draw_line(Vector2(x, h * 0.78), Vector2(x, h * 0.3), Color(0.09, 0.11, 0.1, 1), 5.0)
-
-
-func _draw_static(w: float, h: float, alpha: float) -> void:
-	for line in 34:
-		var y := fmod(line * 47.0 + elapsed * (5.0 + line % 3), h)
-		draw_line(Vector2(0, y), Vector2(w, y + sin(line) * 2.0), Color(0.55, 0.62, 0.55, alpha), 1.0)
+func _commit_incoming() -> void:
+	if _incoming.texture == null:
+		_transition = null
+		return
+	_current.texture = _incoming.texture
+	_current.modulate = Color.WHITE
+	_current.scale = _incoming.scale
+	_incoming.texture = null
+	_incoming.modulate.a = 0.0
+	_transition = null

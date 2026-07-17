@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/mara_venn_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"mara"
+display_name = "Mara Venn"
+role = "Locksmith and salvage adjudicator"
+story_reason = "Mara catalogues sealed rooms before opening them so nobody can quietly rewrite who owned what. Maggie hired her to make Tollard's manual cabinets answer to physical keys."
+home_region = &"ashmere_verge"
+service_id = &"lockwork"
+service_name = "lockwork"
+service_description = "Cuts a documented mechanical bypass and marks one secured cache as legitimate salvage."
+service_flag = &"npc_service_mara_lockwork"
+service_choice = "CUT A DOCUMENTED BYPASS"
+service_notice = "Mara files the burrs off a numbered bypass key. One sealed cache can now be opened without feeding Continuity a credential."
+helped_flag = &"npc_mara_helped"
+ignored_flag = &"npc_mara_ignored"
+voice_signature = "wry legal phrasing, every joke followed by an inventory number"
+greeting = "Locked means ask. Jammed means swear. Sealed means bring a witness."
+intro_lines = Array[String](["MARA - Maggie left me seven keys and a note saying one of them opens a person.", "Help me move the numbered blanks. The workshop radio keeps offering combinations I have not cut yet."])
+helped_lines = Array[String](["MARA - Railhome now has a key board. If one goes missing, the empty hook gets to accuse us all."])
+ignored_lines = Array[String](["MARA - I buried the blanks separately. The radio told me where before I finished."])
+service_lines = Array[String](["MARA - Mechanical bypass, numbered witness tag, no clever electronic handshake. Boring is safe."])
+anchor_lines = {"clinic": "MARA - Medical cabinets were sealed for a reason. Bring Imogen when we open them.", "radio": "MARA - A radio can request access. It cannot sign the salvage ledger.", "witness": "MARA - Two witnesses and visible tool marks. That is how a lock tells the truth.", "copy": "MARA - Copies hate keys. A key remembers only its cuts, not who it wants you to be."}
+strategy_lines = {"restore": "MARA - Restore the door, keep the deadbolt.", "sever": "MARA - Cut the electronic latch first. Then check the mechanical bar twice.", "mesh": "MARA - Give every settlement its own key and publish which locks it fits."}
+help_choice = "MOVE THE NUMBERED KEY BLANKS"
+ignore_choice = "LEAVE HER WITH MAGGIE'S SEVEN KEYS"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "asymmetric black bob / cropped claret jacket / diagonal key wrap / forearm file"
+visual_notes = "Mara's compact locksmith silhouette is built from an asymmetric haircut, cropped leather, a visible key fan and a filed-metal forearm brace."
+identity_accent = Color(0.34, 0.82, 0.74, 1)

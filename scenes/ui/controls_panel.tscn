@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/controls_panel.gd" id="1_ctl"]
+[ext_resource type="Script" path="res://scripts/ui/field_document_surface.gd" id="2_surface"]
 
 [sub_resource type="StyleBoxFlat" id="Style_card"]
 bg_color = Color(0.023, 0.031, 0.031, 0.99)
@@ -102,6 +103,14 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("Style_card")
 
+[node name="Surface" type="Control" parent="Card"]
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_surface")
+document_kind = 3
+accent = Color(0.31, 0.71, 0.67, 0.82)
+paper_tint = Color(0.14, 0.17, 0.15, 1)
+
 [node name="Margin" type="MarginContainer" parent="Card"]
 layout_mode = 2
 theme_override_constants/margin_left = 42
@@ -117,7 +126,7 @@ theme_override_constants/separation = 14
 layout_mode = 2
 theme_override_colors/font_color = Color(0.36, 0.78, 0.77, 1)
 theme_override_font_sizes/font_size = 11
-text = "CARRIAGE 317 FIELD MANUAL  /  ISSUE 04"
+text = "Carriage 317 field manual  /  issue 04"
 
 [node name="Header" type="HBoxContainer" parent="Card/Margin/Box"]
 layout_mode = 2
@@ -127,13 +136,13 @@ layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.9, 0.82, 0.64, 1)
 theme_override_font_sizes/font_size = 34
-text = "FIELD GUIDE"
+text = "Field guide"
 
 [node name="DismissHint" type="Label" parent="Card/Margin/Box/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.42, 0.45, 0.41, 1)
 theme_override_font_sizes/font_size = 11
-text = "SELECT RETURN TO CLOSE"
+text = "Select Return to close"
 vertical_alignment = 2
 
 [node name="Divider" type="HSeparator" parent="Card/Margin/Box"]
@@ -143,7 +152,7 @@ layout_mode = 2
 layout_mode = 2
 theme_override_colors/font_color = Color(0.75, 0.58, 0.34, 1)
 theme_override_font_sizes/font_size = 12
-text = "SURVIVAL INPUTS"
+text = "Road controls"
 
 [node name="Grid" type="GridContainer" parent="Card/Margin/Box"]
 layout_mode = 2
@@ -156,7 +165,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "MOVE"
+text = "Move"
 vertical_alignment = 1
 
 [node name="MoveKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -173,7 +182,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "INTERACT"
+text = "Interact"
 vertical_alignment = 1
 
 [node name="InteractKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -190,7 +199,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "SCAN / REVEAL"
+text = "Sweep / reveal"
 vertical_alignment = 1
 
 [node name="ScanKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -207,7 +216,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "MELEE"
+text = "Strike"
 vertical_alignment = 1
 
 [node name="AttackKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -224,7 +233,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "DODGE"
+text = "Dodge"
 vertical_alignment = 1
 
 [node name="DodgeKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -241,7 +250,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "RECEIVER DISCHARGE"
+text = "Receiver discharge"
 vertical_alignment = 1
 
 [node name="BurstKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -258,7 +267,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "USE RATION"
+text = "Use supplies"
 vertical_alignment = 1
 
 [node name="RationKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -275,7 +284,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "ARCHIVE"
+text = "Field archive"
 vertical_alignment = 1
 
 [node name="ArchiveKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -292,7 +301,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "PAUSE"
+text = "Pause"
 vertical_alignment = 1
 
 [node name="PauseKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -309,7 +318,7 @@ custom_minimum_size = Vector2(130, 36)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
 theme_override_font_sizes/font_size = 14
-text = "FIELD MAP"
+text = "Field map"
 vertical_alignment = 1
 
 [node name="MapKey" type="Label" parent="Card/Margin/Box/Grid"]
@@ -319,6 +328,23 @@ theme_override_colors/font_color = Color(0.48, 0.86, 0.85, 1)
 theme_override_font_sizes/font_size = 13
 theme_override_styles/normal = SubResource("Style_key")
 text = "M"
+vertical_alignment = 1
+
+[node name="CraftAction" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(130, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.69, 0.71, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "Make / notebook"
+vertical_alignment = 1
+
+[node name="CraftKey" type="Label" parent="Card/Margin/Box/Grid"]
+custom_minimum_size = Vector2(260, 36)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.94, 0.72, 0.36, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/normal = SubResource("Style_key")
+text = "C  /  WORKBENCH"
 vertical_alignment = 1
 
 [node name="Callout" type="PanelContainer" parent="Card/Margin/Box"]
@@ -336,7 +362,7 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 theme_override_colors/font_color = Color(0.65, 0.78, 0.74, 1)
 theme_override_font_sizes/font_size = 13
-text = "TRACE RECEIVER  /  Sweeps expose hidden recordings and carrier Bleeds, and can overload insulated relay suits. Complete field records open safer choices at Tollard."
+text = "Receiver note  /  Sweeps expose hidden recordings and carrier bleeds. Complete field records leave safer choices at Tollard; C opens Ellie's make notebook."
 autowrap_mode = 3
 
 [node name="Back" type="Button" parent="Card/Margin/Box"]
@@ -350,5 +376,5 @@ theme_override_styles/focus = SubResource("Style_button_focus")
 theme_override_styles/hover = SubResource("Style_button_hover")
 theme_override_styles/normal = SubResource("Style_button")
 theme_override_styles/pressed = SubResource("Style_button_hover")
-text = "RETURN"
+text = "Return"
 alignment = 0

@@ -1,13 +1,24 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_electronics.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
 id = &"echo_maggie_final"
 title = "Maggie's Final Service Call"
-category = "Tollard Exchange"
+category = "Wrenfield Flooded Cutting"
 quality = "Authenticated recording"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Maggie's mud-stopped field recorder"
+artifact_semantics = &"maggie_service_recorder"
+evidence_class = "witness"
+confidence = 98
+signal_profile = "house number challenge / unedited breath"
+observation_text = "The recorder lies under Maggie's hand. Its tape starts with the house number and lunch-tin challenge; the final breath has no splice."
+contradiction_text = "Continuity's tidy Maggie messages omit anger, stairs and uncertainty present on this physical tape."
+verification_text = "Match the challenge details with the lunch tin and Rafi's independent account."
+feed_warning = "The copied voice would receive Maggie's most private cadence and final message to Ellie."
 hint = "The tape begins with a house number and ends before the speaker can tidy it up."
 memory_text = "MAGGIE: 'Fourteen B. Nine rays on the lunch tin. This bit is me.' She has isolated Tollard's transmitter but cannot reach the battery room. 'Rafi, if Ellie comes, tell her I got this far. Do not tell her I was brave. I was furious and the stairs were awful.' After a long breath: 'El, check what you can. Say when you cannot. That is enough.'"
 keepsake_item = &""

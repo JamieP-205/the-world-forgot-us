@@ -1,0 +1,35 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/building_door.gd" id="1_door"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/base_doorway.png" id="2_art"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
+size = Vector2(104, 88)
+
+[node name="BuildingDoor" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_door")
+prompt = "Enter building"
+target_scene_path = "res://scenes/interiors/building_interior.tscn"
+target_spawn = &"from_world"
+
+[node name="ThresholdShadow" type="Polygon2D" parent="."]
+position = Vector2(0, 24)
+color = Color(0.025, 0.03, 0.028, 0.72)
+polygon = PackedVector2Array(-58, -12, 58, -12, 44, 28, -44, 28)
+
+[node name="WarmSpill" type="Polygon2D" parent="."]
+position = Vector2(0, 20)
+color = Color(0.92, 0.57, 0.22, 0.12)
+polygon = PackedVector2Array(-36, -8, 36, -8, 60, 46, -60, 46)
+
+[node name="DoorSprite" type="Sprite2D" parent="."]
+position = Vector2(0, -24)
+scale = Vector2(0.32, 0.32)
+texture = ExtResource("2_art")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="."]
+position = Vector2(0, 4)
+shape = SubResource("RectangleShape2D_trigger")

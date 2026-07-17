@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://tools/map_flow_collision_smoke.gd" id="1_map_flow"]
+
+[node name="MapFlowCollisionSmoke" type="Node"]
+script = ExtResource("1_map_flow")

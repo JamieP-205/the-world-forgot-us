@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a functional TOP-DOWN placeholder sprite sheet for the survivor.
+"""Generate the legacy functional TOP-DOWN survivor fixture sheet.
 
 This is a *blockout* stand-in (clean shapes, not painterly art) so the player can
 be wired into an AnimatedSprite2D today, replacing the single Polygon2D. Real

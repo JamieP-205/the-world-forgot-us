@@ -1,0 +1,27 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/route_salvage_reserve.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/loot_containers/toolbox_metal_closed.png" id="2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_reserve"]
+size = Vector2(78, 58)
+
+[node name="RouteSalvageReserve" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1")
+prompt = "Check Maggie's labelled job-parts drawer"
+
+[node name="Visual" type="Sprite2D" parent="."]
+position = Vector2(0, -10)
+scale = Vector2(0.19, 0.19)
+texture = ExtResource("2")
+
+[node name="LabelStrip" type="Polygon2D" parent="."]
+position = Vector2(0, -18)
+color = Color(0.82, 0.64, 0.31, 0.88)
+polygon = PackedVector2Array(-25, -5, 25, -5, 25, 5, -25, 5)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_reserve")

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"field_dressing"
+display_name = "Field Dressing"
+description = "Fold two clean pads, bind them with warm resin tape and leave long ties for pressure."
+category = &"medical"
+station_id = &"field_kit"
+station_label = "field kit"
+sort_order = 10
+ingredients = {
+"clean_cloth": 2,
+"resin_tape": 1
+}
+output_item_id = &"field_dressing"
+output_amount = 2
+required_echoes = Array[StringName]([&"echo_clinic_triage"])
+unlock_note = "Imogen's clinic triage record shows how the night staff folded dressings when the sealed stock ran out."

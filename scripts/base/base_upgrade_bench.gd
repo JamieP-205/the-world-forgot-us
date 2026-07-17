@@ -1,6 +1,6 @@
 class_name BaseUpgradeBench
 extends Interactable
-## A simple, generic "build this upgrade" interactable for the Railhome.
+## Shared Railhome bench behaviour for upgrades represented by physical props.
 ##
 ## Unlike BaseUpgradeStation (which drives the Radio Desk's bespoke visuals),
 ## this one just builds any BaseUpgradeData with a material cost, shows the cost
@@ -20,11 +20,7 @@ var _built := false
 
 
 func _ready() -> void:
-	if upgrade_data != null and BaseUpgradeSystem.is_built(upgrade_data.id):
-		_built = true
-		_apply_built()
-	elif _visual != null:
-		_visual.modulate = unbuilt_tint
+	apply_built_state(upgrade_data != null and BaseUpgradeSystem.is_built(upgrade_data.id))
 
 
 func is_available() -> bool:
@@ -55,11 +51,25 @@ func interact(_player: Node2D) -> void:
 
 func _apply_built() -> void:
 	if _visual != null:
+		_visual.visible = true
 		_visual.modulate = Color(1, 1, 1)
 	if reveal_on_build != NodePath(""):
 		var n := get_node_or_null(reveal_on_build)
 		if n != null:
 			n.visible = true
+
+
+## Keeps an already-instanced shelter in step with save restoration and
+## preview state. The durable source of truth remains BaseUpgradeSystem.
+func apply_built_state(built: bool) -> void:
+	_built = built
+	if _visual != null:
+		_visual.visible = true
+		_visual.modulate = Color.WHITE if built else unbuilt_tint
+	if reveal_on_build != NodePath(""):
+		var revealed := get_node_or_null(reveal_on_build)
+		if revealed != null:
+			revealed.visible = built
 
 
 func _title() -> String:

@@ -2,6 +2,8 @@ extends Node
 ## End-to-end campaign smoke test. Run with an isolated APPDATA directory:
 ## godot --headless --path <project> --scene res://tools/complete_game_smoke.tscn
 
+const RouteMissionContracts = preload("res://scripts/narrative/route_mission_contracts.gd")
+
 var _failures: Array[String] = []
 var _main: Node = null
 
@@ -17,6 +19,7 @@ func _run() -> void:
 	GameManager.set_dialogue_active(false)
 	GameManager.set_ending_active(false)
 
+	_check_audio_contract()
 	_check_resources()
 	await _check_full_flow()
 	GameManager.set_ending_active(false)
@@ -77,6 +80,57 @@ func _check_resources() -> void:
 			_fail("resource failed to load " + path)
 
 
+func _check_audio_contract() -> void:
+	_check(AudioManager.has_method("get_audio_smoke_report"), "audio smoke report API exists")
+	if not AudioManager.has_method("get_audio_smoke_report"):
+		return
+	var report: Dictionary = AudioManager.get_audio_smoke_report()
+	var errors: Array = report.get("contract_errors", [])
+	_check(errors.is_empty(), "audio initialization contract passes: %s" % "; ".join(errors))
+	_check(
+		int(report.get("cue_count", 0)) == int(report.get("required_cue_count", -1)),
+		"every required audio cue has a deterministic synthesis spec",
+	)
+	_check(int(report.get("cue_count", 0)) >= 40, "high-value audio cue set is populated")
+	_check(
+		float(report.get("max_theoretical_peak", 2.0))
+			<= float(report.get("safe_synth_peak", 0.0)),
+		"procedural cue source peaks stay below the synthesis ceiling",
+	)
+	_check(
+		int(report.get("rendered_cues", 0)) == int(report.get("cue_count", -1)),
+		"every procedural cue renders the expected deterministic PCM length",
+	)
+	_check(float(report.get("max_rendered_peak", 0.0)) > 0.05, "rendered cues contain an audible signal")
+	_check(
+		float(report.get("max_rendered_peak", 2.0))
+			<= float(report.get("safe_synth_peak", 0.0)),
+		"rendered PCM remains inside the synthesis ceiling",
+	)
+	_check(int(report.get("clipped_samples", -1)) == 0, "procedural cue PCM contains no clipped samples")
+	_check(bool(report.get("deterministic_noise", false)), "seeded noise cues render identically across runs")
+	_check(int(report.get("sfx_pool_size", 0)) >= 12, "SFX pool can protect overlapping high-value cues")
+	_check(float(report.get("sfx_gain_db", 0.0)) <= -2.0, "SFX base gain leaves summing headroom")
+	_check(float(report.get("sfx_gain_db", -99.0)) >= -12.0, "SFX base gain remains audible")
+	_check(float(report.get("cue_output_max_db", 0.0)) <= -1.0, "per-cue output ceiling leaves limiter headroom")
+	_check(float(report.get("cue_call_max_db", 99.0)) <= 3.0, "caller gain is clamped")
+	_check(float(report.get("cue_call_min_db", -99.0)) >= -48.0, "caller attenuation remains bounded")
+	_check(float(report.get("music_level_db", -99.0)) >= -24.0, "music target is audible")
+	_check(float(report.get("music_duck_db", 0.0)) <= -18.0, "danger mix makes room without muting music")
+	_check(int(report.get("ambience_regions", 0)) == 5, "all campaign regions have layered ambience profiles")
+	_check(bool(report.get("master_limiter", false)), "master bus has a peak limiter")
+
+	var buses: Dictionary = report.get("buses", {})
+	_check(String(buses.get("Music", "")) == "Master", "Music bus routes to Master")
+	_check(String(buses.get("SFX", "")) == "Master", "SFX bus routes to Master")
+	_check(String(buses.get("Ambience", "")) == "SFX", "Ambience follows the SFX volume bus")
+	_check(String(buses.get("UI", "")) == "SFX", "UI follows the SFX volume bus")
+	var bus_volumes: Dictionary = report.get("bus_volumes", {})
+	for bus_name in ["Master", "Music", "SFX", "Ambience", "UI"]:
+		var level := float(bus_volumes.get(bus_name, 99.0))
+		_check(level >= -80.0 and level <= 6.0, "%s bus volume is finite and bounded" % bus_name)
+
+
 func _check_full_flow() -> void:
 	var main_scene := load("res://scenes/main.tscn") as PackedScene
 	if main_scene == null:
@@ -117,6 +171,9 @@ func _check_full_flow() -> void:
 	# Play Maggie's workshop tape, then exercise both irreversible outcomes of
 	# the optional call before continuing with the accepted branch.
 	CampaignSystem.call("_complete_story", &"ashmere_mara_radio", -1)
+	CampaignSystem.call("_complete_story", CampaignSystem.NARRATIVE_ANCHOR_STORY_ID, 0)
+	CampaignSystem.call("_complete_story", CampaignSystem.NARRATIVE_STRATEGY_STORY_ID, 0)
+	_check(CampaignSystem.get_active_route_id() == &"clinic_restore", "Ashmere commitments select a playable route")
 	InventorySystem.set_items({"battery": 2, "scrap": 4, "medical_kit": 1})
 	CampaignSystem.call("_complete_story", &"imogen_clinic", -1)
 	_check(WorldState.has_flag(CampaignSystem.IMOGEN_MET_FLAG), "Imogen introduction records the living survivor")
@@ -140,6 +197,9 @@ func _check_full_flow() -> void:
 		"Rafi aerial",
 	)
 	ArchiveSystem.restore(["echo_last_signal", "echo_sun_lid", "echo_mara_repair"])
+	WorldState.set_flag(&"entered_ashmere_clinic")
+	InventorySystem.add_item(&"field_dressing", 1)
+	_complete_active_route_job(0)
 	CampaignSystem.call("_complete_story", &"ashmere_gate", 0)
 	await _frames(4)
 	_expect_level(CampaignSystem.BROADCAST_SCENE)
@@ -153,15 +213,7 @@ func _check_full_flow() -> void:
 	_expect_story_node(&"broadcast_defense_anchor")
 	_expect_story_node(&"rafi_field_contact")
 	_check(_main.get_current_level().find_child("RelayHusk", true, false) != null, "Relay Husk boss placed")
-	_exercise_persistent_choice(
-		&"long_acre_repeater",
-		CampaignSystem.REPEATER_ONLINE_FLAG,
-		CampaignSystem.REPEATER_DECLINED_FLAG,
-		"get_public_repeater_status",
-		"warning line online",
-		"fuse removed",
-		"public repeater",
-	)
+	_exercise_restore_repeater_choice()
 	_check_optional_progress_copy()
 	_check("Rafi" in String(CampaignSystem.call("_archive_delivery_result")), "archive ending reflects the Rafi connection")
 	_check("public repeater" in String(CampaignSystem.call("_archive_delivery_result")), "archive ending reflects the public warning line")
@@ -194,6 +246,16 @@ func _check_full_flow() -> void:
 	CampaignSystem.set_circuit_switch(&"south_line", &"carrier", true)
 	_check(CampaignSystem.is_circuit_complete(&"south_line"), "south circuit alignment completes")
 	_check(CampaignSystem.get_restored_relay_count() == 3, "all three varied relay objectives restore")
+	ArchiveSystem.restore([
+		"echo_last_signal", "echo_sun_lid", "echo_mara_repair", "echo_maggie_final",
+	])
+	CampaignSystem.call("_complete_story", CampaignSystem.MAGGIE_CUTTING_STORY_ID, 0)
+	_check(WorldState.has_flag(&"maggie_final_proof_recovered"), "flooded-cutting recorder establishes Maggie's final proof")
+	CampaignSystem.call("_complete_story", CampaignSystem.RECOVERABLE_HOLLOW_STORY_ID, 1)
+	_check(CampaignSystem.get_hollow_policy() == &"kill", "recoverable Hollow decision records a campaign policy")
+	WorldState.set_flag(&"entered_wrenfield_antenna_bunker")
+	InventorySystem.add_item(&"shielded_fuse", 1)
+	_complete_active_route_job(1)
 	WorldState.mark_defeated(&"RelayHusk")
 	CampaignSystem.call("_complete_story", &"broadcast_core_gate", 0)
 	await _frames(4)
@@ -390,6 +452,32 @@ func _exercise_persistent_choice(
 	_check(not WorldState.has_flag(declined_flag), label + " acceptance cannot be reversed")
 
 
+func _exercise_restore_repeater_choice() -> void:
+	var payload: Dictionary = CampaignSystem.call("_public_repeater_dialogue")
+	_check(Array(payload.get("choices", [])) == ["WIRE THE PUBLIC CHANNEL", "LEAVE IT FOR NOW"],
+		"RESTORE repeater cannot contradict the committed route")
+	CampaignSystem.call("_complete_story", &"long_acre_repeater", 1)
+	_check(not WorldState.has_flag(CampaignSystem.REPEATER_ONLINE_FLAG)
+			and not WorldState.has_flag(CampaignSystem.REPEATER_DECLINED_FLAG),
+		"public repeater leave-for-now remains reversible")
+	CampaignSystem.call("_complete_story", &"long_acre_repeater", 0)
+	_check(WorldState.has_flag(CampaignSystem.REPEATER_ONLINE_FLAG),
+		"public repeater RESTORE branch records its state")
+	_check(CampaignSystem.get_public_repeater_status() == "warning line online",
+		"public repeater RESTORE status is player-facing")
+	_check_choice_copy(&"long_acre_repeater", true, "public repeater")
+	_check(_saved_world_has_flag(CampaignSystem.REPEATER_ONLINE_FLAG),
+		"public repeater RESTORE state reaches the save file")
+	var snapshot := WorldState.get_state()
+	WorldState.clear()
+	WorldState.restore(snapshot)
+	_check(WorldState.has_flag(CampaignSystem.REPEATER_ONLINE_FLAG),
+		"public repeater RESTORE state survives a round-trip")
+	CampaignSystem.call("_complete_story", &"long_acre_repeater", 1)
+	_check(not WorldState.has_flag(CampaignSystem.REPEATER_DECLINED_FLAG),
+		"public repeater RESTORE state cannot be reversed")
+
+
 func _check_choice_copy(story_id: StringName, accepted: bool, label: String) -> void:
 	if story_id == &"bellwether_school_radio":
 		var clinic_result := String(CampaignSystem.call("_clinic_line_result"))
@@ -496,6 +584,22 @@ func _expect_story_node(story_id: StringName) -> void:
 			found = true
 			break
 	_check(found, "story node exists: " + String(story_id))
+
+
+func _complete_active_route_job(slot: int) -> void:
+	var missions := CampaignSystem.get_route_mission_definitions()
+	if slot < 0 or slot >= missions.size():
+		_fail("route mission slot is missing: %d" % slot)
+		return
+	var mission: Dictionary = missions[slot]
+	var mission_id := StringName(mission.get("id", &""))
+	_check(CampaignSystem.start_route_mission(mission_id, false), "%s starts before field sign-off" % mission_id)
+	var unmet := RouteMissionContracts.unmet_steps(mission_id)
+	_check(unmet.is_empty(), "%s field requirements are satisfied: %s" % [mission_id, RouteMissionContracts.unmet_summary(mission_id)])
+	_check(RouteMissionContracts.consume_completion_cost(mission_id), "%s consumes its authored field tool" % mission_id)
+	_check(CampaignSystem.complete_route_mission(mission_id, false), "%s completes through the campaign route API" % mission_id)
+	var service_unlock := StringName(mission.get("service_unlock", &""))
+	_check(WorldState.has_flag(StringName("service_%s" % String(service_unlock))), "%s unlocks its route service" % mission_id)
 
 
 func _frames(count: int) -> void:

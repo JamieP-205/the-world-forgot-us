@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"field_dressing"
+effect_kind = &"heal"
+action_label = "BIND WOUND"
+use_summary = "Stops fresh bleeding and restores 28 condition in the field."
+consequence = "The dressing is spent. Its clean pressure pad buys time; it does not replace shelter treatment."
+consumes_on_use = true
+values = {"heal": 28.0}

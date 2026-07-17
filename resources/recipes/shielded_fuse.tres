@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"shielded_fuse"
+display_name = "Shielded Fuse"
+description = "Rewire a marked ceramic carrier, insulate both caps and leave the rating visible."
+category = &"signal"
+station_id = &"signal_bench"
+station_label = "signal bench"
+sort_order = 30
+ingredients = {
+"ceramic_fuse": 1,
+"copper_wire": 1,
+"resin_tape": 1
+}
+output_item_id = &"shielded_fuse"
+required_flags = Array[StringName]([&"mara_contacted"])
+required_echoes = Array[StringName]([&"echo_mara_repair"])
+unlock_note = "Maggie's ledger pairs fuse ratings with the shielding wrap she used at Ashmere."

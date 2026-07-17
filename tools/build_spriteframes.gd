@@ -1,5 +1,5 @@
 extends SceneTree
-## Build the placeholder SpriteFrames resources for the player and Hollow from
+## Build the legacy fixture SpriteFrames resources for the player and Hollow from
 ## the top-down sheets in assets/processed/{player,hollow}_topdown/.
 ##
 ## Run headless:

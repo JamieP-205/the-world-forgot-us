@@ -13,6 +13,7 @@ extends Interactable
 @export var follow_speed: float = 118.0
 @export var desired_distance: float = 76.0
 @export var catch_up_distance: float = 390.0
+@export var world_profile: WorldNPCProfile
 
 @onready var _visual: Sprite2D = $Visual
 @onready var _shadow: Polygon2D = $ContactShadow
@@ -28,6 +29,16 @@ func _ready() -> void:
 	add_to_group("quest_npcs")
 	add_to_group("objective_targets")
 	set_meta("story_id", story_id)
+	if world_profile != null:
+		add_to_group("world_npcs")
+		set_meta("npc_id", world_profile.npc_id)
+		set_meta("service_id", world_profile.service_id)
+		set_meta("story_reason", world_profile.story_reason)
+		set_meta("sprite_atlas", world_profile.sprite_atlas.resource_path if world_profile.sprite_atlas != null else "")
+		set_meta("silhouette_signature", world_profile.silhouette_signature)
+		if world_profile.sprite_atlas != null:
+			_visual.texture = world_profile.sprite_atlas
+		_visual.modulate = Color.WHITE
 	_last_position = global_position
 	_refresh_visibility()
 	_update_region()
@@ -106,3 +117,7 @@ func _update_region() -> void:
 	var size := _visual.texture.get_size()
 	var cell := size / float(GRID_SIZE)
 	_visual.region_rect = Rect2(Vector2(_frame, _facing_row) * cell, cell)
+
+
+func get_world_npc_id() -> StringName:
+	return world_profile.npc_id if world_profile != null else &""

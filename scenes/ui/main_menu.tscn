@@ -1,29 +1,31 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_panel.tscn" id="2_ctl"]
 [ext_resource type="PackedScene" path="res://scenes/ui/settings_panel.tscn" id="3_settings"]
+[ext_resource type="Script" path="res://scripts/ui/field_document_surface.gd" id="4_surface"]
 
 [sub_resource type="StyleBoxFlat" id="Style_button_normal"]
-bg_color = Color(0.035, 0.044, 0.044, 0.88)
+bg_color = Color(0.57, 0.53, 0.41, 0.44)
 border_width_left = 2
-border_color = Color(0.55, 0.39, 0.18, 0.82)
+border_width_bottom = 1
+border_color = Color(0.32, 0.28, 0.2, 0.82)
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 content_margin_left = 18.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_hover"]
-bg_color = Color(0.085, 0.095, 0.088, 0.96)
+bg_color = Color(0.76, 0.64, 0.39, 0.9)
 border_width_left = 4
-border_color = Color(0.96, 0.65, 0.25, 1)
+border_color = Color(0.47, 0.25, 0.07, 1)
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 content_margin_left = 18.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_pressed"]
-bg_color = Color(0.1, 0.15, 0.15, 1)
+bg_color = Color(0.47, 0.58, 0.51, 0.9)
 border_width_left = 4
-border_color = Color(0.31, 0.86, 0.88, 1)
+border_color = Color(0.1, 0.34, 0.31, 1)
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 content_margin_left = 18.0
@@ -34,7 +36,7 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.36, 0.82, 0.82, 0.9)
+border_color = Color(0.1, 0.34, 0.31, 0.9)
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 expand_margin_left = 2.0
@@ -43,29 +45,29 @@ expand_margin_right = 2.0
 expand_margin_bottom = 2.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_disabled"]
-bg_color = Color(0.025, 0.03, 0.03, 0.7)
+bg_color = Color(0.44, 0.42, 0.35, 0.34)
 border_width_left = 2
-border_color = Color(0.22, 0.22, 0.19, 0.65)
+border_color = Color(0.28, 0.28, 0.23, 0.65)
 content_margin_left = 18.0
 
 [sub_resource type="StyleBoxFlat" id="Style_quote"]
-bg_color = Color(0.025, 0.035, 0.036, 0.79)
+bg_color = Color(0.052, 0.058, 0.052, 0.98)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.35, 0.49, 0.47, 0.38)
+border_color = Color(0.25, 0.25, 0.21, 0.88)
 corner_radius_top_left = 3
 corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
 [sub_resource type="Theme" id="Theme_menu"]
-Button/colors/font_color = Color(0.88, 0.86, 0.77, 1)
-Button/colors/font_disabled_color = Color(0.38, 0.39, 0.36, 1)
-Button/colors/font_focus_color = Color(0.94, 0.9, 0.77, 1)
-Button/colors/font_hover_color = Color(1, 0.79, 0.4, 1)
-Button/colors/font_pressed_color = Color(0.57, 0.94, 0.94, 1)
+Button/colors/font_color = Color(0.11, 0.14, 0.12, 1)
+Button/colors/font_disabled_color = Color(0.32, 0.33, 0.28, 0.74)
+Button/colors/font_focus_color = Color(0.08, 0.13, 0.11, 1)
+Button/colors/font_hover_color = Color(0.12, 0.12, 0.08, 1)
+Button/colors/font_pressed_color = Color(0.06, 0.15, 0.13, 1)
 Button/font_sizes/font_size = 17
 Button/styles/disabled = SubResource("Style_button_disabled")
 Button/styles/focus = SubResource("Style_button_focus")
@@ -93,12 +95,23 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0.018, 0.022, 0.021, 0.16)
 
+[node name="MenuSheet" type="Control" parent="."]
+offset_left = 42.0
+offset_top = 22.0
+offset_right = 438.0
+offset_bottom = 586.0
+mouse_filter = 2
+script = ExtResource("4_surface")
+document_kind = 4
+accent = Color(0.13, 0.37, 0.34, 0.86)
+paper_tint = Color(0.7, 0.67, 0.55, 1)
+
 [node name="SignalTag" type="Label" parent="."]
 offset_left = 74.0
 offset_top = 42.0
 offset_right = 430.0
 offset_bottom = 64.0
-theme_override_colors/font_color = Color(0.35, 0.78, 0.78, 0.92)
+theme_override_colors/font_color = Color(0.13, 0.34, 0.32, 0.96)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 1
@@ -110,7 +123,7 @@ offset_left = 70.0
 offset_top = 72.0
 offset_right = 650.0
 offset_bottom = 186.0
-theme_override_colors/font_color = Color(0.91, 0.84, 0.66, 1)
+theme_override_colors/font_color = Color(0.1, 0.14, 0.13, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.9)
 theme_override_constants/line_spacing = -9
 theme_override_constants/shadow_offset_x = 2
@@ -123,9 +136,9 @@ offset_left = 74.0
 offset_top = 198.0
 offset_right = 560.0
 offset_bottom = 224.0
-theme_override_colors/font_color = Color(0.65, 0.68, 0.61, 1)
+theme_override_colors/font_color = Color(0.25, 0.27, 0.23, 1)
 theme_override_font_sizes/font_size = 15
-text = "A ROAD STORY IN DEAD AIR"
+text = "A road story in dead air"
 
 [node name="TitleRule" type="ColorRect" parent="."]
 offset_left = 74.0
@@ -135,47 +148,49 @@ offset_bottom = 242.0
 mouse_filter = 2
 color = Color(0.84, 0.56, 0.22, 0.72)
 
-[node name="Box" type="VBoxContainer" parent="."]
+[node name="Box" type="GridContainer" parent="."]
 offset_left = 74.0
 offset_top = 274.0
 offset_right = 406.0
 offset_bottom = 558.0
-theme_override_constants/separation = 9
+theme_override_constants/h_separation = 9
+theme_override_constants/v_separation = 9
+columns = 1
 
 [node name="Continue" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
-text = "CONTINUE"
+text = "Continue"
 alignment = 0
 
 [node name="NewGame" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
-text = "NEW JOURNEY"
+text = "Begin a new journey"
 alignment = 0
 
 [node name="Controls" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
-text = "FIELD GUIDE"
+text = "Field guide"
 alignment = 0
 
 [node name="Settings" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
-text = "SETTINGS"
+text = "Settings"
 alignment = 0
 
 [node name="Credits" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
-text = "CREDITS"
+text = "Credits"
 alignment = 0
 
 [node name="Quit" type="Button" parent="Box"]
 custom_minimum_size = Vector2(332, 46)
 layout_mode = 2
-text = "QUIT"
+text = "Leave game"
 alignment = 0
 
 [node name="QuotePanel" type="PanelContainer" parent="."]
@@ -191,9 +206,17 @@ grow_horizontal = 0
 grow_vertical = 2
 theme_override_styles/panel = SubResource("Style_quote")
 
+[node name="Surface" type="Control" parent="QuotePanel"]
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("4_surface")
+document_kind = 1
+accent = Color(0.14, 0.38, 0.36, 0.84)
+paper_tint = Color(0.69, 0.66, 0.54, 1)
+
 [node name="Margin" type="MarginContainer" parent="QuotePanel"]
 layout_mode = 2
-theme_override_constants/margin_left = 26
+theme_override_constants/margin_left = 44
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 26
 theme_override_constants/margin_bottom = 22
@@ -204,21 +227,21 @@ theme_override_constants/separation = 13
 
 [node name="Eyebrow" type="Label" parent="QuotePanel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.62, 0.27, 1)
+theme_override_colors/font_color = Color(0.48, 0.25, 0.08, 1)
 theme_override_font_sizes/font_size = 12
-text = "FAULT TAPE  /  AUTHENTICATED"
+text = "Fault tape  /  authenticated"
 
 [node name="Quote" type="Label" parent="QuotePanel/Margin/Content"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.79, 0.81, 0.74, 1)
+theme_override_colors/font_color = Color(0.11, 0.15, 0.14, 1)
 theme_override_font_sizes/font_size = 20
 text = "“Take the tuning plate off.\nIf it doesn't say 14B,\nswitch the set off and walk.”"
 vertical_alignment = 1
 
 [node name="Attribution" type="Label" parent="QuotePanel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.38, 0.7, 0.69, 0.9)
+theme_override_colors/font_color = Color(0.16, 0.35, 0.32, 0.94)
 theme_override_font_sizes/font_size = 13
 text = "— MAGGIE WARD  /  FAULT TAPE 06"
 

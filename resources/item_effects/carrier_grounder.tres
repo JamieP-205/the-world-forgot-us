@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"carrier_grounder"
+effect_kind = &"carrier_grounder"
+action_label = "GROUND CARRIER"
+use_summary = "Pins a hostile carrier to earth for eighteen seconds, repeatedly hurting signal-sensitive Hollows in range."
+consequence = "The ground braid fuses into the soil. Each pulse reveals the trap's position as clearly as it harms the carrier."
+consumes_on_use = true
+values = {"carrier_damage": 7.0, "duration": 18.0, "pulse_interval": 1.2, "radius": 240.0}

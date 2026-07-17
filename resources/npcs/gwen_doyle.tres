@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/gwen_doyle_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"doyle"
+display_name = "Gwen Doyle"
+role = "Evacuation coach driver"
+story_reason = "Gwen drove the last Bellwether evacuation loop and marked routes by what a full coach could actually pass. Her lost-property tags connect names, seats and abandoned shelters."
+home_region = &"ashmere_verge"
+service_id = &"coach_passages"
+service_name = "coach passages"
+service_description = "Marks a broad, low-ambush return route and unlocks Gwen's labelled field caches."
+service_flag = &"npc_service_doyle_passages"
+service_choice = "ASK FOR A COACH-SAFE PASSAGE"
+service_notice = "Gwen draws a route wide enough for a coach and too exposed for a quiet ambush. Her blue luggage tags mark the caches."
+helped_flag = &"npc_doyle_helped"
+ignored_flag = &"npc_doyle_ignored"
+voice_signature = "blunt driver announcements masking exact memory for every passenger"
+greeting = "Single file is for funerals. Spread out where I can count you."
+intro_lines = Array[String](["GWEN - Twenty-three boarded at the school. Tollard's list says twenty-four arrived.", "The spare seat has a luggage tag in Maggie Ward's handwriting. Help me turn the coach ledger over before the roof comes down."])
+helped_lines = Array[String](["GWEN - I gave everybody at Railhome a seat number. They complained, which is how I know they are settling in."])
+ignored_lines = Array[String](["GWEN - The depot roof took the coach ledger. Tollard still insists its extra passenger arrived safely."])
+service_lines = Array[String](["GWEN - Avoid clever shortcuts. A road that fits forty frightened people usually fits one sensible survivor."])
+anchor_lines = {"clinic": "GWEN - Clinics count admissions. I count who was still on the coach after the doors opened.", "radio": "GWEN - Broadcast landmarks, not names. Names make good bait.", "witness": "GWEN - I remember where they sat. Leena remembers what they said. Put both beside Tollard's list.", "copy": "GWEN - If it rode my coach, it can tell me who was sick on the back step."}
+strategy_lines = {"restore": "GWEN - Restored roads need drivers who can refuse dispatch. Machines love impossible timetables.", "sever": "GWEN - Cut the voice. Keep the road signs.", "mesh": "GWEN - A route belongs to the stops, not the depot. That sounds like your mesh."}
+help_choice = "SAVE THE COACH LEDGER"
+ignore_choice = "LEAVE BEFORE THE ROOF FALLS"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "broad driver greatcoat / rolled passenger ledger / whistle / blue luggage tags"
+visual_notes = "Gwen has a low, commanding centre of gravity. Her coach coat, whistle, ledger roll and fan of blue luggage tags preserve her old public role."
+identity_accent = Color(0.22, 0.46, 0.76, 1)

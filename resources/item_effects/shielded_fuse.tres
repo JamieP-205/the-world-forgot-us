@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"shielded_fuse"
+effect_kind = &"receiver_stability"
+action_label = "FIT FUSE"
+use_summary = "Keeps the receiver cooler for three minutes, cutting sweep drain and improving recharge."
+consequence = "The fuse burns itself clean when the shielding finally saturates."
+consumes_on_use = true
+values = {"duration": 180.0, "stability": 0.3}

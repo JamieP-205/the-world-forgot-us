@@ -1,0 +1,29 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/world/route_mission_station.gd" id="1_station"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/map_wall.png" id="2_map"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_station"]
+radius = 46.0
+
+[node name="RouteMissionStation" type="Area2D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("1_station")
+prompt = "Review the field work card"
+
+[node name="Visual" type="Node2D" parent="."]
+
+[node name="MapBoard" type="Sprite2D" parent="Visual"]
+position = Vector2(0, -22)
+scale = Vector2(0.19, 0.19)
+texture = ExtResource("2_map")
+
+[node name="StatusLamp" type="Polygon2D" parent="Visual"]
+position = Vector2(25, -35)
+color = Color(0.42, 0.84, 0.86, 0.88)
+polygon = PackedVector2Array(-5, -5, 5, -5, 8, 0, 5, 5, -5, 5, -8, 0)
+
+[node name="InteractionShape" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_station")

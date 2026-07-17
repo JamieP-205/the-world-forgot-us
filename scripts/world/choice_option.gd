@@ -56,17 +56,25 @@ func interact(_player: Node2D) -> void:
 	if _locked:
 		return
 
-	var parts: Array[String] = []
+	var rewards: Dictionary = {}
 	for item_id in loot:
-		var amount := int(loot[item_id])
-		InventorySystem.add_item(item_id, amount)
+		var reward_id := StringName(item_id)
+		rewards[reward_id] = int(rewards.get(reward_id, 0)) + int(loot[item_id])
+	if keepsake_item != &"":
+		rewards[keepsake_item] = int(rewards.get(keepsake_item, 0)) + 1
+
+	# A choice is permanent, so its whole reward must fit before the road not
+	# taken is locked. A full stack should never eat part of the player's pick.
+	if not InventorySystem.add_items_atomic(rewards):
+		EventBus.notice_posted.emit("Your field kit cannot hold all of that. Make room before choosing.")
+		return
+
+	var parts: Array[String] = []
+	for item_id in rewards:
+		var amount := int(rewards[item_id])
 		var data: ItemData = ItemDatabase.get_item(item_id)
 		var nm := data.display_name if data != null else String(item_id)
 		parts.append("+%d %s" % [amount, nm])
-	if keepsake_item != &"":
-		InventorySystem.add_item(keepsake_item, 1)
-		var kd: ItemData = ItemDatabase.get_item(keepsake_item)
-		parts.append("+%s" % (kd.display_name if kd != null else String(keepsake_item)))
 
 	var msg := take_notice
 	if not parts.is_empty():

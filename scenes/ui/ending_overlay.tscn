@@ -1,44 +1,46 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/ending_overlay.gd" id="1_ending"]
+[ext_resource type="Script" path="res://scripts/ui/field_document_surface.gd" id="2_surface"]
 
 [sub_resource type="StyleBoxFlat" id="Style_ending"]
-bg_color = Color(0.019, 0.027, 0.027, 0.985)
+bg_color = Color(0.052, 0.058, 0.052, 0.99)
 border_width_left = 3
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.69, 0.49, 0.24, 0.72)
+border_color = Color(0.27, 0.27, 0.22, 0.92)
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 shadow_color = Color(0, 0, 0, 0.86)
 shadow_size = 24
 
 [sub_resource type="StyleBoxFlat" id="Style_stats"]
-bg_color = Color(0.03, 0.052, 0.052, 0.85)
+bg_color = Color(0.55, 0.56, 0.46, 0.52)
 border_width_left = 2
-border_color = Color(0.3, 0.73, 0.72, 0.76)
+border_color = Color(0.16, 0.39, 0.36, 0.76)
 content_margin_left = 14.0
 content_margin_top = 9.0
 content_margin_right = 14.0
 content_margin_bottom = 9.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button"]
-bg_color = Color(0.053, 0.059, 0.051, 1)
+bg_color = Color(0.61, 0.56, 0.42, 0.96)
 border_width_left = 2
-border_color = Color(0.7, 0.48, 0.22, 0.8)
+border_width_bottom = 2
+border_color = Color(0.3, 0.27, 0.19, 0.82)
 content_margin_left = 15.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_hover"]
-bg_color = Color(0.096, 0.091, 0.064, 1)
+bg_color = Color(0.77, 0.64, 0.38, 1)
 border_width_left = 4
-border_color = Color(0.98, 0.68, 0.29, 1)
+border_color = Color(0.44, 0.25, 0.08, 1)
 content_margin_left = 15.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_pressed"]
-bg_color = Color(0.06, 0.12, 0.12, 1)
+bg_color = Color(0.51, 0.62, 0.55, 1)
 border_width_left = 4
-border_color = Color(0.31, 0.84, 0.84, 1)
+border_color = Color(0.1, 0.35, 0.32, 1)
 content_margin_left = 15.0
 
 [sub_resource type="StyleBoxFlat" id="Style_button_focus"]
@@ -47,16 +49,16 @@ border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.33, 0.81, 0.81, 0.95)
+border_color = Color(0.1, 0.35, 0.32, 0.95)
 expand_margin_left = 2.0
 expand_margin_top = 2.0
 expand_margin_right = 2.0
 expand_margin_bottom = 2.0
 
 [sub_resource type="Theme" id="Theme_ending"]
-Button/colors/font_color = Color(0.87, 0.83, 0.72, 1)
-Button/colors/font_hover_color = Color(1, 0.78, 0.38, 1)
-Button/colors/font_pressed_color = Color(0.54, 0.93, 0.93, 1)
+Button/colors/font_color = Color(0.11, 0.14, 0.12, 1)
+Button/colors/font_hover_color = Color(0.07, 0.11, 0.1, 1)
+Button/colors/font_pressed_color = Color(0.06, 0.16, 0.14, 1)
 Button/font_sizes/font_size = 15
 Button/styles/focus = SubResource("Style_button_focus")
 Button/styles/hover = SubResource("Style_button_hover")
@@ -85,6 +87,7 @@ grow_vertical = 2
 color = Color(0.005, 0.009, 0.009, 0.985)
 
 [node name="Horizon" type="ColorRect" parent="."]
+visible = false
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -99,6 +102,7 @@ mouse_filter = 2
 color = Color(0.27, 0.63, 0.62, 0.16)
 
 [node name="Signal" type="ColorRect" parent="."]
+visible = false
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
@@ -125,6 +129,14 @@ custom_minimum_size = Vector2(880, 570)
 layout_mode = 2
 theme_override_styles/panel = SubResource("Style_ending")
 
+[node name="Surface" type="Control" parent="Center/Panel"]
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("2_surface")
+document_kind = 2
+accent = Color(0.14, 0.38, 0.36, 0.82)
+paper_tint = Color(0.7, 0.67, 0.55, 1)
+
 [node name="Margin" type="MarginContainer" parent="Center/Panel"]
 layout_mode = 2
 theme_override_constants/margin_left = 42
@@ -138,19 +150,20 @@ theme_override_constants/separation = 10
 
 [node name="Eyebrow" type="Label" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.39, 0.76, 0.74, 1)
+theme_override_colors/font_color = Color(0.14, 0.33, 0.31, 1)
 theme_override_font_sizes/font_size = 11
-text = "TOLLARD INCIDENT RECORD  /  LINE CLOSED"
+text = "Tollard incident record  /  line closed"
 
 [node name="Title" type="Label" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.72, 0.34, 1)
+theme_override_colors/font_color = Color(0.47, 0.25, 0.08, 1)
 theme_override_font_sizes/font_size = 36
-text = "SEND VERIFIED RECORDS"
+text = "Send verified records"
+autowrap_mode = 3
 
 [node name="Subtitle" type="Label" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.58, 0.75, 0.72, 1)
+theme_override_colors/font_color = Color(0.16, 0.34, 0.31, 1)
 theme_override_font_sizes/font_size = 17
 text = "What you send cannot be unsent."
 autowrap_mode = 3
@@ -158,20 +171,20 @@ autowrap_mode = 3
 [node name="Divider" type="HSeparator" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
 
-[node name="Body" type="Label" parent="Center/Panel/Margin/Content"]
+[node name="Body" type="RichTextLabel" parent="Center/Panel/Margin/Content"]
 custom_minimum_size = Vector2(0, 154)
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_colors/font_color = Color(0.8, 0.81, 0.74, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.72)
-theme_override_font_sizes/font_size = 17
+theme_override_colors/default_color = Color(0.1, 0.14, 0.13, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0)
+theme_override_font_sizes/normal_font_size = 17
 text = "Epilogue"
-vertical_alignment = 1
-autowrap_mode = 3
+fit_content = false
+scroll_active = true
 
 [node name="Stats" type="Label" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.51, 0.81, 0.79, 1)
+theme_override_colors/font_color = Color(0.11, 0.34, 0.31, 1)
 theme_override_font_sizes/font_size = 14
 theme_override_styles/normal = SubResource("Style_stats")
 text = "TRACES CATALOGUED"
@@ -179,24 +192,30 @@ horizontal_alignment = 1
 
 [node name="Credits" type="Label" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.39, 0.4, 0.37, 1)
+theme_override_colors/font_color = Color(0.27, 0.28, 0.23, 1)
 theme_override_font_sizes/font_size = 11
-text = "THE WORLD FORGOT US  /  CREATED BY JAMIE PARR  /  BUILT WITH GODOT\nSTORY · DESIGN · CODE · ART DIRECTION · SOUND · PRODUCTION"
+text = "The World Forgot Us  /  Jamie Parr  /  built with Godot\nStory  ·  design  ·  code  ·  art direction  ·  sound  ·  production"
 horizontal_alignment = 1
 
-[node name="Buttons" type="HBoxContainer" parent="Center/Panel/Margin/Content"]
+[node name="Buttons" type="BoxContainer" parent="Center/Panel/Margin/Content"]
 layout_mode = 2
 alignment = 1
 theme_override_constants/separation = 14
 
+[node name="Continue" type="Button" parent="Center/Panel/Margin/Content/Buttons"]
+custom_minimum_size = Vector2(250, 44)
+layout_mode = 2
+text = "Walk the aftermath"
+alignment = 0
+
 [node name="Replay" type="Button" parent="Center/Panel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(250, 44)
 layout_mode = 2
-text = "BEGIN AGAIN"
+text = "Begin again"
 alignment = 0
 
 [node name="TitleScreen" type="Button" parent="Center/Panel/Margin/Content/Buttons"]
 custom_minimum_size = Vector2(250, 44)
 layout_mode = 2
-text = "KEEP THIS ENDING"
+text = "Keep this ending"
 alignment = 0

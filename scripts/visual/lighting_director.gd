@@ -21,6 +21,7 @@ const LOW_EFFECTS_SETTING := "rendering/environment/ashland_low_effects"
 const LIGHT_PRIORITY_META := &"lighting_priority"
 const SHADOW_PRIORITY_META := &"lighting_shadow_priority"
 const CAST_SHADOWS_META := &"lighting_cast_shadows"
+const LIGHT_IGNORE_META := &"lighting_ignore"
 
 @export var player_light_enabled := true
 @export var player_light_radius := 118.0
@@ -249,6 +250,9 @@ func _upgrade_animated_sprite(sprite: AnimatedSprite2D) -> void:
 		return
 
 	var upgraded := SpriteFrames.new()
+	upgraded.resource_name = source.resource_name
+	for meta_name in source.get_meta_list():
+		upgraded.set_meta(meta_name, source.get_meta(meta_name))
 	for default_animation in upgraded.get_animation_names():
 		upgraded.remove_animation(default_animation)
 	var changed := false
@@ -546,7 +550,9 @@ func _shadow_priority(anchor: Node2D) -> float:
 
 func _light_profile(anchor: Node2D) -> Dictionary:
 	var lower := String(anchor.name).to_lower()
-	if lower.begins_with("__lighting") or not anchor.is_visible_in_tree():
+	if lower.begins_with("__lighting") \
+			or _has_authored_light_owner(anchor) \
+			or not anchor.is_visible_in_tree():
 		return {}
 
 	var explicit_cyan := anchor.is_in_group("lighting_cyan")
@@ -621,6 +627,15 @@ func _light_profile(anchor: Node2D) -> Dictionary:
 		"energy": energy,
 		"shadow_eligible": shadow_eligible,
 	}
+
+
+func _has_authored_light_owner(anchor: Node2D) -> bool:
+	var current: Node = anchor
+	while current != null:
+		if bool(current.get_meta(LIGHT_IGNORE_META, false)):
+			return true
+		current = current.get_parent()
+	return false
 
 
 func _attach_light(

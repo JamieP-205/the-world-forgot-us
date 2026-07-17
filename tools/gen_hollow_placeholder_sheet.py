@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a functional TOP-DOWN placeholder sprite sheet for the Hollow enemy.
+"""Generate the legacy functional TOP-DOWN Hollow fixture sheet.
 
 Blockout stand-in (clean shapes, not painterly art) so the Hollow can be wired
 into an AnimatedSprite2D later, replacing its Polygon2D blockout. It matches the

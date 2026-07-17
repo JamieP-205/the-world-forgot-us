@@ -1,22 +1,24 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/map_screen.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/ui/map_plot.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/ui/field_document_surface.gd" id="3_surface"]
 
 [sub_resource type="StyleBoxFlat" id="paper"]
-bg_color = Color(0.035, 0.039, 0.034, 0.99)
+bg_color = Color(0.052, 0.057, 0.051, 0.99)
 border_width_left = 2
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
-border_color = Color(0.58, 0.48, 0.29, 0.72)
+border_color = Color(0.25, 0.25, 0.21, 0.92)
 shadow_color = Color(0, 0, 0, 0.82)
 shadow_size = 18
 
 [sub_resource type="StyleBoxFlat" id="button"]
-bg_color = Color(0.07, 0.068, 0.052, 1)
-border_width_left = 3
-border_color = Color(0.83, 0.58, 0.25, 0.9)
+bg_color = Color(0.62, 0.57, 0.43, 0.92)
+border_width_left = 2
+border_width_bottom = 2
+border_color = Color(0.31, 0.28, 0.2, 0.78)
 content_margin_left = 14.0
 
 [node name="MapScreen" type="Control"]
@@ -51,9 +53,17 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("paper")
 
+[node name="Surface" type="Control" parent="Card"]
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("3_surface")
+document_kind = 0
+accent = Color(0.21, 0.42, 0.39, 0.82)
+paper_tint = Color(0.72, 0.69, 0.58, 1)
+
 [node name="Margin" type="MarginContainer" parent="Card"]
 layout_mode = 2
-theme_override_constants/margin_left = 32
+theme_override_constants/margin_left = 46
 theme_override_constants/margin_top = 26
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 24
@@ -62,7 +72,7 @@ theme_override_constants/margin_bottom = 24
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="Header" type="HBoxContainer" parent="Card/Margin/Layout"]
+[node name="Header" type="BoxContainer" parent="Card/Margin/Layout"]
 layout_mode = 2
 
 [node name="Title" type="VBoxContainer" parent="Card/Margin/Layout/Header"]
@@ -71,27 +81,30 @@ size_flags_horizontal = 3
 
 [node name="Eyebrow" type="Label" parent="Card/Margin/Layout/Header/Title"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.42, 0.72, 0.67, 1)
+theme_override_colors/font_color = Color(0.16, 0.34, 0.32, 1)
 theme_override_font_sizes/font_size = 11
-text = "ELLIE'S ROAD NOTES / NOT TO SCALE"
+text = "Ellie's road notes  /  not to scale"
 
 [node name="Heading" type="Label" parent="Card/Margin/Layout/Header/Title"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.82, 0.61, 1)
+theme_override_colors/font_color = Color(0.12, 0.16, 0.15, 1)
 theme_override_font_sizes/font_size = 30
-text = "FIELD MAP"
+text = "Field map"
 
 [node name="Region" type="Label" parent="Card/Margin/Layout/Header"]
+custom_minimum_size = Vector2(190, 0)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.93, 0.64, 0.28, 1)
+theme_override_colors/font_color = Color(0.47, 0.25, 0.09, 1)
 theme_override_font_sizes/font_size = 14
-text = "CULLBROOK SERVICES"
+text = "Cullbrook services"
 vertical_alignment = 2
+horizontal_alignment = 2
+autowrap_mode = 3
 
 [node name="Rule" type="HSeparator" parent="Card/Margin/Layout"]
 layout_mode = 2
 
-[node name="Body" type="HBoxContainer" parent="Card/Margin/Layout"]
+[node name="Body" type="BoxContainer" parent="Card/Margin/Layout"]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 24
@@ -111,9 +124,10 @@ script = ExtResource("2")
 
 [node name="Legend" type="Label" parent="Card/Margin/Layout/Body/MapColumn"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.48, 0.52, 0.47, 1)
+theme_override_colors/font_color = Color(0.24, 0.28, 0.24, 1)
 theme_override_font_sizes/font_size = 10
-text = "AMBER = CURRENT REGION   /   SOLID INK = TRAVELLED ROAD   /   DASH = UNVERIFIED"
+text = "Amber ring: current area  /  solid ink: travelled  /  broken ink: unverified"
+autowrap_mode = 3
 
 [node name="Notes" type="VBoxContainer" parent="Card/Margin/Layout/Body"]
 custom_minimum_size = Vector2(330, 0)
@@ -122,13 +136,13 @@ theme_override_constants/separation = 7
 
 [node name="LandmarkHeader" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.41, 0.72, 0.68, 1)
+theme_override_colors/font_color = Color(0.17, 0.36, 0.33, 1)
 theme_override_font_sizes/font_size = 10
-text = "KNOWN LANDMARKS"
+text = "Known landmarks"
 
 [node name="Landmarks" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.73, 0.65, 1)
+theme_override_colors/font_color = Color(0.13, 0.16, 0.14, 1)
 theme_override_font_sizes/font_size = 12
 text = "- Service yard / centre"
 autowrap_mode = 3
@@ -138,20 +152,20 @@ layout_mode = 2
 
 [node name="ObjectiveHeader" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.91, 0.61, 0.25, 1)
+theme_override_colors/font_color = Color(0.46, 0.25, 0.08, 1)
 theme_override_font_sizes/font_size = 10
-text = "CURRENT JOB"
+text = "Current job"
 
 [node name="Objective" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.88, 0.84, 0.72, 1)
+theme_override_colors/font_color = Color(0.1, 0.14, 0.13, 1)
 theme_override_font_sizes/font_size = 14
 text = "Find the north-road tape."
 autowrap_mode = 3
 
 [node name="ObjectiveLocation" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.44, 0.68, 0.65, 1)
+theme_override_colors/font_color = Color(0.16, 0.34, 0.32, 1)
 theme_override_font_sizes/font_size = 10
 text = "NORTH-ROAD MAST"
 autowrap_mode = 3
@@ -161,20 +175,20 @@ layout_mode = 2
 
 [node name="LeadHeader" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.52, 0.47, 1)
+theme_override_colors/font_color = Color(0.28, 0.29, 0.24, 1)
 theme_override_font_sizes/font_size = 10
-text = "PENCIL NOTE / OPTIONAL"
+text = "Pencil note  /  optional"
 
 [node name="Lead" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.72, 0.73, 0.65, 1)
+theme_override_colors/font_color = Color(0.14, 0.17, 0.15, 1)
 theme_override_font_sizes/font_size = 12
 text = "No open local lead"
 autowrap_mode = 3
 
 [node name="LeadLocation" type="Label" parent="Card/Margin/Layout/Body/Notes"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.42, 0.59, 0.56, 1)
+theme_override_colors/font_color = Color(0.18, 0.32, 0.3, 1)
 theme_override_font_sizes/font_size = 10
 text = "Sweep the area."
 autowrap_mode = 3
@@ -183,10 +197,10 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(220, 40)
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_colors/font_color = Color(0.88, 0.82, 0.68, 1)
-theme_override_colors/font_hover_color = Color(1, 0.76, 0.35, 1)
+theme_override_colors/font_color = Color(0.12, 0.14, 0.12, 1)
+theme_override_colors/font_hover_color = Color(0.08, 0.12, 0.11, 1)
 theme_override_styles/normal = SubResource("button")
 theme_override_styles/hover = SubResource("button")
 theme_override_styles/pressed = SubResource("button")
-text = "FOLD MAP  [M]"
+text = "Fold map  [M]"
 alignment = 0

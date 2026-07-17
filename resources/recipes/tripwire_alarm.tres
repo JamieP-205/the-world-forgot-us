@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"tripwire_alarm"
+display_name = "Tripwire Alarm"
+description = "Rig a low pull wire to a tin clapper and a single battery chirp; paint both anchor pegs amber."
+category = &"camp"
+station_id = &"workbench"
+station_label = "workbench"
+sort_order = 80
+ingredients = {
+"battery": 1,
+"copper_wire": 3,
+"scrap": 2
+}
+output_item_id = &"tripwire_alarm"
+required_flags = Array[StringName]([&"imogen_rescued"])
+required_echoes = Array[StringName]([&"echo_names_wall"])
+unlock_note = "The names-wall record turns an old snare design into a warning that cannot quietly hurt the next traveller."

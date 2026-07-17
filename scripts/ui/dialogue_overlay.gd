@@ -4,12 +4,19 @@ extends Control
 ## Touch layouts scale the complete card from the real browser window so the
 ## story text and choices stay readable through the expanded game viewport.
 
+const PHONE_PORTRAIT_CARD := Vector2(460.0, 620.0)
+const PHONE_LANDSCAPE_CARD := Vector2(820.0, 350.0)
+const INPUT_DEBOUNCE_MSEC := 280
+
 @onready var _panel: PanelContainer = $Panel
+@onready var _margin: MarginContainer = $Panel/Margin
+@onready var _content: VBoxContainer = $Panel/Margin/Content
 @onready var _speaker: Label = $Panel/Margin/Content/Speaker
-@onready var _body: Label = $Panel/Margin/Content/Body
+@onready var _signal_tag: Label = $Panel/Margin/Content/SignalTag
+@onready var _body: RichTextLabel = $Panel/Margin/Content/Body
 @onready var _progress: Label = $Panel/Margin/Content/Footer/Progress
 @onready var _continue: Button = $Panel/Margin/Content/Footer/Continue
-@onready var _choices: VBoxContainer = $Panel/Margin/Content/Choices
+@onready var _choices: GridContainer = $Panel/Margin/Content/Choices
 
 var _story_id: StringName = &""
 var _lines: Array[String] = []
@@ -18,13 +25,14 @@ var _line_index := 0
 var _choices_visible := false
 var _accept_after_msec := 0
 var _touch_ui := false
+var _layout_touch := false
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_touch_ui = _is_touch_device()
 	visible = false
-	_continue.pressed.connect(_advance)
+	_continue.pressed.connect(_on_continue_pressed)
 	EventBus.dialogue_requested.connect(_show_dialogue)
 	get_viewport().size_changed.connect(_apply_responsive_layout)
 	call_deferred("_apply_responsive_layout")
@@ -35,50 +43,116 @@ func _is_touch_device() -> bool:
 		or OS.has_feature("web_ios") or DisplayServer.is_touchscreen_available()
 
 
-func _physical_scale() -> float:
-	var window_size := Vector2(DisplayServer.window_get_size())
-	if window_size.x <= 1.0 or window_size.y <= 1.0 or size.x <= 1.0 or size.y <= 1.0:
+func _physical_scale(logical_view: Vector2, physical_override: Vector2 = Vector2.ZERO) -> float:
+	var window_size := physical_override
+	if window_size == Vector2.ZERO:
+		window_size = Vector2(DisplayServer.window_get_size())
+	if window_size.x <= 1.0 or window_size.y <= 1.0 \
+			or logical_view.x <= 1.0 or logical_view.y <= 1.0:
 		return 1.0
-	return maxf(0.05, minf(window_size.x / size.x, window_size.y / size.y))
+	return maxf(0.05, minf(window_size.x / logical_view.x, window_size.y / logical_view.y))
 
 
-func _apply_responsive_layout() -> void:
-	if not is_node_ready() or size.x <= 1.0 or size.y <= 1.0:
+func apply_responsive_layout(
+		viewport_size: Vector2,
+		touch_override: int = -1,
+		physical_view: Vector2 = Vector2.ZERO,
+	) -> void:
+	_apply_responsive_layout(viewport_size, touch_override, physical_view)
+
+
+func _apply_responsive_layout(
+		size_override: Vector2 = Vector2.ZERO,
+		touch_override: int = -1,
+		physical_view: Vector2 = Vector2.ZERO,
+	) -> void:
+	if not is_node_ready():
 		return
-	if _touch_ui:
-		var window_size := Vector2(DisplayServer.window_get_size())
-		var portrait := window_size.y > window_size.x
-		var requested_scale := clampf(0.92 / _physical_scale(), 1.0, 2.85)
-		var base_size := Vector2(460.0, 440.0) if portrait else Vector2(760.0, 300.0)
-		var edge := 16.0 * requested_scale
-		var fit_scale := minf(
-			(size.x - edge * 2.0) / base_size.x,
-			(size.y - edge * 2.0) / base_size.y
-		)
-		var card_scale := maxf(0.72, minf(requested_scale, fit_scale))
-		_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
-		_panel.pivot_offset = Vector2.ZERO
-		_panel.scale = Vector2.ONE * card_scale
-		_panel.size = base_size
-		_panel.position = Vector2(
-			(size.x - base_size.x * card_scale) * 0.5,
-			size.y - edge - base_size.y * card_scale
-		)
-		_continue.custom_minimum_size = Vector2(188.0, 54.0)
-		_continue.add_theme_font_size_override("font_size", 18)
+	var view := size_override if size_override != Vector2.ZERO else size
+	if view.x <= 1.0 or view.y <= 1.0:
+		return
+	_layout_touch = _touch_ui if touch_override < 0 else touch_override == 1
+	if _layout_touch:
+		_apply_phone_layout(view, view.y > view.x, physical_view)
 	else:
-		_panel.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-		_panel.scale = Vector2.ONE
-		_panel.offset_left = 58.0
-		_panel.offset_right = -280.0
-		_panel.offset_top = -300.0
-		_panel.offset_bottom = -38.0
-		_continue.custom_minimum_size = Vector2(176.0, 36.0)
-		_continue.add_theme_font_size_override("font_size", 14)
+		_apply_desktop_layout(view)
+	_restyle_choice_buttons()
+
+
+func _apply_phone_layout(view: Vector2, portrait: bool, physical_view: Vector2) -> void:
+	var physical := _physical_scale(view, physical_view)
+	var requested_scale := clampf(0.92 / physical, 1.0, 3.2)
+	var base_size := PHONE_PORTRAIT_CARD if portrait else PHONE_LANDSCAPE_CARD
+	var edge := 14.0 * requested_scale
+	var fit_scale := minf(
+		(view.x - edge * 2.0) / base_size.x,
+		(view.y - edge * 2.0) / base_size.y
+	)
+	var card_scale := maxf(0.5, minf(requested_scale, fit_scale))
+	_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_panel.grow_horizontal = Control.GROW_DIRECTION_END
+	_panel.grow_vertical = Control.GROW_DIRECTION_END
+	_panel.pivot_offset = Vector2.ZERO
+	_panel.scale = Vector2.ONE * card_scale
+	_panel.size = base_size
+	_panel.position = Vector2(
+		(view.x - base_size.x * card_scale) * 0.5,
+		view.y - edge - base_size.y * card_scale
+	)
+	_margin.add_theme_constant_override("margin_left", 26)
+	_margin.add_theme_constant_override("margin_top", 16)
+	_margin.add_theme_constant_override("margin_right", 30)
+	_margin.add_theme_constant_override("margin_bottom", 18)
+	_content.add_theme_constant_override("separation", 7)
+	_choices.columns = 1 if portrait else 2
+	_choices.add_theme_constant_override("h_separation", 8)
+	_choices.add_theme_constant_override("v_separation", 7)
+	_signal_tag.add_theme_font_size_override("font_size", 11)
+	_speaker.add_theme_font_size_override("font_size", 21 if portrait else 19)
+	_body.add_theme_font_size_override("normal_font_size", 18 if portrait else 17)
+	_progress.add_theme_font_size_override("font_size", 12)
+	_continue.custom_minimum_size = Vector2(188.0, 58.0)
+	_continue.add_theme_font_size_override("font_size", 18)
+	_panel.size = base_size
+
+
+func _apply_desktop_layout(view: Vector2) -> void:
+	_panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	_panel.grow_horizontal = Control.GROW_DIRECTION_END
+	_panel.grow_vertical = Control.GROW_DIRECTION_END
+	_panel.pivot_offset = Vector2.ZERO
+	_panel.scale = Vector2.ONE
+	_panel.size = Vector2(maxf(756.0, view.x - 116.0), 342.0)
+	_panel.position = Vector2(58.0, view.y - 380.0)
+	_margin.add_theme_constant_override("margin_left", 30)
+	_margin.add_theme_constant_override("margin_top", 16)
+	_margin.add_theme_constant_override("margin_right", 38)
+	_margin.add_theme_constant_override("margin_bottom", 17)
+	_content.add_theme_constant_override("separation", 8)
+	_choices.columns = 2
+	_choices.add_theme_constant_override("h_separation", 8)
+	_choices.add_theme_constant_override("v_separation", 6)
+	_signal_tag.add_theme_font_size_override("font_size", 10)
+	_speaker.add_theme_font_size_override("font_size", 19)
+	_body.add_theme_font_size_override("normal_font_size", 16)
+	_progress.add_theme_font_size_override("font_size", 11)
+	_continue.custom_minimum_size = Vector2(176.0, 44.0)
+	_continue.add_theme_font_size_override("font_size", 14)
+	_panel.size = Vector2(maxf(756.0, view.x - 116.0), 342.0)
+
+
+func _restyle_choice_buttons() -> void:
+	for child in _choices.get_children():
+		if child is not Button:
+			continue
+		var button := child as Button
+		button.custom_minimum_size = Vector2(340.0, 62.0 if _layout_touch else 48.0)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.add_theme_font_size_override("font_size", 17 if _layout_touch else 14)
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if not visible or Time.get_ticks_msec() < _accept_after_msec:
+	if not visible:
 		return
 	if _choices_visible and event is InputEventKey and event.pressed and not event.echo:
 		var index := -1
@@ -88,16 +162,25 @@ func _unhandled_input(event: InputEvent) -> void:
 			index = 1
 		elif event.keycode == KEY_3:
 			index = 2
+		elif event.keycode == KEY_4:
+			index = 3
 		if index >= 0 and index < _choice_labels.size():
-			_choose(index)
+			_on_choice_pressed(index)
 			get_viewport().set_input_as_handled()
 	elif not _choices_visible and (event.is_action_pressed("ui_accept") \
 			or event.is_action_pressed("interact")):
-		_advance()
+		_on_continue_pressed()
 		get_viewport().set_input_as_handled()
-	elif _touch_ui and not _choices_visible and event is InputEventScreenTouch and event.pressed:
+
+
+## Screen touches arrive before GUI controls. Claiming page taps here prevents
+## the browser's follow-on synthetic click from also pressing Continue. Once
+## replies are visible, the real choice buttons own touch normally.
+func _input(event: InputEvent) -> void:
+	if visible and _touch_ui and not _choices_visible \
+			and event is InputEventScreenTouch and event.pressed:
 		AudioManager.unlock_audio()
-		_advance()
+		_on_continue_pressed()
 		get_viewport().set_input_as_handled()
 
 
@@ -112,7 +195,8 @@ func _show_dialogue(payload: Dictionary) -> void:
 	_line_index = 0
 	_choices_visible = false
 	_accept_after_msec = Time.get_ticks_msec() + 180
-	_speaker.text = String(payload.get("title", "UNKNOWN SIGNAL"))
+	_speaker.text = String(payload.get("title", "Unknown line"))
+	_signal_tag.text = String(payload.get("provenance", _provenance_for(_speaker.text)))
 	var accent: Color = payload.get("accent", Color(0.38, 0.90, 0.94, 1.0))
 	_speaker.add_theme_color_override("font_color", accent)
 	_panel.modulate = Color(1, 1, 1, 1)
@@ -128,12 +212,13 @@ func _show_line() -> void:
 		_finish(-1)
 		return
 	_body.text = _lines[_line_index]
+	_body.scroll_to_line(0)
 	_progress.text = (
-		"RECORD %02d / %02d     TAP CONTINUE" if _touch_ui
-		else "RECORD %02d / %02d     ENTER  /  E"
+		"Page %d of %d · tap to continue" if _layout_touch
+		else "Page %d of %d · Enter or E"
 	) % [_line_index + 1, _lines.size()]
-	_continue.text = "CONTINUE" if _line_index < _lines.size() - 1 else (
-		"CHOOSE" if not _choice_labels.is_empty() else "CLOSE"
+	_continue.text = "Continue" if _line_index < _lines.size() - 1 else (
+		"Choose a reply" if not _choice_labels.is_empty() else "Close"
 	)
 	_continue.visible = true
 	_choices.visible = false
@@ -161,15 +246,40 @@ func _show_choices() -> void:
 	_clear_choices()
 	for i in _choice_labels.size():
 		var button := Button.new()
-		button.custom_minimum_size = Vector2(0, 58 if _touch_ui else 38)
-		button.text = "%02d  /  %s" % [i + 1, _choice_labels[i]]
+		button.custom_minimum_size = Vector2(340, 62 if _layout_touch else 48)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.text = "%d.  %s" % [i + 1, _choice_labels[i]]
 		button.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		button.add_theme_font_size_override("font_size", 18 if _touch_ui else 14)
-		button.pressed.connect(_choose.bind(i))
+		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		button.add_theme_font_size_override("font_size", 17 if _layout_touch else 14)
+		button.pressed.connect(_on_choice_pressed.bind(i))
 		_choices.add_child(button)
 	if _choices.get_child_count() > 0:
 		(_choices.get_child(0) as Button).grab_focus()
-	_progress.text = "TAP A RESPONSE" if _touch_ui else "SELECT WITH MOUSE  /  NUMBER KEY"
+	_progress.text = "Tap a reply" if _layout_touch else "Choose with mouse or number key"
+
+
+func _on_continue_pressed() -> void:
+	if not _claim_ui_input():
+		return
+	_advance()
+
+
+func _on_choice_pressed(index: int) -> void:
+	if not _claim_ui_input():
+		return
+	_choose(index)
+
+
+## Touchscreen browsers may send the same gesture as both a screen touch and
+## a synthetic mouse click. Holding a brief shared gate keeps one tap to one
+## page or one reply, including the hand-off from the last page to choices.
+func _claim_ui_input() -> bool:
+	var now := Time.get_ticks_msec()
+	if now < _accept_after_msec:
+		return false
+	_accept_after_msec = now + INPUT_DEBOUNCE_MSEC
+	return true
 
 
 func _choose(index: int) -> void:
@@ -193,3 +303,12 @@ func _clear_choices() -> void:
 	for child in _choices.get_children():
 		_choices.remove_child(child)
 		child.queue_free()
+
+
+func _provenance_for(title: String) -> String:
+	var lower := title.to_lower()
+	if "radio" in lower or "signal" in lower or "maggie" in lower or "continuity" in lower:
+		return "Receiver line · identity not yet verified"
+	if "evidence" in lower or "record" in lower or "ledger" in lower:
+		return "Field evidence · copied into Ellie's notebook"
+	return "Field conversation · noted by Ellie"

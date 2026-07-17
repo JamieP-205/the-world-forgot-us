@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/petrol_station_props/phone_booth.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_driver_call"
 title = "Caller on Line Seven"
 category = "Wrenfield Relay Station"
 quality = "Damaged call"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Line Seven handset and duplicate tape"
+artifact_semantics = &"line_seven_handset"
+evidence_class = "witness"
+confidence = 71
+signal_profile = "two overlapping wife-voices / line seven"
+observation_text = "Two voices with the same print occupy separate tape layers; a third speaker is physically in the room."
+contradiction_text = "Each copied wife gives a different junction, and neither can be the caller's dead partner."
+verification_text = "Separate the tape layers and confirm the quiet speaker's location before filing."
+feed_warning = "The copied voice would learn which intimate voice made the caller obey."
 hint = "Two evacuation instructions occupy the same strip of tape."
 memory_text = "CALLER: 'The radio used my wife's voice. She died in February.' The operator asks for his location. A second voice, also his wife, gives a different junction and tells him not to trust the operator. In the background a real person says, very quietly, 'Turn every speaker off.'"
 keepsake_item = &""

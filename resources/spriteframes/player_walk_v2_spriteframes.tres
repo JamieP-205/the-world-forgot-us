@@ -67,6 +67,15 @@ atlas = ExtResource("1_walk")
 region = Rect2(940, 940, 314, 314)
 
 [resource]
+resource_name = "player_walk_v2_directional"
+resource_local_to_scene = true
+metadata/animation_owner = "player_walk"
+metadata/contract_version = 1
+metadata/foot_pivot_normalized = Vector2(0.5, 0.96)
+metadata/source_status = "production_walk_sheet_registration_corrected"
+metadata/timing_profile = {"walk": 7.0}
+metadata/replacement_sheet_contract = {"cell_size": Vector2i(314, 314), "directions": PackedStringArray("down", "up", "left", "right"), "states": PackedStringArray("walk"), "silhouette": "player coat and pack, alternating planted-foot beats"}
+metadata/registration = {"anchor_space": "texture_pixels", "animation_offsets": {"walk_down": Vector2(0, -73), "walk_left": Vector2(0, -74), "walk_right": Vector2(0, -16.5), "walk_up": Vector2(0, -65.5)}, "default_offset": Vector2(0, -73), "direction_offsets": {"down": Vector2(0, 0), "left": Vector2(0, 0), "right": Vector2(0, 0), "up": Vector2(0, 0)}, "frame_offsets": {"walk_down": [Vector2(0, 0), Vector2(19, 1), Vector2(37, -1), Vector2(52.5, -1)], "walk_left": [Vector2(0, 0), Vector2(6, 0), Vector2(36, 0), Vector2(51, 0)], "walk_right": [Vector2(0, 0), Vector2(35, -3), Vector2(53, -1), Vector2(65.5, -2)], "walk_up": [Vector2(0, 0), Vector2(19.5, 0), Vector2(34, 0), Vector2(55.5, 3)]}, "state_offsets": {"walk": Vector2(0, 0)}}
 animations = [{
 "frames": [{"duration": 1.0, "texture": SubResource("Down0")}, {"duration": 1.0, "texture": SubResource("Down1")}, {"duration": 1.0, "texture": SubResource("Down2")}, {"duration": 1.0, "texture": SubResource("Down3")}],
 "loop": true,

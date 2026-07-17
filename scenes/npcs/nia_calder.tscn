@@ -1,0 +1,7 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/npcs/world_survivor_npc.tscn" id="1_actor"]
+[ext_resource type="Resource" path="res://resources/npcs/nia_calder.tres" id="2_profile"]
+
+[node name="NiaCalder" instance=ExtResource("1_actor")]
+profile = ExtResource("2_profile")
