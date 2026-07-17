@@ -18,9 +18,16 @@ The July 2026 production pass used the built-in OpenAI image-generation tool for
 
 - [`assets/source/generated/player_walk_v2/`](assets/source/generated/player_walk_v2/) contains the green-screen source for Ellie's sixteen-frame, four-direction walk cycle. Existing player views were supplied as identity and style references.
 - [`assets/source/generated/environment_landmarks_v2/`](assets/source/generated/environment_landmarks_v2/) contains green-screen source art for the Bellwether civic ruin, Long Acre relay station and Tollard Exchange ruin. Existing environment props were supplied as style and camera references.
-- [`assets/generated/npcs/`](assets/generated/npcs/) contains transparent painted directional sheets for Imogen and Rafi, made to match the project's top-down character presentation.
+- [`assets/source/generated/characters/npc_identity/`](assets/source/generated/characters/npc_identity/) contains flat-magenta masters for Leena, Owen, Gwen, Idris, Mara, Tom, Nia and the Maggie/Continuity presence, plus the static Maggie cutting discovery. Imogen and Rafi's existing sheets were supplied as style and atlas-layout references only.
+- [`assets/generated/npcs/`](assets/generated/npcs/) contains the transparent runtime derivatives and the earlier distinct Imogen and Rafi atlases. The eight new character sheets each contain sixteen authored views: down, up, left and right with four locomotion phases per direction.
+- [`assets/source/generated/characters/enemy_walk_rebuild/`](assets/source/generated/characters/enemy_walk_rebuild/) contains six green-screen, sixteen-frame directional locomotion atlases: Hollow, Mimic Stalker, Signal Leech, Relay Husk, Static Wraith and Choir Warden.
+- [`assets/source/generated/item_icons/`](assets/source/generated/item_icons/) contains the green-screen twelve-item crafting atlas.
+- [`assets/source/generated/environment/`](assets/source/generated/environment/) contains the Railhome depot/carriage exterior used at Cullbrook.
+- [`assets/source/generated/trace_anchors/`](assets/source/generated/trace_anchors/) contains the handset/photograph Trace Anchor and its separate aligned afterimage source.
+- [`assets/source/generated/interiors/`](assets/source/generated/interiors/) contains the flat-magenta source atlas for nineteen building-specific interior hero props and one spare emergency-store cluster.
+- [`assets/processed/cinematic_rebuild/`](assets/processed/cinematic_rebuild/) contains eight generated full-frame opening illustrations. These are recorded here as generated outputs even though they do not need a chroma-key processing stage.
 
-The prompts requested top-down three-quarter painterly pixel art, continuity with the supplied project references, isolated assets, no text or interface elements, and either a flat green extraction background or transparency. No external stock art was introduced in this pass.
+The prompts requested top-down three-quarter painterly art, continuity with the supplied project references, isolated assets, no interface elements, and either a flat chroma-key background or transparency. No external stock art was introduced in this pass.
 
 ## Processed game images
 
@@ -30,6 +37,10 @@ Most PNGs under [`assets/processed/`](assets/processed/) are derivatives prepare
 - [`tools/make_ground_decals.py`](tools/make_ground_decals.py) turns opaque ground-tile slices into feathered decals.
 - [`tools/generate_normal_maps.py`](tools/generate_normal_maps.py) derives deterministic tangent-space normal maps from processed art using alpha-weighted luminance. These are generated lighting data, not artist-authored height maps.
 - [`assets/processed/player_walk_v2/`](assets/processed/player_walk_v2/) and [`assets/processed/environment_landmarks_v2/`](assets/processed/environment_landmarks_v2/) are transparent derivatives extracted from the July 2026 green-screen sources with the local chroma-key helper, soft matte and edge despill. Landmark normals live under [`assets/processed/normals/environment_landmarks_v2/`](assets/processed/normals/environment_landmarks_v2/).
+- [`assets/processed/enemy_walk_rebuild/`](assets/processed/enemy_walk_rebuild/), [`assets/processed/item_icons_rebuild/`](assets/processed/item_icons_rebuild/), [`assets/processed/environment_rebuild/`](assets/processed/environment_rebuild/), [`assets/processed/trace_anchors/`](assets/processed/trace_anchors/) and [`assets/processed/interior_identity/`](assets/processed/interior_identity/) are transparent derivatives from the new chroma-screen sources. The Trace Anchor afterimage was separately keyed from black.
+- [`assets/generated/npcs/*_walk.png`](assets/generated/npcs/) and [`assets/generated/npcs/maggie_cutting_body.png`](assets/generated/npcs/maggie_cutting_body.png) were keyed from the NPC identity masters with a soft alpha matte and edge despill. Each named profile binds its own atlas directly; no runtime palette swap or procedural costume overlay creates character identity.
+- [`tools/install_enemy_walk_atlases.gd`](tools/install_enemy_walk_atlases.gd) slices the six enemy atlases into four rows and four locomotion frames while retaining each scene's existing combat actions.
+- [`assets/processed/normals/`](assets/processed/normals/) contains deterministic normal derivatives for the current character, building, prop, Trace Anchor and cinematic-adjacent game art covered by the lighting pipeline.
 - [`tools/gen_player_placeholder_sheet.py`](tools/gen_player_placeholder_sheet.py) and [`tools/gen_hollow_placeholder_sheet.py`](tools/gen_hollow_placeholder_sheet.py) create fallback top-down blockout sheets with Pillow drawing commands. The live player and Hollow scenes now use the processed painted concept art through `resources/spriteframes/*_painted_spriteframes.tres`; the scripted sheets remain as documented fallbacks.
 
 The character placeholder directories contain their own format notes:

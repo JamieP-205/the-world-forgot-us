@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_medicine.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_clinic_triage"
 title = "Paper Patients"
 category = "Ashmere Estate"
 quality = "Witness recording"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Handwritten wristbands and medicine card"
+artifact_semantics = &"clinic_wristbands"
+evidence_class = "witness"
+confidence = 90
+signal_profile = "paired-name cadence / printer dropout"
+observation_text = "Every wristband carries a patient name, medicine and a second person's initials."
+contradiction_text = "The clinic terminal renames Bed Four three times; the paired handwritten bands do not."
+verification_text = "Read each name back to a surviving porter and match the medicine card."
+feed_warning = "The copied voice would absorb patient names and vulnerable medical details."
 hint = "Paper wristbands hang from the clinic rail, each written twice."
 memory_text = "LEENA SHAH: 'Ignore the screen. Ask them their name, then ask whoever came with them.' A porter says the computer has renamed Bed Four for the third time. Leena tears labels from the printer and writes by hand: name, medicine, witness. 'If nobody knows, write unknown. Do not guess.'"
 keepsake_item = &""

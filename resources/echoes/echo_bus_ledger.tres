@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/roadside_props/backpack.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_bus_ledger"
 title = "Gwen Doyle's Last Run"
 category = "Ashmere Estate"
 quality = "Analogue record"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Driver's canvas satchel and headcount ledger"
+artifact_semantics = &"driver_headcount_satchel"
+evidence_class = "physical"
+confidence = 89
+signal_profile = "engine-band rumble / pencil ticks"
+observation_text = "Twenty-seven pencil ticks share pressure and spacing; the printed Tollard route is crossed out once."
+contradiction_text = "Road control sends the bus west while the driver can still see the school to the east."
+verification_text = "Match the twenty-seven names against Ashmere School's paper intake sheet."
+feed_warning = "The copied voice would learn the children's route and the driver's refusal pattern."
 hint = "The driver's ledger lists headcounts, not ticket numbers."
 memory_text = "GWEN DOYLE logs twenty-seven aboard, then crosses out the printed route to Tollard. 'The signs say east. Road control says west. I can see the school from here, so we are going to the school.' A child asks if that is allowed. Gwen says, 'It is my bus.' Twenty-seven names are checked in at Ashmere School."
 keepsake_item = &""

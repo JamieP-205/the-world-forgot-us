@@ -1,0 +1,428 @@
+[gd_scene load_steps=13 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/crafting_overlay.gd" id="1_overlay"]
+[ext_resource type="Script" path="res://scripts/ui/crafting_workbench_surface.gd" id="2_surface"]
+
+[sub_resource type="StyleBoxFlat" id="Style_metal"]
+bg_color = Color(0.035, 0.045, 0.041, 0.96)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.35, 0.43, 0.36, 0.78)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+shadow_color = Color(0, 0, 0, 0.58)
+shadow_size = 7
+
+[sub_resource type="StyleBoxFlat" id="Style_paper_left"]
+bg_color = Color(0.78, 0.72, 0.57, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.22, 0.16, 0.84)
+corner_radius_top_left = 2
+corner_radius_top_right = 1
+corner_radius_bottom_right = 5
+corner_radius_bottom_left = 1
+shadow_color = Color(0, 0, 0, 0.52)
+shadow_size = 9
+shadow_offset = Vector2(5, 6)
+
+[sub_resource type="StyleBoxFlat" id="Style_paper_right"]
+bg_color = Color(0.805, 0.75, 0.61, 0.98)
+border_width_left = 2
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.25, 0.22, 0.16, 0.84)
+corner_radius_top_left = 1
+corner_radius_top_right = 3
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 5
+shadow_color = Color(0, 0, 0, 0.52)
+shadow_size = 9
+shadow_offset = Vector2(5, 6)
+
+[sub_resource type="StyleBoxFlat" id="Style_rule"]
+bg_color = Color(0.56, 0.50, 0.38, 0.30)
+border_width_left = 3
+border_width_bottom = 1
+border_color = Color(0.42, 0.19, 0.13, 0.48)
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 10.0
+content_margin_bottom = 8.0
+
+[sub_resource type="StyleBoxFlat" id="Style_ink_button"]
+bg_color = Color(0.075, 0.081, 0.068, 0.96)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.48, 0.35, 0.18, 0.95)
+corner_radius_top_left = 1
+corner_radius_top_right = 2
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 2
+content_margin_left = 14.0
+content_margin_right = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_ink_hover"]
+bg_color = Color(0.13, 0.13, 0.095, 1)
+border_width_left = 5
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.82, 0.56, 0.23, 1)
+corner_radius_top_left = 1
+corner_radius_top_right = 2
+corner_radius_bottom_right = 1
+corner_radius_bottom_left = 2
+content_margin_left = 14.0
+content_margin_right = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_disabled"]
+bg_color = Color(0.23, 0.22, 0.18, 0.46)
+border_width_left = 2
+border_width_bottom = 1
+border_color = Color(0.32, 0.29, 0.22, 0.58)
+
+[sub_resource type="StyleBoxFlat" id="Style_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.36, 0.75, 0.71, 0.96)
+
+[sub_resource type="StyleBoxFlat" id="Style_station"]
+bg_color = Color(0.70, 0.65, 0.51, 0.95)
+border_width_left = 2
+border_width_bottom = 2
+border_color = Color(0.30, 0.27, 0.20, 0.68)
+content_margin_left = 10.0
+content_margin_right = 10.0
+
+[sub_resource type="Theme" id="Theme_workbook"]
+Button/colors/font_color = Color(0.89, 0.84, 0.70, 1)
+Button/colors/font_disabled_color = Color(0.31, 0.29, 0.24, 0.78)
+Button/colors/font_focus_color = Color(1, 0.84, 0.48, 1)
+Button/colors/font_hover_color = Color(1, 0.84, 0.48, 1)
+Button/font_sizes/font_size = 14
+Button/styles/disabled = SubResource("Style_disabled")
+Button/styles/focus = SubResource("Style_focus")
+Button/styles/hover = SubResource("Style_ink_hover")
+Button/styles/normal = SubResource("Style_ink_button")
+Button/styles/pressed = SubResource("Style_ink_hover")
+Label/colors/font_color = Color(0.105, 0.095, 0.073, 1)
+Label/font_sizes/font_size = 14
+OptionButton/colors/font_color = Color(0.13, 0.12, 0.09, 1)
+OptionButton/colors/font_hover_color = Color(0.09, 0.08, 0.06, 1)
+OptionButton/font_sizes/font_size = 13
+OptionButton/styles/focus = SubResource("Style_focus")
+OptionButton/styles/hover = SubResource("Style_station")
+OptionButton/styles/normal = SubResource("Style_station")
+OptionButton/styles/pressed = SubResource("Style_station")
+
+[node name="CraftingOverlay" type="Control"]
+process_mode = 3
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme = SubResource("Theme_workbook")
+script = ExtResource("1_overlay")
+
+[node name="WorkbenchSurface" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("2_surface")
+
+[node name="OuterMargin" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 34
+theme_override_constants/margin_top = 26
+theme_override_constants/margin_right = 34
+theme_override_constants/margin_bottom = 28
+
+[node name="RootLayout" type="VBoxContainer" parent="OuterMargin"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="TopStrip" type="PanelContainer" parent="OuterMargin/RootLayout"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_metal")
+
+[node name="Margin" type="MarginContainer" parent="OuterMargin/RootLayout/TopStrip"]
+layout_mode = 2
+theme_override_constants/margin_left = 15
+theme_override_constants/margin_top = 7
+theme_override_constants/margin_right = 7
+theme_override_constants/margin_bottom = 7
+
+[node name="Row" type="HBoxContainer" parent="OuterMargin/RootLayout/TopStrip/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="OuterMargin/RootLayout/TopStrip/Margin/Row"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.87, 0.80, 0.64, 1)
+theme_override_font_sizes/font_size = 16
+text = "FIELD WORKBENCH  /  ELLIE'S REPAIR BOOK"
+vertical_alignment = 1
+
+[node name="Hint" type="Label" parent="OuterMargin/RootLayout/TopStrip/Margin/Row"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.39, 0.69, 0.66, 0.92)
+theme_override_font_sizes/font_size = 11
+text = "C / Y  CLOSE"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="OuterMargin/RootLayout/TopStrip/Margin/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(106, 34)
+layout_mode = 2
+text = "CLOSE BOOK"
+
+[node name="PageScroll" type="ScrollContainer" parent="OuterMargin/RootLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Pages" type="BoxContainer" parent="OuterMargin/RootLayout/PageScroll"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 520)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 22
+
+[node name="MethodsPage" type="PanelContainer" parent="OuterMargin/RootLayout/PageScroll/Pages"]
+custom_minimum_size = Vector2(395, 500)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("Style_paper_left")
+
+[node name="Margin" type="MarginContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 25
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 22
+
+[node name="Layout" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Kicker" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.19, 0.13, 0.92)
+theme_override_font_sizes/font_size = 11
+text = "METHOD INDEX / ANNOTATED FROM RECOVERED RECORDS"
+
+[node name="Heading" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "WHAT CAN WE MAKE?"
+
+[node name="FilterRow" type="HBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="StationFilter" type="OptionButton" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout/FilterRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(190, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="RecipeCount" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout/FilterRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(145, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.29, 0.22, 1)
+theme_override_font_sizes/font_size = 11
+text = "0 METHODS / 0 READY"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="RecipeScroll" type="ScrollContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="RecipeList" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout/RecipeScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 7
+
+[node name="MarginNote" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/MethodsPage/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.38, 0.34, 0.26, 0.92)
+theme_override_font_sizes/font_size = 11
+text = "No improvisation is harmless. Check what the finished tool does—and what using it wakes—before spending the stock."
+autowrap_mode = 3
+
+[node name="DetailPage" type="PanelContainer" parent="OuterMargin/RootLayout/PageScroll/Pages"]
+custom_minimum_size = Vector2(455, 500)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("Style_paper_right")
+
+[node name="Margin" type="MarginContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage"]
+layout_mode = 2
+theme_override_constants/margin_left = 27
+theme_override_constants/margin_top = 23
+theme_override_constants/margin_right = 27
+theme_override_constants/margin_bottom = 22
+
+[node name="PageLayout" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="DetailScroll" type="ScrollContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Layout" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 9
+
+[node name="OutputRow" type="HBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="OutputIcon" type="TextureRect" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/OutputRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(66, 66)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleColumn" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/OutputRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 2
+
+[node name="OutputTitle" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/OutputRow/TitleColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 25
+text = "SELECT A METHOD"
+autowrap_mode = 3
+
+[node name="OutputStock" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/OutputRow/TitleColumn"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.19, 0.13, 0.92)
+theme_override_font_sizes/font_size = 11
+text = "0 / 0 IN FIELD KIT"
+
+[node name="Description" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.20, 0.18, 0.14, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="UseSummary" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.09, 0.26, 0.24, 1)
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
+[node name="Consequence" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.19, 0.13, 1)
+theme_override_font_sizes/font_size = 13
+autowrap_mode = 3
+
+[node name="IngredientsHeading" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "MATERIAL CHECK / TRANSACTION IS ALL-OR-NOTHING"
+
+[node name="IngredientList" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 2
+
+[node name="UnlockPanel" type="PanelContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_rule")
+
+[node name="Layout" type="VBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/UnlockPanel"]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="UnlockHeading" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/UnlockPanel/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.19, 0.13, 1)
+theme_override_font_sizes/font_size = 11
+
+[node name="UnlockText" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout/UnlockPanel/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.20, 0.18, 0.14, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="CraftStatus" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.32, 0.25, 0.15, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="UseStatus" type="Label" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/DetailScroll/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.09, 0.26, 0.24, 1)
+theme_override_font_sizes/font_size = 12
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="CraftButton" type="Button" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MAKE"
+
+[node name="UseButton" type="Button" parent="OuterMargin/RootLayout/PageScroll/Pages/DetailPage/Margin/PageLayout/Actions"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 54)
+layout_mode = 2
+size_flags_horizontal = 3
+text = "USE"

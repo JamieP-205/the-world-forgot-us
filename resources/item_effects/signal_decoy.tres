@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"signal_decoy"
+effect_kind = &"signal_decoy"
+action_label = "SET DECOY"
+use_summary = "Throws a false carrier across a wide circle, pulling nearby Hollows away for fourteen seconds."
+consequence = "The coil broadcasts from where it is set, then cooks itself. The noise may draw things you never saw."
+consumes_on_use = true
+values = {"duration": 14.0, "pull": 7.0, "pulse_interval": 1.4, "radius": 320.0}

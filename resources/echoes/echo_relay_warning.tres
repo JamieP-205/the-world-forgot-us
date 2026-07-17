@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/roadside_props/portable_radio.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_relay_warning"
 title = "Weather Channel Test"
 category = "Wrenfield Relay Station"
 quality = "Clean recording"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Battery weather receiver"
+artifact_semantics = &"analogue_weather_receiver"
+evidence_class = "system"
+confidence = 84
+signal_profile = "plain carrier / no personal routing"
+observation_text = "The weather set repeats the same wind and ash-front figures without inserting a listener's name."
+contradiction_text = "Personalised evacuation channels disagree; the anonymous weather carrier remains consistent."
+verification_text = "Compare both broadcasts with the wind vane and handwritten station log."
+feed_warning = "The copied voice would learn which anonymous channel still bypasses its routing."
 hint = "An analogue test channel survived because it never asked who was listening."
 memory_text = "RAFI: 'Wind north-east, thirty-two. Ash front at Wrenfield by six.' Maggie asks him to repeat it without names or personal routing. The second transmission is plain, dull and correct. 'There,' she says. 'The old channel still works when nobody tries to be clever.'"
 keepsake_item = &""

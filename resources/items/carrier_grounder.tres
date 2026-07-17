@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_rebuild/crafted_items_atlas.png" id="2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("2")
+region = Rect2(1136, 707, 368, 339)
+
+[resource]
+script = ExtResource("1")
+icon = SubResource("AtlasTexture_icon")
+id = &"carrier_grounder"
+display_name = "Carrier Grounder"
+description = "A weighted earth clamp behind an analogue isolator. Throw it clear, clip it low and give the false voice somewhere else to go."
+stack_size = 2
+category = "device"

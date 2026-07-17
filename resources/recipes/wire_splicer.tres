@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"wire_splicer"
+display_name = "Wire Splicer"
+description = "Fit cutters, crimp jaw and insulated pick into a folding steel handle."
+category = &"tool"
+station_id = &"workbench"
+station_label = "workbench"
+sort_order = 100
+ingredients = {
+"resin_tape": 2,
+"scrap": 3
+}
+output_item_id = &"wire_splicer"
+required_echoes = Array[StringName]([&"echo_mara_repair"])
+unlock_note = "Maggie's bench inventory includes the dimensions of the field tool she kept losing."

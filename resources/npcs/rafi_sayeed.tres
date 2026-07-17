@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/rafi_idle.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"rafi"
+display_name = "Rafi Sayeed"
+role = "Quarry radio keeper"
+story_reason = "Rafi has logged every false weather warning and every real survivor call on 88.4. His timing notes reveal when the network predicts danger and when it manufactures it."
+home_region = &"broadcast_fields"
+service_id = &"carrier_forecast"
+service_name = "carrier forecast"
+service_description = "Reads current route commitments against his signal log and marks a quieter carrier window."
+service_flag = &"npc_service_rafi_forecast"
+service_choice = "ASK FOR A QUIET CARRIER WINDOW"
+service_notice = "Rafi circles a six-minute gap in the carrier noise. The next transmission will be harder to imitate."
+helped_flag = &"npc_rafi_helped"
+ignored_flag = &"npc_rafi_ignored"
+legacy_helped_flag = &"helped_rafi"
+voice_signature = "fast technical patter that stops dead before a personal admission"
+greeting = "If the set says your name first, do not answer second."
+intro_lines = Array[String](["RAFI - I have three batteries, one aerial and a county full of voices asking me to choose who sounds real.", "Help me move the logbooks. Leave the loudspeaker; it has started finishing my sentences."])
+helped_lines = Array[String](["RAFI - Railhome's roof gives us nine clean degrees north. That is practically luxury."])
+ignored_lines = Array[String](["RAFI - I waited through two forecast cycles. Then the quarry speaker thanked me in my mother's voice."])
+service_lines = Array[String](["RAFI - Hold the dial there. Hear that clean notch between the breathing and the rain?"])
+anchor_lines = {"clinic": "RAFI - Clinic traffic is messy enough to be human. The perfect calls worry me.", "radio": "RAFI - Give me a public frequency and I will give people a test phrase the copy cannot predict.", "witness": "RAFI - My logs are timestamps, not testimony. Put them beside Leena's names.", "copy": "RAFI - It learns cadence faster than facts. Make it answer something ugly and specific."}
+strategy_lines = {"restore": "RAFI - Restoring the trunk will wake every repeater, including the ones that whisper back.", "sever": "RAFI - Cut Tollard if you must. I can keep three villages talking locally.", "mesh": "RAFI - Small relays, named operators, no central voice. I can work with that."}
+help_choice = "MOVE HIS LOGBOOKS TO RAILHOME"
+ignore_choice = "LEAVE HIM ON 88.4"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "knit cap / heavy navy radio coat / broad shoulder satchel"
+visual_notes = "Rafi's stocky outline, dark knit cap, weatherproof navy coat and radio bag give him the weight of somebody who has lived beside a transmitter."
+identity_accent = Color(0.30, 0.82, 0.86, 1)

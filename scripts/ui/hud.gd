@@ -193,7 +193,7 @@ func _on_inventory_changed() -> void:
 func _refresh_inventory(reveal: bool) -> void:
 	var items := InventorySystem.get_items()
 	var total := InventorySystem.get_total_count()
-	_inventory_header.text = "FIELD KIT / %d" % total
+	_inventory_header.text = "Field kit  ·  %d" % total
 	while _inventory_rows.get_child_count() > 0:
 		var child := _inventory_rows.get_child(0)
 		_inventory_rows.remove_child(child)
@@ -213,8 +213,8 @@ func _refresh_inventory(reveal: bool) -> void:
 func _refresh_objective() -> void:
 	var data := CampaignSystem.get_objective()
 	_objective.text = String(data.get("text", "Find a road that still agrees with its signs."))
-	_objective_location.text = String(data.get("location", "LOCATION UNCONFIRMED"))
-	_objective_progress.text = String(data.get("progress", ""))
+	_objective_location.text = "Near  " + _field_note(String(data.get("location", "location unconfirmed")))
+	_objective_progress.text = _field_note(String(data.get("progress", "")))
 	_refresh_region_line()
 
 
@@ -222,18 +222,26 @@ func _refresh_region_line() -> void:
 	var main := get_tree().get_first_node_in_group("main")
 	var phase := ""
 	if main != null and main.has_method("get_day_phase_name"):
-		phase = String(main.get_day_phase_name()).to_upper()
+		phase = String(main.get_day_phase_name()).capitalize()
 	var path := _current_level_path()
-	var region := "CULLBROOK"
-	if path.ends_with("railhome_base.tscn"): region = "CARRIAGE 317"
-	elif path.ends_with("ashmere_verge.tscn"): region = "ASHMERE"
-	elif path.ends_with("broadcast_fields.tscn"): region = "WRENFIELD"
-	elif path.ends_with("choir_core.tscn"): region = "TOLLARD"
-	_region_line.text = "%s / %s" % [region, phase if not phase.is_empty() else "FIELD NOTE"]
+	var region := "Cullbrook"
+	if path.ends_with("railhome_base.tscn"): region = "Carriage 317"
+	elif path.ends_with("ashmere_verge.tscn"): region = "Ashmere"
+	elif path.ends_with("broadcast_fields.tscn"): region = "Wrenfield"
+	elif path.ends_with("choir_core.tscn"): region = "Tollard"
+	_region_line.text = "%s  ·  %s" % [region, phase if not phase.is_empty() else "Field note"]
+
+
+func _field_note(raw: String) -> String:
+	var parts := raw.strip_edges().to_lower().split(" / ")
+	var written: Array[String] = []
+	for part in parts:
+		written.append(String(part).capitalize())
+	return "  ·  ".join(written)
 
 
 func _on_prompt_changed(text: String) -> void:
-	_prompt.text = "E  /  " + text if not text.is_empty() else ""
+	_prompt.text = "E  ·  " + text if not text.is_empty() else ""
 	_prompt_panel.visible = not text.strip_edges().is_empty()
 
 
@@ -255,13 +263,20 @@ func _on_scanner_changed(current: float, maximum: float) -> void:
 
 
 func _refresh_archive() -> void:
-	_archive_count.text = "I  /  %d TRACES" % ArchiveSystem.get_count()
+	_archive_count.text = "I  ·  %d traces" % ArchiveSystem.get_count()
 
 
 func _update_compass() -> void:
 	var player := get_tree().get_first_node_in_group("player") as Node2D
 	var target := _objective_target()
-	_compass.set_aim(player != null and target != null, target.global_position - player.global_position if player != null and target != null else Vector2.ZERO)
+	var direction := target.global_position - player.global_position if player != null and target != null else Vector2.ZERO
+	var precise := SettingsManager.get_bool("gameplay", "precise_bearings") \
+		or BaseUpgradeSystem.is_built(&"route_beacon")
+	# The standard receiver gives a useful road bearing, then goes quiet near
+	# the site so the player must read signs, light and landmarks. The optional
+	# beacon upgrade (or accessibility toggle) restores a pinpoint needle.
+	var outside_search_radius := direction.length() > 260.0
+	_compass.set_aim(player != null and target != null and (precise or outside_search_radius), direction, precise)
 
 
 func _objective_target() -> Node2D:

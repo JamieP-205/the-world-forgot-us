@@ -1,0 +1,389 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" path="res://assets/processed/hollow_concept_sheet/hollow_idle.png" id="1_idle"]
+[ext_resource type="Texture2D" path="res://assets/processed/hollow_concept_sheet/hollow_attack.png" id="3_attack"]
+[ext_resource type="Texture2D" path="res://assets/processed/hollow_concept_sheet/hollow_charged.png" id="4_hit"]
+[ext_resource type="Texture2D" path="res://assets/processed/hollow_concept_sheet/hollow_dissolve.png" id="5_death"]
+[ext_resource type="Texture2D" path="res://assets/processed/enemy_walk_rebuild/hollow_walk_4dir.png" id="6_walk"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_y45mi"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 0, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fq7h6"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 0, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yu7a0"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 627, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_to2h8"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 627, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_jehll"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 940, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_mucrd"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 940, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a1pjd"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 313, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o7uq6"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 313, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cy5uk"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 0, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yqjcd"]
+atlas = ExtResource("6_walk")
+region = Rect2(313, 0, 314, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_ewfe5"]
+atlas = ExtResource("6_walk")
+region = Rect2(627, 0, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_eu6cc"]
+atlas = ExtResource("6_walk")
+region = Rect2(940, 0, 314, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5aiex"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 627, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vn7rp"]
+atlas = ExtResource("6_walk")
+region = Rect2(313, 627, 314, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_w7f8m"]
+atlas = ExtResource("6_walk")
+region = Rect2(627, 627, 313, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sa8k1"]
+atlas = ExtResource("6_walk")
+region = Rect2(940, 627, 314, 313)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gjisu"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 940, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j8dd3"]
+atlas = ExtResource("6_walk")
+region = Rect2(313, 940, 314, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4eoju"]
+atlas = ExtResource("6_walk")
+region = Rect2(627, 940, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_35psi"]
+atlas = ExtResource("6_walk")
+region = Rect2(940, 940, 314, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_1wp5x"]
+atlas = ExtResource("6_walk")
+region = Rect2(0, 313, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_y1apv"]
+atlas = ExtResource("6_walk")
+region = Rect2(313, 313, 314, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_o0vpk"]
+atlas = ExtResource("6_walk")
+region = Rect2(627, 313, 313, 314)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_xks86"]
+atlas = ExtResource("6_walk")
+region = Rect2(940, 313, 314, 314)
+
+[resource]
+resource_local_to_scene = true
+resource_name = "enemy_hollow_directional"
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_attack")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}],
+"loop": 0,
+"name": &"attack_down",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_attack")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}],
+"loop": 0,
+"name": &"attack_left",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_attack")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}],
+"loop": 0,
+"name": &"attack_right",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_attack")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}],
+"loop": 0,
+"name": &"attack_up",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_death")
+}],
+"loop": 0,
+"name": &"death_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_death")
+}],
+"loop": 0,
+"name": &"death_left",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_death")
+}],
+"loop": 0,
+"name": &"death_right",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("5_death")
+}],
+"loop": 0,
+"name": &"death_up",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_idle")
+}],
+"loop": 0,
+"name": &"hit_down",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_idle")
+}],
+"loop": 0,
+"name": &"hit_left",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_idle")
+}],
+"loop": 0,
+"name": &"hit_right",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_hit")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_idle")
+}],
+"loop": 0,
+"name": &"hit_up",
+"speed": 10.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_y45mi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fq7h6")
+}],
+"loop": 1,
+"name": &"idle_down",
+"speed": 2.4
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yu7a0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_to2h8")
+}],
+"loop": 1,
+"name": &"idle_left",
+"speed": 2.4
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_jehll")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_mucrd")
+}],
+"loop": 1,
+"name": &"idle_right",
+"speed": 2.4
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1pjd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o7uq6")
+}],
+"loop": 1,
+"name": &"idle_up",
+"speed": 2.4
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cy5uk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yqjcd")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_ewfe5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_eu6cc")
+}],
+"loop": 1,
+"name": &"walk_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5aiex")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vn7rp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_w7f8m")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sa8k1")
+}],
+"loop": 1,
+"name": &"walk_left",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gjisu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j8dd3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4eoju")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_35psi")
+}],
+"loop": 1,
+"name": &"walk_right",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_1wp5x")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_y1apv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_o0vpk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_xks86")
+}],
+"loop": 1,
+"name": &"walk_up",
+"speed": 5.0
+}]
+metadata/animation_owner = "hollow"
+metadata/contract_version = 1
+metadata/foot_pivot_normalized = Vector2(0.5, 0.94)
+metadata/source_status = "production_four_direction_walk_atlas"
+metadata/silhouette_modulate = Color(0.58, 0.78, 0.72, 0.84)
+metadata/timing_profile = {
+"attack": 8.0,
+"death": 5.0,
+"hit": 10.0,
+"idle": 2.4,
+"walk": 5.0
+}
+metadata/replacement_sheet_contract = {
+"cell_size": Vector2i(384, 512),
+"directions": PackedStringArray("down", "up", "left", "right"),
+"silhouette": "stooped survivor shape, dragging lead foot, shoulder lag",
+"states": PackedStringArray("idle", "walk", "attack", "hit", "death")
+}
+metadata/registration = {
+"anchor_space": "texture_pixels",
+"default_offset": Vector2(0, -20),
+"direction_offsets": {
+"down": Vector2(0, 0),
+"left": Vector2(0, 0),
+"right": Vector2(0, 0),
+"up": Vector2(0, 0)
+},
+"state_offsets": {
+"attack": Vector2(0, 6),
+"death": Vector2(0, 18.5),
+"hit": Vector2(0, -7),
+"idle": Vector2(0, 0),
+"walk": Vector2(0, 0)
+}
+}
+metadata/walk_atlas = "res://assets/processed/enemy_walk_rebuild/hollow_walk_4dir.png"
+metadata/walk_atlas_grid = Vector2i(4, 4)

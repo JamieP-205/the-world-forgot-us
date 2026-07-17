@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/loot_containers/toolbox_metal_open.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_mara_repair"
 title = "Maggie's Service Ledger"
 category = "Ashmere Estate"
 quality = "Analogue record"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Open toolbox with grease-marked service ledger"
+artifact_semantics = &"service_ledger_toolbox"
+evidence_class = "physical"
+confidence = 86
+signal_profile = "contact hum / job 6142 repeat"
+observation_text = "The same greasy thumbprint crosses job 6142 twice; the fuse wrapper is from the clinic fridge."
+contradiction_text = "The electronic service history omits the borrowed fuse and the moved Wrenfield key."
+verification_text = "Match job 6142, the clinic fuse wrapper and Maggie's handwriting before filing."
+feed_warning = "The copied voice would learn Maggie's maintenance shortcuts and key challenge."
 hint = "Greasy fingerprints stop at one job number, written twice."
 memory_text = "WARD, M. Receiver fault at Ashmere workshop. Replaced F3 with a fuse borrowed from the clinic fridge. Wrenfield key moved to two-part check: lunch-tin mark plus job 6142. In the margin: 'Leena - I owe you a fuse, three insulin pens and an apology.'"
 keepsake_item = &"tin_locket"

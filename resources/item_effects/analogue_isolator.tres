@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"analogue_isolator"
+effect_kind = &"receiver_stability"
+action_label = "FIT ISOLATOR"
+use_summary = "Strongly damps the carrier for two minutes, making repeated receiver sweeps cheaper and faster to recover."
+consequence = "The ceramic bed fractures under the load. The quieter receiver can also hide how close the carrier really is."
+consumes_on_use = true
+values = {"duration": 120.0, "stability": 0.55}

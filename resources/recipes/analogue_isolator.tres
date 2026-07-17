@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"analogue_isolator"
+display_name = "Analogue Isolator"
+description = "Wind a choke around a steel core, fuse the input and leave a measured air gap."
+category = &"signal"
+station_id = &"signal_bench"
+station_label = "signal bench"
+sort_order = 50
+ingredients = {
+"copper_wire": 2,
+"scrap": 2,
+"shielded_fuse": 1
+}
+output_item_id = &"analogue_isolator"
+required_flags = Array[StringName]([&"memory_burst_unlocked"])
+required_echoes = Array[StringName]([&"echo_last_signal"])
+unlock_note = "Maggie's first mast call gives the pulse spacing and dead-air gap needed to isolate a copied carrier."

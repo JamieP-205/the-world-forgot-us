@@ -59,9 +59,9 @@ func _bind_hud() -> void:
 
 	EventBus.interaction_prompt_changed.connect(_on_prompt_changed)
 	ArchiveSystem.echo_recorded.connect(func(_data: MemoryEchoData) -> void: _refresh_archive())
-	_field_hint.text = "KIT  /  TOOLS     MENU  /  PAUSE"
-	_pause_hint.text = "TAP RETURN TO ROAD  /  TOUCH GUIDE EXPLAINS THE CONTROLS"
-	(_hud.get_node("PauseOverlay/Menu/Margin/Items/Guide") as Button).text = "TOUCH GUIDE"
+	_field_hint.text = "kit · tools     pause · menu"
+	_pause_hint.text = "Tap return to road  ·  pocket guide explains the controls"
+	(_hud.get_node("PauseOverlay/Menu/Margin/Items/Guide") as Button).text = "POCKET GUIDE"
 	_apply_layout()
 	_refresh_archive()
 
@@ -195,9 +195,9 @@ func _set_scaled_rect(control: Control, position: Vector2, control_size: Vector2
 func _on_prompt_changed(text: String) -> void:
 	if _prompt == null:
 		return
-	_prompt.text = "USE  /  " + text if not text.is_empty() else ""
+	_prompt.text = "use  ·  " + text if not text.is_empty() else ""
 
 
 func _refresh_archive() -> void:
 	if _archive_count != null:
-		_archive_count.text = "LOG  /  %d TRACES" % ArchiveSystem.get_count()
+		_archive_count.text = "traces  ·  %d" % ArchiveSystem.get_count()

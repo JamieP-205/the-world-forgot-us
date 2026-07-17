@@ -15,6 +15,15 @@ atlas = ExtResource("5_actions")
 region = Rect2(1525, 90, 380, 620)
 
 [resource]
+resource_name = "player_painted_directional_actions"
+resource_local_to_scene = true
+metadata/animation_owner = "player_actions"
+metadata/contract_version = 1
+metadata/foot_pivot_normalized = Vector2(0.5, 0.975)
+metadata/source_status = "painted_directional_action_states"
+metadata/timing_profile = {"attack": 5.0, "death": 4.0, "hit": 5.0, "idle": 1.0}
+metadata/replacement_sheet_contract = {"cell_size": Vector2i(410, 685), "directions": PackedStringArray("down", "up", "left", "right"), "states": PackedStringArray("idle", "attack", "hit", "death"), "silhouette": "player coat, receiver pack, readable tool-side arm"}
+metadata/registration = {"anchor_space": "texture_pixels", "animation_offsets": {"attack_down": Vector2(0, -106.5), "attack_left": Vector2(0, -170), "attack_right": Vector2(0, -106.5), "attack_up": Vector2(0, -161), "death_down": Vector2(0, -112.5), "death_left": Vector2(0, -112.5), "death_right": Vector2(0, -112.5), "death_up": Vector2(0, -112.5), "hit_down": Vector2(0, -112.5), "hit_left": Vector2(0, -112.5), "hit_right": Vector2(0, -112.5), "hit_up": Vector2(0, -112.5), "hurt_down": Vector2(0, -112.5), "hurt_left": Vector2(0, -112.5), "hurt_right": Vector2(0, -112.5), "hurt_up": Vector2(0, -112.5), "idle_down": Vector2(0, -170), "idle_left": Vector2(0, -170), "idle_right": Vector2(0, -170), "idle_up": Vector2(0, -161), "walk_down": Vector2(0, -170), "walk_left": Vector2(0, -170), "walk_right": Vector2(0, -170), "walk_up": Vector2(0, -161)}, "default_offset": Vector2(0, -170), "direction_offsets": {"down": Vector2(0, 0), "left": Vector2(0, 0), "right": Vector2(0, 0), "up": Vector2(0, 9)}, "frame_offsets": {"death_down": [Vector2(0, 0), Vector2(0, -57.5)], "death_left": [Vector2(0, 0), Vector2(0, -57.5)], "death_right": [Vector2(0, 0), Vector2(0, -57.5)], "death_up": [Vector2(0, 0), Vector2(0, -48.5)]}, "state_offsets": {"attack": Vector2(0, 0), "death": Vector2(0, 0), "hit": Vector2(0, 0), "idle": Vector2(0, 0)}}
 animations = [{
 "frames": [{
 "duration": 1.0,
@@ -143,4 +152,80 @@ animations = [{
 "loop": true,
 "name": &"walk_up",
 "speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}],
+"loop": false,
+"name": &"hit_down",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}],
+"loop": false,
+"name": &"hit_left",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}],
+"loop": false,
+"name": &"hit_right",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}],
+"loop": false,
+"name": &"hit_up",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("1_front")
+}],
+"loop": false,
+"name": &"death_down",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("3_left")
+}],
+"loop": false,
+"name": &"death_left",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("4_right")
+}],
+"loop": false,
+"name": &"death_right",
+"speed": 4.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("Atlas_hurt")
+}, {
+"duration": 1.0,
+"texture": ExtResource("2_back")
+}],
+"loop": false,
+"name": &"death_up",
+"speed": 4.0
 }]

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"lock_shim"
+effect_kind = &"access"
+action_label = "SHIM LOCK"
+use_summary = "Opens a neglected padlock or service latch without announcing the break."
+consequence = "The thin shim kinks inside the lock and is left behind. Whatever was sealed can now be reached."
+consumes_on_use = true
+target_group = &"craft_access_targets"
+target_prompt = "Stand beside a neglected padlock or service latch."
+values = {"range": 96.0}

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"circuit_bridge"
+display_name = "Circuit Bridge"
+description = "Make three short leads, mark feed, ground and carrier, then bind them as one temporary set."
+category = &"repair"
+station_id = &"signal_bench"
+station_label = "signal bench"
+sort_order = 60
+ingredients = {
+"copper_wire": 2,
+"resin_tape": 1,
+"scrap": 1
+}
+output_item_id = &"circuit_bridge"
+required_flags = Array[StringName]([&"mara_contacted"])
+required_echoes = Array[StringName]([&"echo_mara_repair"])
+unlock_note = "Maggie's repair notes insist every temporary bridge is short, labelled and removed after testing."

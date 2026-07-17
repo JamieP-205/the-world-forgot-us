@@ -62,6 +62,17 @@ signal dialogue_finished(story_id: StringName, choice_index: int)
 ## Quest state changed; HUD objectives and level props refresh from this.
 signal campaign_progress_changed
 
+## The data-driven narrative route changed. Consumers receive a JSON-safe
+## snapshot and can update services, quest boards or world dressing without
+## reaching into CampaignSystem internals.
+signal narrative_state_changed(snapshot: Dictionary)
+
+## Both route commitments now identify one of the twelve campaign paths.
+signal narrative_route_committed(route_id: StringName)
+
+## A named survivor's durable campaign state changed.
+signal narrative_npc_state_changed(npc_id: StringName, state: StringName)
+
 ## The player released the unlocked radial memory burst.
 signal signal_burst_used(origin: Vector2, radius: float)
 

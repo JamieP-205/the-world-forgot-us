@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"circuit_bridge"
+effect_kind = &"bridge"
+action_label = "BRIDGE CIRCUIT"
+use_summary = "Bypasses one dead relay, breaker or door circuit long enough to restore its function."
+consequence = "The bridge welds itself across the contacts. The repaired route stays live, including anything listening on it."
+consumes_on_use = true
+target_group = &"craft_bridge_targets"
+target_prompt = "Stand beside a dead relay, breaker or powered door."
+values = {"range": 108.0}

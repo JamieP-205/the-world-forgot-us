@@ -1,163 +1,316 @@
-[gd_scene load_steps=31 format=3]
+[gd_scene load_steps=60 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/world/scene_exit.tscn" id="1_exit"]
-[ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="14_ash"]
-[ext_resource type="Script" path="res://scripts/base/base_upgrade_bench.gd" id="15_bench"]
-[ext_resource type="Script" path="res://scripts/base/keepsake_shelf.gd" id="16_shelf"]
-[ext_resource type="Resource" path="res://resources/upgrades/scanner_coil.tres" id="17_coil"]
-[ext_resource type="Resource" path="res://resources/upgrades/base_lantern.tres" id="18_lantern"]
-[ext_resource type="Script" path="res://scripts/world/lore_prop.gd" id="13_lore"]
-[ext_resource type="Script" path="res://scripts/base/save_point.gd" id="2_save"]
-[ext_resource type="PackedScene" path="res://scenes/base/base_upgrade_station.tscn" id="3_station"]
-[ext_resource type="Resource" path="res://resources/upgrades/radio_desk.tres" id="4_radiodesk"]
-[ext_resource type="Script" path="res://scripts/base/storage_box.gd" id="5_storage"]
-[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/bedroll.png" id="6_bedroll"]
-[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/storage_chest.png" id="7_storage_tex"]
-[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/lantern.png" id="8_lantern"]
-[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/map_wall.png" id="9_mapwall"]
-[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/workbench_tools.png" id="10_workbench"]
-[ext_resource type="Texture2D" path="res://assets/processed/decals/metal_floor.png" id="11_grime"]
-[ext_resource type="Texture2D" path="res://assets/processed/decals/dirt_debris.png" id="12_dirt"]
+[ext_resource type="Script" path="res://scripts/world/ash_drift.gd" id="2_ash"]
+[ext_resource type="Script" path="res://scripts/base/base_upgrade_bench.gd" id="3_bench"]
+[ext_resource type="Script" path="res://scripts/base/keepsake_shelf.gd" id="4_shelf"]
+[ext_resource type="Resource" path="res://resources/upgrades/scanner_coil.tres" id="5_coil"]
+[ext_resource type="Resource" path="res://resources/upgrades/base_lantern.tres" id="6_lantern_upgrade"]
+[ext_resource type="Script" path="res://scripts/world/lore_prop.gd" id="7_lore"]
+[ext_resource type="Script" path="res://scripts/base/save_point.gd" id="8_save"]
+[ext_resource type="PackedScene" path="res://scenes/base/base_upgrade_station.tscn" id="9_station"]
+[ext_resource type="Resource" path="res://resources/upgrades/radio_desk.tres" id="10_radio_upgrade"]
+[ext_resource type="Script" path="res://scripts/base/storage_box.gd" id="11_storage"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/bedroll.png" id="12_bedroll"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/storage_chest.png" id="13_storage_tex"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/lantern.png" id="14_lantern"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/map_wall.png" id="15_mapwall"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/workbench_tools.png" id="16_workbench"]
+[ext_resource type="Texture2D" path="res://assets/processed/decals/metal_floor.png" id="17_metal"]
+[ext_resource type="Texture2D" path="res://assets/processed/decals/dirt_debris.png" id="18_dirt"]
 [ext_resource type="Texture2D" path="res://assets/processed/decals/wood_floor.png" id="19_wood"]
 [ext_resource type="Texture2D" path="res://assets/processed/scanner_memory_effects/mnemoscope_device.png" id="20_scope"]
 [ext_resource type="Texture2D" path="res://assets/processed/railhome_props/workbench_empty.png" id="21_emptybench"]
 [ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_old_photo.png" id="22_photo"]
 [ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_compass.png" id="23_compass"]
+[ext_resource type="PackedScene" path="res://scenes/npcs/world_npc_population.tscn" id="24_population"]
+[ext_resource type="Script" path="res://scripts/base/railhome_base.gd" id="25_base"]
+[ext_resource type="Texture2D" path="res://assets/processed/loot_containers/locker_metal.png" id="26_locker"]
+[ext_resource type="Texture2D" path="res://assets/processed/loot_containers/crate_wood_closed.png" id="27_crate"]
+[ext_resource type="Texture2D" path="res://assets/processed/loot_containers/toolbox_metal_closed.png" id="28_toolbox"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_canned_food.png" id="29_food"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_battery.png" id="30_battery"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_medicine.png" id="31_medicine"]
+[ext_resource type="Texture2D" path="res://assets/processed/roadside_props/portable_radio.png" id="32_portable_radio"]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_h"]
-size = Vector2(820, 30)
+[sub_resource type="RectangleShape2D" id="Shape_wall_h"]
+size = Vector2(1224, 28)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_wall_v"]
-size = Vector2(30, 340)
+[sub_resource type="RectangleShape2D" id="Shape_wall_v"]
+size = Vector2(28, 612)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bedroll"]
-size = Vector2(68, 42)
+[sub_resource type="RectangleShape2D" id="Shape_wall_door_segment"]
+size = Vector2(28, 202)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_storage"]
-size = Vector2(62, 44)
+[sub_resource type="RectangleShape2D" id="Shape_bedroll_trigger"]
+size = Vector2(68, 54)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_table"]
-size = Vector2(90, 42)
+[sub_resource type="RectangleShape2D" id="Shape_storage_trigger"]
+size = Vector2(70, 56)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_lore"]
-size = Vector2(40, 32)
+[sub_resource type="RectangleShape2D" id="Shape_lore"]
+size = Vector2(42, 34)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_bench"]
-size = Vector2(56, 40)
+[sub_resource type="RectangleShape2D" id="Shape_upgrade_trigger"]
+size = Vector2(62, 52)
+
+[sub_resource type="RectangleShape2D" id="Shape_bunk"]
+size = Vector2(56, 42)
+
+[sub_resource type="RectangleShape2D" id="Shape_chest"]
+size = Vector2(52, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_locker"]
+size = Vector2(32, 46)
+
+[sub_resource type="RectangleShape2D" id="Shape_crate"]
+size = Vector2(52, 38)
+
+[sub_resource type="RectangleShape2D" id="Shape_toolbox"]
+size = Vector2(48, 32)
+
+[sub_resource type="RectangleShape2D" id="Shape_table"]
+size = Vector2(70, 42)
+
+[sub_resource type="RectangleShape2D" id="Shape_workbench"]
+size = Vector2(66, 40)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_bunk"]
+polygon = PackedVector2Array(-28, -21, 28, -21, 28, 21, -28, 21)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_chest"]
+polygon = PackedVector2Array(-26, -20, 26, -20, 26, 20, -26, 20)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_locker"]
+polygon = PackedVector2Array(-16, -23, 16, -23, 16, 23, -16, 23)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_crate"]
+polygon = PackedVector2Array(-26, -19, 26, -19, 26, 19, -26, 19)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_toolbox"]
+polygon = PackedVector2Array(-24, -16, 24, -16, 24, 16, -24, 16)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_table"]
+polygon = PackedVector2Array(-35, -21, 35, -21, 35, 21, -35, 21)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_workbench"]
+polygon = PackedVector2Array(-33, -20, 33, -20, 33, 20, -33, 20)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_wall_h"]
+polygon = PackedVector2Array(-612, -14, 612, -14, 612, 14, -612, 14)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_wall_v"]
+polygon = PackedVector2Array(-14, -306, 14, -306, 14, 306, -14, 306)
+
+[sub_resource type="OccluderPolygon2D" id="Occ_wall_door_segment"]
+polygon = PackedVector2Array(-14, -101, 14, -101, 14, 101, -14, 101)
+
+[sub_resource type="Gradient" id="Gradient_cold"]
+offsets = PackedFloat32Array(0, 0.58, 1)
+colors = PackedColorArray(0.44, 0.72, 0.78, 0.76, 0.16, 0.29, 0.33, 0.32, 0.02, 0.04, 0.05, 0)
+
+[sub_resource type="GradientTexture2D" id="Texture_cold"]
+gradient = SubResource("Gradient_cold")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="Gradient" id="Gradient_warm"]
+offsets = PackedFloat32Array(0, 0.62, 1)
+colors = PackedColorArray(1, 0.66, 0.28, 0.82, 0.52, 0.24, 0.08, 0.34, 0.06, 0.02, 0.01, 0)
+
+[sub_resource type="GradientTexture2D" id="Texture_warm"]
+gradient = SubResource("Gradient_warm")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
 
 [node name="RailhomeBase" type="Node2D"]
+y_sort_enabled = true
+script = ExtResource("25_base")
+
+[node name="WorldNPCPopulation" parent="." instance=ExtResource("24_population")]
+region_id = "railhome"
 
 [node name="Atmosphere" type="Node2D" parent="."]
 z_index = 90
-modulate = Color(1, 1, 1, 0.25)
-script = ExtResource("14_ash")
-particle_count = 24
-area = Vector2(1200, 700)
+modulate = Color(1, 1, 1, 0.18)
+script = ExtResource("2_ash")
+particle_count = 30
+area = Vector2(1580, 920)
 drift = Vector2(-7, 4)
 
 [node name="Floor" type="Polygon2D" parent="."]
+z_index = -12
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("18_dirt")
+uv = PackedVector2Array(0, 0, 480, 0, 480, 320, 0, 320)
+color = Color(0.20, 0.205, 0.18, 1)
+polygon = PackedVector2Array(-760, -430, 760, -430, 760, 430, -760, 430)
+
+[node name="RailBed" type="Polygon2D" parent="."]
+z_index = -11
+color = Color(0.25, 0.24, 0.20, 1)
+polygon = PackedVector2Array(-760, -350, 760, -350, 760, 350, -760, 350)
+
+[node name="TrackNorth" type="Polygon2D" parent="."]
+z_index = -10
+color = Color(0.095, 0.105, 0.10, 1)
+polygon = PackedVector2Array(-750, -368, 750, -368, 750, -354, -750, -354)
+
+[node name="TrackSouth" type="Polygon2D" parent="."]
+z_index = -10
+color = Color(0.095, 0.105, 0.10, 1)
+polygon = PackedVector2Array(-750, 354, 750, 354, 750, 368, -750, 368)
+
+[node name="CarriageShadow" type="Polygon2D" parent="."]
+z_index = -9
+color = Color(0.012, 0.016, 0.015, 0.93)
+polygon = PackedVector2Array(-632, -322, 620, -322, 646, -292, 646, 296, 616, 330, -630, 330, -650, 294, -650, -292)
+
+[node name="CarriageFloor" type="Polygon2D" parent="."]
 z_index = -8
 texture_repeat = 1
 texture_filter = 2
-texture = ExtResource("12_dirt")
-uv = PackedVector2Array(0, 0, 320, 0, 320, 240, 0, 240)
-color = Color(0.22, 0.22, 0.19, 1)
-polygon = PackedVector2Array(-600, -350, 600, -350, 600, 350, -600, 350)
+texture = ExtResource("17_metal")
+uv = PackedVector2Array(0, 0, 480, 0, 480, 320, 0, 320)
+color = Color(0.39, 0.37, 0.31, 1)
+polygon = PackedVector2Array(-612, -306, 612, -306, 612, 306, -612, 306)
 
-[node name="RailBed" type="Polygon2D" parent="."]
+[node name="RecoveryFloor" type="Polygon2D" parent="."]
 z_index = -7
-color = Color(0.30, 0.28, 0.23, 1)
-polygon = PackedVector2Array(-600, -220, 600, -220, 600, 220, -600, 220)
-
-[node name="CarriageShadow" type="Polygon2D" parent="."]
-z_index = -5
-color = Color(0.015, 0.018, 0.017, 0.92)
-polygon = PackedVector2Array(-420, -166, 410, -166, 438, -132, 438, 148, 402, 178, -424, 178, -444, 140, -444, -132)
-
-[node name="CarriageFloor" type="Polygon2D" parent="."]
-z_index = -4
-texture_repeat = 1
-texture_filter = 2
-texture = ExtResource("11_grime")
-uv = PackedVector2Array(0, 0, 320, 0, 320, 240, 0, 240)
-color = Color(0.42, 0.39, 0.32, 1)
-polygon = PackedVector2Array(-400, -160, 400, -160, 400, 160, -400, 160)
-
-[node name="Runner" type="Polygon2D" parent="."]
-z_index = -2
 texture_repeat = 1
 texture_filter = 2
 texture = ExtResource("19_wood")
-uv = PackedVector2Array(0, 0, 320, 0, 320, 240, 0, 240)
-color = Color(0.48, 0.34, 0.22, 0.72)
-polygon = PackedVector2Array(-380, -34, 380, -34, 380, 34, -380, 34)
+uv = PackedVector2Array(0, 0, 200, 0, 200, 300, 0, 300)
+color = Color(0.40, 0.31, 0.23, 0.74)
+polygon = PackedVector2Array(-584, -278, -226, -278, -226, 278, -584, 278)
+
+[node name="OperationsFloor" type="Polygon2D" parent="."]
+z_index = -7
+color = Color(0.25, 0.31, 0.30, 0.48)
+polygon = PackedVector2Array(-218, -278, 210, -278, 210, 278, -218, 278)
+
+[node name="CommonsFloor" type="Polygon2D" parent="."]
+z_index = -7
+color = Color(0.31, 0.27, 0.20, 0.44)
+polygon = PackedVector2Array(218, -278, 584, -278, 584, 278, 218, 278)
+
+[node name="Runner" type="Polygon2D" parent="."]
+z_index = -5
+texture_repeat = 1
+texture_filter = 2
+texture = ExtResource("19_wood")
+uv = PackedVector2Array(0, 0, 420, 0, 420, 56, 0, 56)
+color = Color(0.52, 0.37, 0.23, 0.82)
+polygon = PackedVector2Array(-568, -60, 536, -60, 536, 60, -568, 60)
+
+[node name="ThresholdGrate" type="Polygon2D" parent="."]
+z_index = -4
+color = Color(0.11, 0.14, 0.14, 0.78)
+polygon = PackedVector2Array(448, -88, 598, -88, 598, 88, 448, 88)
+
+[node name="GrateLines" type="Node2D" parent="ThresholdGrate"]
+
+[node name="LineA" type="Polygon2D" parent="ThresholdGrate/GrateLines"]
+color = Color(0.33, 0.39, 0.35, 0.5)
+polygon = PackedVector2Array(16, 12, 142, 12, 142, 16, 16, 16)
+
+[node name="LineB" type="Polygon2D" parent="ThresholdGrate/GrateLines"]
+color = Color(0.33, 0.39, 0.35, 0.5)
+polygon = PackedVector2Array(16, 42, 142, 42, 142, 46, 16, 46)
+
+[node name="LineC" type="Polygon2D" parent="ThresholdGrate/GrateLines"]
+color = Color(0.33, 0.39, 0.35, 0.5)
+polygon = PackedVector2Array(16, 72, 142, 72, 142, 76, 16, 76)
 
 [node name="ColdInteriorTint" type="Polygon2D" parent="."]
-color = Color(0.06, 0.10, 0.11, 0.16)
-polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
+z_index = -3
+color = Color(0.055, 0.11, 0.12, 0.13)
+polygon = PackedVector2Array(-584, -278, 584, -278, 584, 278, -584, 278)
 
-[node name="Bunks" type="Polygon2D" parent="."]
-visible = false
-color = Color(0.13, 0.14, 0.13, 1)
-polygon = PackedVector2Array(-374, -134, -250, -134, -250, -104, -374, -104)
+[node name="ZoneSeams" type="Node2D" parent="."]
+z_index = -2
 
-[node name="BunkArtA" type="Sprite2D" parent="."]
-position = Vector2(-318, -112)
-rotation = 0.05
-scale = Vector2(0.17, 0.13)
-modulate = Color(0.72, 0.67, 0.56, 0.92)
-texture = ExtResource("6_bedroll")
+[node name="WestNorth" type="Polygon2D" parent="ZoneSeams"]
+color = Color(0.18, 0.16, 0.12, 0.72)
+polygon = PackedVector2Array(-224, -278, -216, -278, -216, -72, -224, -72)
 
-[node name="BunkArtB" type="Sprite2D" parent="."]
-position = Vector2(-214, -112)
-rotation = -0.04
-scale = Vector2(0.17, 0.13)
-modulate = Color(0.66, 0.62, 0.54, 0.88)
-texture = ExtResource("6_bedroll")
+[node name="WestSouth" type="Polygon2D" parent="ZoneSeams"]
+color = Color(0.18, 0.16, 0.12, 0.72)
+polygon = PackedVector2Array(-224, 72, -216, 72, -216, 278, -224, 278)
 
-[node name="TrackNorth" type="Polygon2D" parent="."]
-z_index = -6
-color = Color(0.12, 0.13, 0.12, 1)
-polygon = PackedVector2Array(-590, -244, 590, -244, 590, -232, -590, -232)
+[node name="EastNorth" type="Polygon2D" parent="ZoneSeams"]
+color = Color(0.18, 0.16, 0.12, 0.72)
+polygon = PackedVector2Array(210, -278, 218, -278, 218, -72, 210, -72)
 
-[node name="TrackSouth" type="Polygon2D" parent="."]
-z_index = -6
-color = Color(0.12, 0.13, 0.12, 1)
-polygon = PackedVector2Array(-590, 232, 590, 232, 590, 244, -590, 244)
-
-[node name="CarriageRibs" type="Node2D" parent="."]
-z_index = -1
-modulate = Color(0.40, 0.32, 0.25, 0.24)
-
-[node name="RibA" type="Polygon2D" parent="CarriageRibs"]
-polygon = PackedVector2Array(-280, -136, -275, -136, -275, 136, -280, 136)
-
-[node name="RibB" type="Polygon2D" parent="CarriageRibs"]
-polygon = PackedVector2Array(-142, -136, -137, -136, -137, 136, -142, 136)
-
-[node name="RibC" type="Polygon2D" parent="CarriageRibs"]
-polygon = PackedVector2Array(4, -136, 9, -136, 9, 136, 4, 136)
-
-[node name="RibD" type="Polygon2D" parent="CarriageRibs"]
-polygon = PackedVector2Array(150, -136, 155, -136, 155, 136, 150, 136)
-
-[node name="RibE" type="Polygon2D" parent="CarriageRibs"]
-polygon = PackedVector2Array(286, -136, 291, -136, 291, 136, 286, 136)
+[node name="EastSouth" type="Polygon2D" parent="ZoneSeams"]
+color = Color(0.18, 0.16, 0.12, 0.72)
+polygon = PackedVector2Array(210, 72, 218, 72, 218, 278, 210, 278)
 
 [node name="FloorDecals" type="Node2D" parent="."]
-modulate = Color(1, 1, 1, 0.5)
+z_index = -1
+modulate = Color(1, 1, 1, 0.32)
 
-[node name="GrimeA" type="Sprite2D" parent="FloorDecals"]
-position = Vector2(70, 60)
-scale = Vector2(0.5, 0.42)
-texture = ExtResource("11_grime")
+[node name="GrimeWorkshop" type="Sprite2D" parent="FloorDecals"]
+position = Vector2(315, -152)
+scale = Vector2(0.42, 0.31)
+texture = ExtResource("17_metal")
 
 [node name="DirtEntry" type="Sprite2D" parent="FloorDecals"]
-position = Vector2(250, -40)
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("12_dirt")
+position = Vector2(506, 28)
+scale = Vector2(0.34, 0.30)
+texture = ExtResource("18_dirt")
+
+[node name="LayoutZones" type="Node2D" parent="."]
+
+[node name="WestRecovery" type="Node2D" parent="LayoutZones" groups=["railhome_layout_zones"]]
+metadata/zone_id = &"recovery"
+metadata/bounds = Rect2(-584, -278, 358, 556)
+
+[node name="CentreOperations" type="Node2D" parent="LayoutZones" groups=["railhome_layout_zones"]]
+metadata/zone_id = &"operations"
+metadata/bounds = Rect2(-218, -278, 428, 556)
+
+[node name="EastCommonsEgress" type="Node2D" parent="LayoutZones" groups=["railhome_layout_zones"]]
+metadata/zone_id = &"commons"
+metadata/bounds = Rect2(218, -278, 366, 556)
+
+[node name="ThresholdMudRoom" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(510, 0)
+metadata/zone_id = &"threshold_mud_room"
+
+[node name="SleepingMedicalNook" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(-430, -150)
+metadata/zone_id = &"sleeping_medical"
+
+[node name="RadioInvestigationDesk" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(-70, -150)
+metadata/zone_id = &"radio_investigation"
+
+[node name="WorkshopCraftingBench" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(300, -150)
+metadata/zone_id = &"workshop_crafting"
+
+[node name="StoragePowerWall" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(460, -150)
+metadata/zone_id = &"storage_power"
+
+[node name="WaterFoodStore" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(-480, 150)
+metadata/zone_id = &"water_food"
+
+[node name="UpgradeStations" type="Marker2D" parent="LayoutZones" groups=["railhome_functional_zones"]]
+position = Vector2(100, -148)
+metadata/zone_id = &"upgrade_stations"
 
 [node name="Walls" type="StaticBody2D" parent="."]
+z_index = 4
 collision_layer = 1
 collision_mask = 0
 
@@ -165,238 +318,283 @@ collision_mask = 0
 texture_repeat = 1
 texture_filter = 2
 texture = ExtResource("19_wood")
-uv = PackedVector2Array(0, 0, 320, 0, 320, 24, 0, 24)
-color = Color(0.44, 0.34, 0.25, 1)
-polygon = PackedVector2Array(-400, -160, 400, -160, 400, -136, -400, -136)
+uv = PackedVector2Array(0, 0, 480, 0, 480, 28, 0, 28)
+color = Color(0.41, 0.31, 0.23, 1)
+polygon = PackedVector2Array(-612, -306, 612, -306, 612, -278, -612, -278)
 
 [node name="BottomVisual" type="Polygon2D" parent="Walls"]
 texture_repeat = 1
 texture_filter = 2
 texture = ExtResource("19_wood")
-uv = PackedVector2Array(0, 0, 320, 0, 320, 24, 0, 24)
-color = Color(0.44, 0.34, 0.25, 1)
-polygon = PackedVector2Array(-400, 136, 400, 136, 400, 160, -400, 160)
+uv = PackedVector2Array(0, 0, 480, 0, 480, 28, 0, 28)
+color = Color(0.41, 0.31, 0.23, 1)
+polygon = PackedVector2Array(-612, 278, 612, 278, 612, 306, -612, 306)
 
 [node name="LeftVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.34, 0.27, 0.21, 1)
-polygon = PackedVector2Array(-400, -160, -376, -160, -376, 160, -400, 160)
+color = Color(0.29, 0.24, 0.20, 1)
+polygon = PackedVector2Array(-612, -306, -584, -306, -584, 306, -612, 306)
 
-[node name="RightVisual" type="Polygon2D" parent="Walls"]
-color = Color(0.34, 0.27, 0.21, 1)
-polygon = PackedVector2Array(376, -160, 400, -160, 400, 160, 376, 160)
+[node name="RightTopVisual" type="Polygon2D" parent="Walls"]
+color = Color(0.29, 0.24, 0.20, 1)
+polygon = PackedVector2Array(584, -306, 612, -306, 612, -76, 584, -76)
+
+[node name="RightBottomVisual" type="Polygon2D" parent="Walls"]
+color = Color(0.29, 0.24, 0.20, 1)
+polygon = PackedVector2Array(584, 76, 612, 76, 612, 306, 584, 306)
 
 [node name="TopShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(0, -148)
-shape = SubResource("RectangleShape2D_wall_h")
+position = Vector2(0, -292)
+shape = SubResource("Shape_wall_h")
 
 [node name="BottomShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(0, 148)
-shape = SubResource("RectangleShape2D_wall_h")
+position = Vector2(0, 292)
+shape = SubResource("Shape_wall_h")
 
 [node name="LeftShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(-388, 0)
-shape = SubResource("RectangleShape2D_wall_v")
+position = Vector2(-598, 0)
+shape = SubResource("Shape_wall_v")
 
-[node name="RightShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(388, 0)
-shape = SubResource("RectangleShape2D_wall_v")
+[node name="RightTopShape" type="CollisionShape2D" parent="Walls"]
+position = Vector2(598, -177)
+shape = SubResource("Shape_wall_door_segment")
 
-[node name="Bedroll" type="Area2D" parent="."]
-position = Vector2(-300, -82)
+[node name="RightBottomShape" type="CollisionShape2D" parent="Walls"]
+position = Vector2(598, 177)
+shape = SubResource("Shape_wall_door_segment")
+
+[node name="TopOccluder" type="LightOccluder2D" parent="Walls"]
+position = Vector2(0, -292)
+occluder = SubResource("Occ_wall_h")
+
+[node name="BottomOccluder" type="LightOccluder2D" parent="Walls"]
+position = Vector2(0, 292)
+occluder = SubResource("Occ_wall_h")
+
+[node name="LeftOccluder" type="LightOccluder2D" parent="Walls"]
+position = Vector2(-598, 0)
+occluder = SubResource("Occ_wall_v")
+
+[node name="RightTopOccluder" type="LightOccluder2D" parent="Walls"]
+position = Vector2(598, -177)
+occluder = SubResource("Occ_wall_door_segment")
+
+[node name="RightBottomOccluder" type="LightOccluder2D" parent="Walls"]
+position = Vector2(598, 177)
+occluder = SubResource("Occ_wall_door_segment")
+
+[node name="Bunks" type="Node2D" parent="."]
+
+[node name="Bedroll" type="Area2D" parent="Bunks" groups=["railhome_solid_fixtures"]]
+position = Vector2(-516, -208)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
-script = ExtResource("2_save")
-prompt = "Rest at bedroll"
+script = ExtResource("8_save")
+prompt = "Rest in the sleeping nook"
+metadata/fixture_id = &"rest_bunk"
+metadata/zone_id = &"recovery"
 
-[node name="SafeGlow" type="Polygon2D" parent="Bedroll"]
+[node name="SafeGlow" type="Polygon2D" parent="Bunks/Bedroll"]
 visible = false
-color = Color(0.88, 0.62, 0.28, 0.025)
-polygon = PackedVector2Array(-58, -32, 52, -32, 62, 28, -52, 34)
+color = Color(0.88, 0.62, 0.28, 0.04)
+polygon = PackedVector2Array(-42, -30, 42, -30, 48, 30, -48, 30)
 
-[node name="Visual" type="Sprite2D" parent="Bedroll"]
+[node name="Visual" type="Sprite2D" parent="Bunks/Bedroll"]
 scale = Vector2(0.2, 0.2)
-texture = ExtResource("6_bedroll")
+texture = ExtResource("12_bedroll")
 
-[node name="TriggerShape" type="CollisionShape2D" parent="Bedroll"]
-shape = SubResource("RectangleShape2D_bedroll")
+[node name="TriggerShape" type="CollisionShape2D" parent="Bunks/Bedroll"]
+shape = SubResource("Shape_bedroll_trigger")
 
-[node name="StorageBox" type="Area2D" parent="."]
-position = Vector2(-300, 82)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("5_storage")
-prompt = "Check storage"
-
-[node name="Visual" type="Sprite2D" parent="StorageBox"]
-position = Vector2(0, -4)
-scale = Vector2(0.2, 0.2)
-texture = ExtResource("7_storage_tex")
-
-[node name="TriggerShape" type="CollisionShape2D" parent="StorageBox"]
-shape = SubResource("RectangleShape2D_storage")
-
-[node name="RadioDeskStation" parent="." instance=ExtResource("3_station")]
-position = Vector2(-90, -90)
-upgrade_data = ExtResource("4_radiodesk")
-
-[node name="Workbench" type="StaticBody2D" parent="."]
-position = Vector2(-90, -90)
+[node name="SolidFootprint" type="StaticBody2D" parent="Bunks/Bedroll"]
 collision_layer = 1
 collision_mask = 0
 
-[node name="WorkbenchShape" type="CollisionShape2D" parent="Workbench"]
-shape = SubResource("RectangleShape2D_table")
+[node name="CollisionShape" type="CollisionShape2D" parent="Bunks/Bedroll/SolidFootprint"]
+position = Vector2(0, 7)
+shape = SubResource("Shape_bunk")
 
-[node name="MapWall" type="Sprite2D" parent="."]
-position = Vector2(96, -140)
-scale = Vector2(0.16, 0.16)
-texture = ExtResource("9_mapwall")
+[node name="Occluder" type="LightOccluder2D" parent="Bunks/Bedroll/SolidFootprint"]
+position = Vector2(0, 7)
+occluder = SubResource("Occ_bunk")
 
-[node name="WorkbenchDecor" type="Sprite2D" parent="."]
-position = Vector2(-196, -116)
-scale = Vector2(0.16, 0.16)
-texture = ExtResource("10_workbench")
-
-[node name="LanternGlow" type="Polygon2D" parent="."]
-visible = false
-color = Color(0.92, 0.62, 0.26, 0.025)
-polygon = PackedVector2Array(210, -150, 300, -150, 320, -60, 190, -60)
-
-[node name="Lantern" type="Sprite2D" parent="."]
-position = Vector2(256, -108)
-scale = Vector2(0.14, 0.14)
-texture = ExtResource("8_lantern")
-
-[node name="Outside" parent="." instance=ExtResource("1_exit")]
-position = Vector2(340, 0)
-scale = Vector2(0.68, 0.68)
-prompt = "Go out to Cullbrook Service Station"
-target_scene_path = "res://scenes/maps/test_map.tscn"
-target_spawn = &"from_base"
-
-[node name="from_world" type="Marker2D" parent="." groups=["spawn_points"]]
-position = Vector2(280, 0)
-
-[node name="WarmOverlay" type="Polygon2D" parent="."]
-visible = false
-color = Color(0.92, 0.62, 0.28, 0.055)
-polygon = PackedVector2Array(-390, -132, 370, -132, 370, 126, -390, 126)
-
-[node name="ScannerCoilBench" type="Area2D" parent="."]
-position = Vector2(60, -92)
-collision_layer = 4
+[node name="BunkFrameB" type="StaticBody2D" parent="Bunks" groups=["railhome_solid_fixtures"]]
+position = Vector2(-438, -208)
+collision_layer = 1
 collision_mask = 0
-monitoring = false
-script = ExtResource("15_bench")
-prompt = "Build Scanner Coil"
-upgrade_data = ExtResource("17_coil")
-payoff_notice = "Scanner Coil built. Receiver sweeps now reach farther and recharge faster."
+metadata/fixture_id = &"spare_bunk"
+metadata/zone_id = &"recovery"
 
-[node name="Visual" type="Sprite2D" parent="ScannerCoilBench"]
-position = Vector2(0, -5)
-scale = Vector2(0.11, 0.11)
-texture = ExtResource("20_scope")
+[node name="BunkArtB" type="Sprite2D" parent="Bunks/BunkFrameB"]
+rotation = -0.035
+scale = Vector2(0.2, 0.2)
+modulate = Color(0.78, 0.73, 0.63, 0.95)
+texture = ExtResource("12_bedroll")
 
-[node name="Coil" type="Polygon2D" parent="ScannerCoilBench/Visual"]
-visible = false
-color = Color(0.34, 0.82, 0.88, 0.9)
-polygon = PackedVector2Array(-9, -6, 9, -6, 9, 5, -9, 5)
+[node name="CollisionShape" type="CollisionShape2D" parent="Bunks/BunkFrameB"]
+position = Vector2(0, 7)
+shape = SubResource("Shape_bunk")
 
-[node name="TriggerShape" type="CollisionShape2D" parent="ScannerCoilBench"]
-shape = SubResource("RectangleShape2D_bench")
+[node name="Occluder" type="LightOccluder2D" parent="Bunks/BunkFrameB"]
+position = Vector2(0, 7)
+occluder = SubResource("Occ_bunk")
 
-[node name="SignalLantern" type="Area2D" parent="."]
-position = Vector2(256, -62)
-collision_layer = 4
+[node name="MedicalLocker" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(-332, -209)
+collision_layer = 1
 collision_mask = 0
-monitoring = false
-script = ExtResource("15_bench")
-prompt = "Wire the signal lantern"
-upgrade_data = ExtResource("18_lantern")
-payoff_notice = "Signal Lantern lit. The carriage glows warm - the base feels awake."
-reveal_on_build = NodePath("../WarmOverlay")
+metadata/fixture_id = &"medical_locker"
+metadata/zone_id = &"recovery"
 
-[node name="Visual" type="Sprite2D" parent="SignalLantern"]
-visible = false
+[node name="Visual" type="Sprite2D" parent="MedicalLocker"]
+position = Vector2(0, -7)
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.78, 0.82, 0.78, 1)
+texture = ExtResource("26_locker")
+
+[node name="CollisionShape" type="CollisionShape2D" parent="MedicalLocker"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_locker")
+
+[node name="Occluder" type="LightOccluder2D" parent="MedicalLocker"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_locker")
+
+[node name="MedicalBoard" type="Sprite2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(-332, -260)
 scale = Vector2(0.12, 0.12)
-modulate = Color(0.92, 0.79, 0.58, 0.98)
-texture = ExtResource("8_lantern")
+modulate = Color(0.83, 0.78, 0.65, 0.96)
+texture = ExtResource("31_medicine")
 
-[node name="Bulb" type="Polygon2D" parent="SignalLantern/Visual"]
-visible = false
-color = Color(1, 0.72, 0.34, 0.95)
-polygon = PackedVector2Array(-6, -7, 6, -7, 6, 4, -6, 4)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="SignalLantern"]
-shape = SubResource("RectangleShape2D_bench")
-
-[node name="KeepsakeShelf" type="Area2D" parent="."]
-position = Vector2(150, -118)
-collision_layer = 4
+[node name="WaterCrate" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(-520, 208)
+collision_layer = 1
 collision_mask = 0
-monitoring = false
-script = ExtResource("16_shelf")
-prompt = "Tend the memory shelf"
+metadata/fixture_id = &"water_store"
+metadata/zone_id = &"recovery"
 
-[node name="Visual" type="Sprite2D" parent="KeepsakeShelf"]
-position = Vector2(0, 4)
-scale = Vector2(0.15, 0.11)
-modulate = Color(0.72, 0.68, 0.58, 0.94)
+[node name="Visual" type="Sprite2D" parent="WaterCrate"]
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.68, 0.78, 0.76, 1)
+texture = ExtResource("27_crate")
+
+[node name="WaterMark" type="Polygon2D" parent="WaterCrate"]
+position = Vector2(0, -2)
+color = Color(0.30, 0.65, 0.67, 0.82)
+polygon = PackedVector2Array(-9, -4, 9, -4, 9, 4, -9, 4)
+
+[node name="CollisionShape" type="CollisionShape2D" parent="WaterCrate"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_crate")
+
+[node name="Occluder" type="LightOccluder2D" parent="WaterCrate"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_crate")
+
+[node name="FoodCrate" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(-447, 208)
+collision_layer = 1
+collision_mask = 0
+metadata/fixture_id = &"food_store"
+metadata/zone_id = &"recovery"
+
+[node name="Visual" type="Sprite2D" parent="FoodCrate"]
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.82, 0.72, 0.51, 1)
+texture = ExtResource("27_crate")
+
+[node name="FoodMark" type="Sprite2D" parent="FoodCrate"]
+position = Vector2(0, -3)
+scale = Vector2(0.085, 0.085)
+texture = ExtResource("29_food")
+
+[node name="CollisionShape" type="CollisionShape2D" parent="FoodCrate"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_crate")
+
+[node name="Occluder" type="LightOccluder2D" parent="FoodCrate"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_crate")
+
+[node name="RadioDeskStation" parent="." instance=ExtResource("9_station")]
+position = Vector2(-104, -207)
+upgrade_data = ExtResource("10_radio_upgrade")
+
+[node name="MapWall" type="Sprite2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(54, -254)
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.82, 0.79, 0.67, 0.98)
+texture = ExtResource("15_mapwall")
+
+[node name="RoutePins" type="Node2D" parent="MapWall"]
+
+[node name="WestPin" type="Polygon2D" parent="MapWall/RoutePins" groups=["railhome_route_state"]]
+visible = false
+position = Vector2(-34, -6)
+color = Color(0.25, 0.84, 0.80, 0.98)
+polygon = PackedVector2Array(-5, -5, 5, -5, 5, 5, -5, 5)
+metadata/min_route_stage = 1
+
+[node name="EastPin" type="Polygon2D" parent="MapWall/RoutePins" groups=["railhome_route_state"]]
+visible = false
+position = Vector2(13, -18)
+color = Color(0.25, 0.84, 0.80, 0.98)
+polygon = PackedVector2Array(-5, -5, 5, -5, 5, 5, -5, 5)
+metadata/min_route_stage = 2
+
+[node name="SouthPin" type="Polygon2D" parent="MapWall/RoutePins" groups=["railhome_route_state"]]
+visible = false
+position = Vector2(32, 18)
+color = Color(0.25, 0.84, 0.80, 0.98)
+polygon = PackedVector2Array(-5, -5, 5, -5, 5, 5, -5, 5)
+metadata/min_route_stage = 3
+
+[node name="PortableSet" type="Sprite2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(117, -245)
+scale = Vector2(0.12, 0.12)
+modulate = Color(0.66, 0.70, 0.65, 0.9)
+texture = ExtResource("32_portable_radio")
+
+[node name="InvestigationTable" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(-58, 207)
+collision_layer = 1
+collision_mask = 0
+metadata/fixture_id = &"investigation_table"
+metadata/zone_id = &"operations"
+
+[node name="Visual" type="Sprite2D" parent="InvestigationTable"]
+scale = Vector2(0.19, 0.19)
+modulate = Color(0.78, 0.72, 0.61, 1)
 texture = ExtResource("21_emptybench")
 
-[node name="Ledge" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+[node name="CollisionShape" type="CollisionShape2D" parent="InvestigationTable"]
+position = Vector2(0, 4)
+shape = SubResource("Shape_table")
+
+[node name="Occluder" type="LightOccluder2D" parent="InvestigationTable"]
+position = Vector2(0, 4)
+occluder = SubResource("Occ_table")
+
+[node name="OccupiedCupA" type="Polygon2D" parent="InvestigationTable" groups=["railhome_occupancy_state"]]
 visible = false
-color = Color(0.56, 0.39, 0.22, 1)
-polygon = PackedVector2Array(-24, -3, 24, -3, 24, 0, -24, 0)
+position = Vector2(-17, -13)
+color = Color(0.72, 0.54, 0.30, 1)
+polygon = PackedVector2Array(-4, -5, 4, -5, 4, 5, -4, 5)
+metadata/min_occupants = 1
 
-[node name="Keepsake1" type="Polygon2D" parent="KeepsakeShelf/Visual"]
+[node name="OccupiedCupB" type="Polygon2D" parent="InvestigationTable" groups=["railhome_occupancy_state"]]
 visible = false
-color = Color(0.74, 0.48, 0.18, 0.9)
-polygon = PackedVector2Array(-16, -9, -9, -9, -9, -4, -16, -4)
-
-[node name="Keepsake2" type="Polygon2D" parent="KeepsakeShelf/Visual"]
-visible = false
-color = Color(0.66, 0.45, 0.22, 0.9)
-polygon = PackedVector2Array(6, -9, 13, -9, 13, -4, 6, -4)
-
-[node name="PhotoKeepsake" type="Sprite2D" parent="KeepsakeShelf"]
-position = Vector2(-16, -8)
-scale = Vector2(0.075, 0.075)
-modulate = Color(0.88, 0.75, 0.55, 0.96)
-texture = ExtResource("22_photo")
-
-[node name="TriggerShape" type="CollisionShape2D" parent="KeepsakeShelf"]
-shape = SubResource("RectangleShape2D_bench")
-
-[node name="CarvedInitials" type="Area2D" parent="."]
-position = Vector2(300, -122)
-collision_layer = 4
-collision_mask = 0
-monitoring = false
-script = ExtResource("13_lore")
-prompt = "Read the carving by the door"
-notice = "Scratched into the door frame, half-sanded away: 'M.W. kept this carriage warm. Whoever's next - keep it warm.' Carriage 317 was someone's home before it was yours."
-
-[node name="Visual" type="Polygon2D" parent="CarvedInitials"]
-visible = false
-color = Color(0.32, 0.28, 0.24, 1)
-polygon = PackedVector2Array(-12, -14, 12, -14, 12, 14, -12, 14)
-
-[node name="Scratch" type="Polygon2D" parent="CarvedInitials/Visual"]
-color = Color(0.62, 0.55, 0.4, 1)
-polygon = PackedVector2Array(-8, -6, 8, -6, 8, -3, -8, -3)
-
-[node name="TriggerShape" type="CollisionShape2D" parent="CarvedInitials"]
-shape = SubResource("RectangleShape2D_lore")
+position = Vector2(16, -10)
+color = Color(0.46, 0.62, 0.58, 1)
+polygon = PackedVector2Array(-4, -5, 4, -5, 4, 5, -4, 5)
+metadata/min_occupants = 4
 
 [node name="CountyRouteLedger" type="Area2D" parent="."]
-position = Vector2(92, 92)
+position = Vector2(-58, 190)
 collision_layer = 4
 collision_mask = 0
 monitoring = false
-script = ExtResource("13_lore")
+script = ExtResource("7_lore")
 prompt = "Check the route notebook"
 notice = "Four places are written on the inside cover: Cullbrook Services. Bellwether. Long Acre. Tollard County Exchange. The last two match Maggie Ward's repair notes."
 
@@ -405,15 +603,311 @@ scale = Vector2(0.11, 0.11)
 modulate = Color(0.84, 0.76, 0.60, 0.94)
 texture = ExtResource("23_compass")
 
-[node name="Page" type="Polygon2D" parent="CountyRouteLedger/Visual"]
-visible = false
-color = Color(0.67, 0.62, 0.49, 0.88)
-polygon = PackedVector2Array(-15, -9, 15, -9, 14, 9, -14, 9)
-
-[node name="RouteLine" type="Polygon2D" parent="CountyRouteLedger/Visual/Page"]
-visible = false
-color = Color(0.26, 0.36, 0.35, 0.72)
-polygon = PackedVector2Array(-11, -4, 8, -4, 8, -2, -11, -2)
-
 [node name="TriggerShape" type="CollisionShape2D" parent="CountyRouteLedger"]
-shape = SubResource("RectangleShape2D_lore")
+shape = SubResource("Shape_lore")
+
+[node name="KeepsakeShelf" type="Area2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(112, 252)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("4_shelf")
+prompt = "Tend the memory shelf"
+
+[node name="Visual" type="Sprite2D" parent="KeepsakeShelf"]
+position = Vector2(0, 2)
+scale = Vector2(0.16, 0.12)
+modulate = Color(0.72, 0.68, 0.58, 0.94)
+texture = ExtResource("21_emptybench")
+
+[node name="PhotoKeepsake" type="Sprite2D" parent="KeepsakeShelf"]
+position = Vector2(-18, -7)
+scale = Vector2(0.075, 0.075)
+modulate = Color(0.88, 0.75, 0.55, 0.96)
+texture = ExtResource("22_photo")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="KeepsakeShelf"]
+shape = SubResource("Shape_lore")
+
+[node name="Workbench" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(286, -207)
+collision_layer = 1
+collision_mask = 0
+metadata/fixture_id = &"crafting_workbench"
+metadata/zone_id = &"commons"
+
+[node name="WorkbenchDecor" type="Sprite2D" parent="Workbench"]
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("16_workbench")
+
+[node name="WorkbenchShape" type="CollisionShape2D" parent="Workbench"]
+position = Vector2(0, 6)
+shape = SubResource("Shape_workbench")
+
+[node name="Occluder" type="LightOccluder2D" parent="Workbench"]
+position = Vector2(0, 6)
+occluder = SubResource("Occ_workbench")
+
+[node name="ScannerCoilBench" type="Area2D" parent="." groups=["railhome_upgrade_benches"]]
+position = Vector2(323, -195)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_bench")
+prompt = "Build Scanner Coil"
+upgrade_data = ExtResource("5_coil")
+payoff_notice = "Scanner Coil built. Receiver sweeps now reach farther and recharge faster."
+
+[node name="Visual" type="Sprite2D" parent="ScannerCoilBench"]
+position = Vector2(0, -5)
+scale = Vector2(0.12, 0.12)
+texture = ExtResource("20_scope")
+
+[node name="Coil" type="Polygon2D" parent="ScannerCoilBench/Visual" groups=["railhome_upgrade_state"]]
+visible = false
+color = Color(0.34, 0.82, 0.88, 0.9)
+polygon = PackedVector2Array(-9, -6, 9, -6, 9, 5, -9, 5)
+metadata/upgrade_id = &"scanner_coil"
+
+[node name="TriggerShape" type="CollisionShape2D" parent="ScannerCoilBench"]
+shape = SubResource("Shape_upgrade_trigger")
+
+[node name="PowerLockerA" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(444, -210)
+collision_layer = 1
+collision_mask = 0
+metadata/fixture_id = &"power_locker_a"
+metadata/zone_id = &"commons"
+
+[node name="Visual" type="Sprite2D" parent="PowerLockerA"]
+position = Vector2(0, -7)
+scale = Vector2(0.18, 0.18)
+texture = ExtResource("26_locker")
+
+[node name="CollisionShape" type="CollisionShape2D" parent="PowerLockerA"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_locker")
+
+[node name="Occluder" type="LightOccluder2D" parent="PowerLockerA"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_locker")
+
+[node name="PowerLockerB" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(494, -210)
+collision_layer = 1
+collision_mask = 0
+metadata/fixture_id = &"power_locker_b"
+metadata/zone_id = &"commons"
+
+[node name="Visual" type="Sprite2D" parent="PowerLockerB"]
+position = Vector2(0, -7)
+scale = Vector2(0.18, 0.18)
+modulate = Color(0.76, 0.77, 0.70, 1)
+texture = ExtResource("26_locker")
+
+[node name="CollisionShape" type="CollisionShape2D" parent="PowerLockerB"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_locker")
+
+[node name="Occluder" type="LightOccluder2D" parent="PowerLockerB"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_locker")
+
+[node name="PowerPanel" type="Node2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(548, -246)
+
+[node name="Backplate" type="Polygon2D" parent="PowerPanel"]
+color = Color(0.14, 0.17, 0.16, 0.95)
+polygon = PackedVector2Array(-28, -24, 28, -24, 28, 24, -28, 24)
+
+[node name="Battery" type="Sprite2D" parent="PowerPanel"]
+scale = Vector2(0.12, 0.12)
+texture = ExtResource("30_battery")
+
+[node name="SignalLantern" type="Area2D" parent="." groups=["railhome_upgrade_benches", "railhome_wall_props"]]
+position = Vector2(172, -246)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("3_bench")
+prompt = "Wire the signal lantern"
+upgrade_data = ExtResource("6_lantern_upgrade")
+payoff_notice = "Signal Lantern lit. The carriage glows warm - the base feels awake."
+reveal_on_build = NodePath("../WarmOverlay")
+
+[node name="Visual" type="Sprite2D" parent="SignalLantern"]
+scale = Vector2(0.13, 0.13)
+modulate = Color(0.92, 0.79, 0.58, 0.98)
+texture = ExtResource("14_lantern")
+
+[node name="Bulb" type="Polygon2D" parent="SignalLantern/Visual" groups=["railhome_upgrade_state"]]
+visible = false
+color = Color(1, 0.72, 0.34, 0.95)
+polygon = PackedVector2Array(-6, -7, 6, -7, 6, 4, -6, 4)
+metadata/upgrade_id = &"base_lantern"
+
+[node name="TriggerShape" type="CollisionShape2D" parent="SignalLantern"]
+shape = SubResource("Shape_upgrade_trigger")
+
+[node name="StorageBox" type="Area2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(304, 208)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("11_storage")
+prompt = "Check storage manifest"
+metadata/fixture_id = &"storage_manifest_chest"
+metadata/zone_id = &"commons"
+
+[node name="Visual" type="Sprite2D" parent="StorageBox"]
+position = Vector2(0, -4)
+scale = Vector2(0.2, 0.2)
+texture = ExtResource("13_storage_tex")
+
+[node name="TriggerShape" type="CollisionShape2D" parent="StorageBox"]
+shape = SubResource("Shape_storage_trigger")
+
+[node name="SolidFootprint" type="StaticBody2D" parent="StorageBox"]
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape" type="CollisionShape2D" parent="StorageBox/SolidFootprint"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_chest")
+
+[node name="Occluder" type="LightOccluder2D" parent="StorageBox/SolidFootprint"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_chest")
+
+[node name="MudBench" type="StaticBody2D" parent="." groups=["railhome_solid_fixtures"]]
+position = Vector2(456, 208)
+collision_layer = 1
+collision_mask = 0
+metadata/fixture_id = &"mud_room_tool_bench"
+metadata/zone_id = &"commons"
+
+[node name="Visual" type="Sprite2D" parent="MudBench"]
+scale = Vector2(0.16, 0.16)
+modulate = Color(0.72, 0.68, 0.58, 1)
+texture = ExtResource("28_toolbox")
+
+[node name="CollisionShape" type="CollisionShape2D" parent="MudBench"]
+position = Vector2(0, 5)
+shape = SubResource("Shape_toolbox")
+
+[node name="Occluder" type="LightOccluder2D" parent="MudBench"]
+position = Vector2(0, 5)
+occluder = SubResource("Occ_toolbox")
+
+[node name="BootTray" type="Polygon2D" parent="."]
+position = Vector2(522, 108)
+color = Color(0.12, 0.13, 0.12, 0.92)
+polygon = PackedVector2Array(-34, -12, 34, -12, 34, 12, -34, 12)
+
+[node name="Lantern" type="Sprite2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(548, 236)
+scale = Vector2(0.13, 0.13)
+modulate = Color(0.80, 0.72, 0.58, 0.88)
+texture = ExtResource("14_lantern")
+
+[node name="CarvedInitials" type="Area2D" parent="." groups=["railhome_wall_props"]]
+position = Vector2(558, -104)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("7_lore")
+prompt = "Read the carving by the door"
+notice = "Scratched into the door frame, half-sanded away: 'M.W. kept this carriage warm. Whoever's next - keep it warm.' Carriage 317 was someone's home before it was yours."
+
+[node name="Visual" type="Polygon2D" parent="CarvedInitials"]
+color = Color(0.32, 0.28, 0.24, 1)
+polygon = PackedVector2Array(-12, -14, 12, -14, 12, 14, -12, 14)
+
+[node name="Scratch" type="Polygon2D" parent="CarvedInitials/Visual"]
+color = Color(0.62, 0.55, 0.4, 1)
+polygon = PackedVector2Array(-8, -6, 8, -6, 8, -3, -8, -3)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="CarvedInitials"]
+shape = SubResource("Shape_lore")
+
+[node name="Outside" parent="." instance=ExtResource("1_exit")]
+position = Vector2(576, 0)
+scale = Vector2(0.86, 0.86)
+prompt = "Step out to Cullbrook Service Station"
+target_scene_path = "res://scenes/maps/test_map.tscn"
+target_spawn = &"from_base"
+
+[node name="from_world" type="Marker2D" parent="." groups=["spawn_points"]]
+position = Vector2(466, 0)
+
+[node name="WarmOverlay" type="Polygon2D" parent="." groups=["railhome_upgrade_state"]]
+z_index = -2
+visible = false
+color = Color(0.92, 0.62, 0.28, 0.06)
+polygon = PackedVector2Array(-584, -278, 584, -278, 584, 278, -584, 278)
+metadata/upgrade_id = &"base_lantern"
+
+[node name="Lighting" type="Node2D" parent="."]
+
+[node name="ColdRecovery" type="PointLight2D" parent="Lighting" groups=["railhome_cold_lights"]]
+position = Vector2(-420, -4)
+texture = SubResource("Texture_cold")
+texture_scale = 2.2
+energy = 0.54
+color = Color(0.50, 0.76, 0.79, 1)
+shadow_enabled = true
+metadata/base_energy = 0.54
+
+[node name="ColdOperations" type="PointLight2D" parent="Lighting" groups=["railhome_cold_lights"]]
+position = Vector2(-22, 6)
+texture = SubResource("Texture_cold")
+texture_scale = 2.2
+energy = 0.50
+color = Color(0.48, 0.72, 0.75, 1)
+shadow_enabled = true
+metadata/base_energy = 0.5
+
+[node name="ColdCommons" type="PointLight2D" parent="Lighting" groups=["railhome_cold_lights"]]
+position = Vector2(360, -4)
+texture = SubResource("Texture_cold")
+texture_scale = 2.15
+energy = 0.52
+color = Color(0.48, 0.72, 0.74, 1)
+shadow_enabled = true
+metadata/base_energy = 0.52
+
+[node name="WarmBunks" type="PointLight2D" parent="Lighting" groups=["railhome_warm_lights"]]
+visible = false
+position = Vector2(-454, -150)
+texture = SubResource("Texture_warm")
+texture_scale = 1.4
+energy = 0.72
+color = Color(1, 0.67, 0.31, 1)
+shadow_enabled = true
+
+[node name="WarmRadio" type="PointLight2D" parent="Lighting" groups=["railhome_warm_lights"]]
+visible = false
+position = Vector2(-80, -158)
+texture = SubResource("Texture_warm")
+texture_scale = 1.35
+energy = 0.68
+color = Color(1, 0.65, 0.28, 1)
+shadow_enabled = true
+
+[node name="WarmWorkshop" type="PointLight2D" parent="Lighting" groups=["railhome_warm_lights"]]
+visible = false
+position = Vector2(292, -154)
+texture = SubResource("Texture_warm")
+texture_scale = 1.45
+energy = 0.70
+color = Color(1, 0.64, 0.27, 1)
+shadow_enabled = true
+
+[node name="WarmThreshold" type="PointLight2D" parent="Lighting" groups=["railhome_warm_lights"]]
+visible = false
+position = Vector2(510, 34)
+texture = SubResource("Texture_warm")
+texture_scale = 1.35
+energy = 0.66
+color = Color(1, 0.64, 0.28, 1)
+shadow_enabled = true

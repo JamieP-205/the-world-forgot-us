@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/imogen_idle.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"imogen"
+display_name = "Imogen Bell"
+role = "Clinic custodian and field medic"
+story_reason = "Imogen kept Ashmere clinic's oxygen bank and handwritten patient roll alive after the doors failed. She can prove which callers were living patients rather than Continuity completions."
+home_region = &"ashmere_verge"
+service_id = &"field_triage"
+service_name = "field triage"
+service_description = "Cleans wounds and restores the player to full health at Railhome."
+service_flag = &"npc_service_imogen_triage"
+service_choice = "LET IMOGEN CHECK THE WOUND"
+service_notice = "Imogen cleans the ash out of the cut and rebinds it. Health restored."
+helped_flag = &"npc_imogen_helped"
+ignored_flag = &"npc_imogen_ignored"
+legacy_helped_flag = &"imogen_rescued"
+voice_signature = "clinical precision interrupted by dry, exhausted humour"
+greeting = "Count your breaths before you tell me you are fine."
+intro_lines = Array[String](["IMOGEN - The clinic list has names the exchange insists never existed.", "I can carry the paper or the oxygen bottle. I cannot carry both through that door alone."])
+helped_lines = Array[String](["IMOGEN - I put the patient roll beside your map. If a name changes overnight, we will see the ink fight back."])
+ignored_lines = Array[String](["IMOGEN - You left me a working door and no hands. The oxygen lasted. Two names did not."])
+service_lines = Array[String](["IMOGEN - Sit on the crate. Sleeves up. If you faint, do it away from the clean cloth."])
+anchor_lines = {"clinic": "IMOGEN - A clinic route only matters if the patients remain people, not entries.", "radio": "IMOGEN - Broadcast the list, but keep the paper. Air can lie; ink leaves a scar.", "witness": "IMOGEN - Ask twice, write once. That is how Maggie taught us to keep a witness.", "copy": "IMOGEN - A copy may feel pain. That does not make its borrowed history true."}
+strategy_lines = {"restore": "IMOGEN - Restore the useful lines one circuit at a time. No blind mains switch.", "sever": "IMOGEN - If you cut the exchange, leave local alarms breathing.", "mesh": "IMOGEN - A mesh needs named keepers. Anonymous systems are how this began."}
+help_choice = "CARRY THE PATIENT ROLL"
+ignore_choice = "LEAVE HER TO SAVE THE OXYGEN"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "short hooded field jacket / medical satchel / compact grounded stance"
+visual_notes = "Imogen's oxblood hood, green scrubs and worn cream medical satchel make her read as a working field medic before dialogue begins."
+identity_accent = Color(0.78, 0.25, 0.22, 1)

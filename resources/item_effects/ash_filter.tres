@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"ash_filter"
+effect_kind = &"ash_protection"
+action_label = "FIT FILTER"
+use_summary = "Cuts ash exposure by 65 percent for three minutes while crossing contaminated ground."
+consequence = "The charcoal loads up and must be discarded. Protection reduces exposure; it never makes the ash harmless."
+consumes_on_use = true
+values = {"duration": 180.0, "resistance": 0.65}

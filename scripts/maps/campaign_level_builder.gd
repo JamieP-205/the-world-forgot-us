@@ -12,6 +12,8 @@ var campaign_id: String = "ashmere_verge"
 const LOOT_SCENE := preload("res://scenes/world/loot_container.tscn")
 const ECHO_SCENE := preload("res://scenes/world/memory_echo.tscn")
 const EXIT_SCENE := preload("res://scenes/world/scene_exit.tscn")
+const BuildingCatalog = preload("res://scripts/world/building_catalog.gd")
+const BUILDING_DOOR_SCENE := preload("res://scenes/world/building_door.tscn")
 const HOLLOW_SCENE := preload("res://scenes/enemies/enemy_hollow.tscn")
 const IMOGEN_SCENE := preload("res://scenes/npcs/imogen_bell.tscn")
 const RAFI_SCENE := preload("res://scenes/npcs/rafi_sayeed.tscn")
@@ -20,6 +22,11 @@ const DEFENSE_ANCHOR_SCENE := preload("res://scenes/world/signal_defense_anchor.
 const CIRCUIT_SWITCH_SCENE := preload("res://scenes/world/circuit_switch.tscn")
 const SIGNAL_LEECH_SCENE := preload("res://scenes/enemies/enemy_signal_leech.tscn")
 const MIMIC_STALKER_SCENE := preload("res://scenes/enemies/enemy_mimic_stalker.tscn")
+const WORLD_NPC_POPULATION_SCENE := preload("res://scenes/npcs/world_npc_population.tscn")
+const ROUTE_MISSION_STATION_SCENE := preload("res://scenes/world/route_mission_station.tscn")
+const HOLLOW_DECISION_SCENE := preload("res://scenes/world/hollow_decision_site.tscn")
+const ROUTE_FINALE_SCENE := preload("res://scenes/world/route_finale_controller.tscn")
+const ROUTE_SALVAGE_RESERVE_SCENE := preload("res://scenes/world/route_salvage_reserve.tscn")
 
 const CAMPAIGN_INTERACTABLE_PATH := "res://scenes/world/campaign_interactable.tscn"
 const STATIC_WRAITH_PATH := "res://scenes/enemies/enemy_static_wraith.tscn"
@@ -52,6 +59,8 @@ const PROP_BROKEN_CAR := "res://assets/processed/roadside_props/broken_car.png"
 const PROP_GUARDRAIL := "res://assets/processed/roadside_props/guardrail.png"
 const PROP_BARRIER := "res://assets/processed/petrol_station_props/warning_barrier.png"
 const PROP_STATION_SIGN := "res://assets/processed/petrol_station_props/station_sign_tall.png"
+const PROP_LANTERN := "res://assets/processed/railhome_props/lantern.png"
+const PROP_MAGGIE_BODY := "res://assets/generated/npcs/maggie_cutting_body.png"
 const LANDMARK_BELLWETHER := "res://assets/processed/environment_landmarks_v2/bellwether_civic_ruin.png"
 const LANDMARK_LONG_ACRE := "res://assets/processed/environment_landmarks_v2/long_acre_relay_station.png"
 const LANDMARK_TOLLARD := "res://assets/processed/environment_landmarks_v2/tollard_exchange_ruin.png"
@@ -68,6 +77,72 @@ func _ready() -> void:
 			_build_choir_core()
 		_:
 			push_warning("Unknown campaign level id: %s" % campaign_id)
+	WorldLayoutContract.apply(self, StringName(campaign_id), false)
+	_add_world_npc_population()
+	_add_route_aftermath_dressing()
+
+
+func _add_world_npc_population() -> void:
+	var population := WORLD_NPC_POPULATION_SCENE.instantiate() as WorldNPCPopulation
+	if population == null:
+		return
+	population.name = "WorldNPCPopulation"
+	population.region_id = campaign_id
+	add_child(population)
+
+
+func _add_route_aftermath_dressing() -> void:
+	if not WorldState.has_flag(&"route_aftermath_active"):
+		return
+	var states := CampaignSystem.get_active_world_states()
+	if states.is_empty():
+		return
+	var positions: Array = Array({
+		"ashmere_verge": [Vector2(650, 330), Vector2(-930, -430), Vector2(790, -330), Vector2(-720, 470), Vector2(1110, -340)],
+		"broadcast_fields": [Vector2(-1130, -70), Vector2(1080, -70), Vector2(-100, 480), Vector2(-1220, 530), Vector2(1060, 610)],
+		"choir_core": [Vector2(-510, -270), Vector2(510, -270), Vector2(0, -390), Vector2(-840, -280), Vector2(840, -280)],
+	}.get(campaign_id, []))
+	if positions.is_empty():
+		return
+	var layer := Node2D.new()
+	layer.name = "RouteAftermath"
+	layer.add_to_group("route_aftermath_visuals")
+	add_child(layer)
+	for index in range(states.size()):
+		var state_id: StringName = states[index]
+		var icon := Sprite2D.new()
+		icon.name = String(state_id).to_pascal_case()
+		icon.texture = load(_aftermath_icon_path(String(state_id))) as Texture2D
+		icon.position = positions[index % positions.size()]
+		icon.scale = Vector2(0.11, 0.11)
+		icon.modulate = _aftermath_tint(String(state_id))
+		icon.z_index = 5
+		icon.set_meta("world_state", state_id)
+		layer.add_child(icon)
+	layer.set_meta("route_id", CampaignSystem.get_active_route_id())
+	layer.set_meta("states_rendered", states.size())
+
+
+func _aftermath_icon_path(state_id: String) -> String:
+	var lower := state_id.to_lower()
+	if "radio" in lower or "warning" in lower or "speaker" in lower or "voice" in lower:
+		return "res://assets/processed/roadside_props/portable_radio.png"
+	if "record" in lower or "archive" in lower or "source" in lower or "memorial" in lower or "name" in lower:
+		return PROP_MAP_WALL
+	if "clinic" in lower or "patient" in lower or "medical" in lower or "treatment" in lower:
+		return PROP_LANTERN
+	if "power" in lower or "relay" in lower or "battery" in lower or "fuse" in lower:
+		return PROP_WORKBENCH
+	return PROP_BARRIER
+
+
+func _aftermath_tint(state_id: String) -> Color:
+	var lower := state_id.to_lower()
+	if "dark" in lower or "quiet" in lower or "dead" in lower or "blank" in lower:
+		return Color(0.56, 0.62, 0.61, 0.78)
+	if "warning" in lower or "weather" in lower or "memorial" in lower:
+		return Color(0.95, 0.68, 0.28, 0.92)
+	return Color(0.48, 0.88, 0.82, 0.92)
 
 
 # ---------------------------------------------------------------------------
@@ -123,6 +198,9 @@ func _build_ashmere_verge() -> void:
 	_add_obstacle("SchoolHallEast", Vector2(-470, -540), Vector2(170, 270), Color(0.27, 0.25, 0.22, 1.0))
 	_add_obstacle("BusDepotWall", Vector2(-720, 650), Vector2(390, 82), RUST_DARK)
 	_add_obstacle("ClinicAnnex", Vector2(690, 480), Vector2(250, 160), METAL)
+	# The chapel shell is deliberately sealed and broken open at the roof. It
+	# reads differently from the intact, lit thresholds around the route loop.
+	_add_obstacle("BellwetherChapelShell", Vector2(1110, 570), Vector2(300, 138), RUST_DARK)
 	_add_ruin_debris("TerraceFall", Vector2(-430, -280), -0.22, Vector2(0.62, 0.52))
 	_add_ruin_debris("ClinicFall", Vector2(510, 445), 0.18, Vector2(0.72, 0.56))
 	_add_guardrail_run("OldRoadRail", Vector2(-750, 142), 3, Vector2(118, 4), -0.02)
@@ -165,7 +243,14 @@ func _build_ashmere_verge() -> void:
 	_add_memory_echo("EchoBusLedger", &"echo_bus_ledger", Vector2(-760, 525))
 	_add_campaign_interactable("ashmere_mara_radio", Vector2(645, -250), "Answer the workshop radio")
 	_add_campaign_interactable("bellwether_school_radio", Vector2(-1010, -505), "Call the quarry camp")
+	_add_campaign_interactable("narrative_anchor_commitment", Vector2(825, -420), "Read Maggie's four work cards")
+	_add_campaign_interactable("narrative_strategy_commitment", Vector2(1150, -450), "Review the relay strategy card")
+	_add_authored_scene(ROUTE_SALVAGE_RESERVE_SCENE, "RouteSalvageReserve", Vector2(935, -330))
 	_add_campaign_interactable("ashmere_gate", Vector2(1260, -360), "Unlock the Long Acre road")
+	_add_route_mission_station("ClinicAshmereWorkCard", Vector2(805, 360), 0, "clinic")
+	_add_route_mission_station("RadioAshmereWorkCard", Vector2(-920, -545), 0, "radio")
+	_add_route_mission_station("WitnessAshmereWorkCard", Vector2(-1085, -315), 0, "witness")
+	_add_route_mission_station("CopyAshmereWorkCard", Vector2(760, -165), 0, "copy")
 	# The clinic-to-workshop rescue follows the physical loop the player has
 	# already learned: meet Imogen in the annex, reroute the ambulance junction,
 	# then escort her across the road to Maggie's cellar.
@@ -196,6 +281,7 @@ func _build_ashmere_verge() -> void:
 	_add_world_bounds(Vector2(2800, 1700))
 	_add_ash_drift("AshDriftWest", Vector2(-760, 0), Vector2(1100, 900), Vector2(-13, 7))
 	_add_ash_drift("AshDriftEast", Vector2(700, -80), Vector2(1200, 960), Vector2(-10, 6))
+	_add_ash_drift("ClinicAnnexAshPocket", Vector2(885, 605), Vector2(280, 210), Vector2(-18, 8), 8.0)
 
 
 # ---------------------------------------------------------------------------
@@ -259,6 +345,7 @@ func _build_broadcast_fields() -> void:
 	_add_obstacle("EastLaybyBus", Vector2(1320, 300), Vector2(310, 105), RUST_DARK)
 	_add_obstacle("SouthGeneratorHall", Vector2(0, 650), Vector2(430, 200), METAL)
 	_add_obstacle("RepeaterShelter", Vector2(-1260, 600), Vector2(290, 150), RUST_DARK)
+	_add_obstacle("WrenfieldPumpHouseCollapse", Vector2(1330, 650), Vector2(285, 125), RUST_DARK)
 	_add_ruin_debris("WestTransformerFall", Vector2(-480, -255), 0.14, Vector2(0.78, 0.54))
 	_add_ruin_debris("EastTransformerFall", Vector2(490, -250), -0.16, Vector2(0.74, 0.56))
 	_add_guardrail_run("WestFieldRail", Vector2(-660, 250), 4, Vector2(112, 2), 0.0)
@@ -296,18 +383,45 @@ func _build_broadcast_fields() -> void:
 	_add_loot("BroadcastSouthLocker", Vector2(245, 300), {&"battery": 1, &"canned_food": 1}, "Search the south control locker")
 	_add_loot("BroadcastCoreEmergency", Vector2(-215, -505), {&"scrap": 3, &"canned_food": 1}, "Search the core emergency crate")
 	_add_loot("LongAcreCableLocker", Vector2(-1390, -255), {&"scrap": 3, &"battery": 2}, "Open the cable-house locker")
-	_add_loot("LongAcreDriverCache", Vector2(1370, 250), {&"canned_food": 1, &"battery": 1}, "Search the stranded driver's cab")
+	_add_loot("LongAcreDriverCache", Vector2(1370, 250), {&"canned_food": 1, &"battery": 1}, "Search Gwen's blue-tagged coach cache", {
+		&"service_bonus_flag": &"npc_service_doyle_passages",
+		&"service_bonus": {&"canned_food": 1, &"battery": 1},
+		&"service_bonus_claim_flag": &"npc_service_doyle_cache_claimed",
+	})
 	_add_loot("LongAcreGeneratorKit", Vector2(250, 665), {&"scrap": 2, &"battery": 1}, "Search the generator service case")
 	_add_loot("LongAcreRepeaterDonations", Vector2(-1380, 625), {&"canned_food": 2, &"scrap": 1}, "Open the public repeater donation tin")
+	# The return footprints and the drainage ditch lead off the relay loop into a
+	# quiet pocket. Water, ballast and a broken barrier frame Maggie's body and
+	# recorder before the Tollard gate, where the reveal can still change play.
+	_add_textured_polygon("FloodedCutting", PackedVector2Array([
+		Vector2(760, 485), Vector2(1000, 420), Vector2(1390, 520),
+		Vector2(1470, 790), Vector2(1180, 900), Vector2(820, 810),
+	]), TEX_GRAVEL, Color(0.29, 0.39, 0.39, 1.0), -1, Vector2(0.78, 0.78))
+	_add_textured_polygon("CuttingWater", PackedVector2Array([
+		Vector2(930, 570), Vector2(1370, 600), Vector2(1390, 745),
+		Vector2(1160, 800), Vector2(900, 720),
+	]), TEX_METAL, Color(0.19, 0.38, 0.40, 0.78), 0, Vector2(0.62, 0.62))
+	_add_sprite("CuttingBarrier", PROP_BARRIER, Vector2(840, 520), Vector2(0.22, 0.22), 4, Color(0.68, 0.61, 0.48, 0.88))
+	_add_sprite("MaggieBody", PROP_MAGGIE_BODY, Vector2(1170, 650), Vector2(0.12, 0.12), 5, Color(0.80, 0.82, 0.79, 0.96))
+	_add_decal("CuttingBallast", TEX_RUBBLE, Vector2(1080, 735), Vector2(0.74, 0.74), 1)
+	_add_glow("CuttingCarrierLeak", Vector2(1180, 650), 118.0, Color(0.30, 0.82, 0.84, 0.11), 2)
 
 	_add_campaign_interactable("broadcast_relay_west", Vector2(-1180, -120), "Reset the cable-yard relay")
 	_add_campaign_interactable("broadcast_relay_east", Vector2(1180, -115), "Align the roadside relay")
 	_add_campaign_interactable("broadcast_relay_south", Vector2(0, 520), "Restart the generator relay")
 	_add_campaign_interactable("long_acre_repeater", Vector2(-1270, 500), "Repair the public repeater")
+	_add_authored_scene(ROUTE_SALVAGE_RESERVE_SCENE, "WrenfieldRouteSalvageReserve", Vector2(-1135, 470))
 	_add_campaign_interactable("broadcast_core_gate", Vector2(0, -845), "Open the Tollard County Exchange")
+	_add_campaign_interactable("maggie_cutting_recorder", Vector2(1225, 650), "Check Maggie's body and recorder")
 	_add_memory_echo("EchoNamesWall", &"echo_names_wall", Vector2(-945, 390))
 	_add_memory_echo("EchoRelayWarning", &"echo_relay_warning", Vector2(-1310, -245))
 	_add_memory_echo("EchoDriverCall", &"echo_driver_call", Vector2(1240, 235))
+	_add_memory_echo("EchoMaggieFinal", &"echo_maggie_final", Vector2(1150, 650))
+	_add_authored_scene(HOLLOW_DECISION_SCENE, "RecoverableHollow", Vector2(955, 610))
+	_add_route_mission_station("ClinicWrenfieldWorkCard", Vector2(1020, -15), 1, "clinic")
+	_add_route_mission_station("RadioWrenfieldWorkCard", Vector2(-1225, 580), 1, "radio")
+	_add_route_mission_station("WitnessWrenfieldWorkCard", Vector2(-1370, -300), 1, "witness")
+	_add_route_mission_station("CopyWrenfieldWorkCard", Vector2(1320, 775), 1, "copy")
 	# Wrenfield's three relays now ask for three different kinds of field work,
 	# each tied to a visually distinct route pocket rather than three identical
 	# cabinets standing in open ground.
@@ -359,6 +473,7 @@ func _build_broadcast_fields() -> void:
 	_add_world_bounds(Vector2(3200, 2000))
 	_add_ash_drift("SignalAshWest", Vector2(-820, -40), Vector2(1500, 1300), Vector2(-17, 5))
 	_add_ash_drift("SignalAshEast", Vector2(820, -40), Vector2(1500, 1300), Vector2(-15, 6))
+	_add_ash_drift("GeneratorAshPocket", Vector2(330, 710), Vector2(320, 220), Vector2(-21, 7), 9.0)
 
 
 # ---------------------------------------------------------------------------
@@ -415,6 +530,7 @@ func _build_choir_core() -> void:
 	_add_obstacle("TollardSwitchBank", Vector2(900, 30), Vector2(330, 120), METAL)
 	_add_obstacle("ReceptionBarrierWest", Vector2(-350, 500), Vector2(310, 80), RUST_DARK)
 	_add_obstacle("ReceptionBarrierEast", Vector2(350, 500), Vector2(310, 80), RUST_DARK)
+	_add_obstacle("CountyRecordsAnnexCollapse", Vector2(-1040, 455), Vector2(285, 125), RUST_DARK)
 	_add_ruin_debris("CoreThresholdFall", Vector2(-245, 405), -0.14, Vector2(0.58, 0.46))
 	_add_ruin_debris("CoreArchiveFall", Vector2(510, -465), 0.18, Vector2(0.52, 0.42))
 
@@ -435,12 +551,15 @@ func _build_choir_core() -> void:
 
 	_add_loot("ChoirWestEmergency", Vector2(-535, 95), {&"canned_food": 2, &"battery": 1}, "Search the west emergency locker")
 	_add_loot("ChoirEastEmergency", Vector2(535, 95), {&"canned_food": 1, &"scrap": 3}, "Search the east emergency locker")
-	_add_loot("TollardArchiveEvidence", Vector2(-1030, -410), {&"battery": 1, &"scrap": 2}, "Open the county archive evidence drawer")
+	_add_loot("TollardArchiveEvidence", Vector2(-1030, -410), {&"battery": 1, &"scrap": 2}, "Open the county archive evidence drawer", {
+		&"required_service_flag": &"mechanical_bypass_available",
+		&"locked_prompt": "Secured archive drawer - Mara's numbered bypass is required",
+	})
 	_add_loot("TollardOperationsLocker", Vector2(1030, -390), {&"canned_food": 2, &"battery": 1}, "Open the night-shift locker")
 	_add_loot("TollardReceptionCache", Vector2(470, 570), {&"scrap": 2, &"canned_food": 1}, "Search the reception emergency box")
 	_add_memory_echo("EchoFirstTone", &"echo_first_tone", Vector2(0, -330))
-	_add_memory_echo("EchoMaggieFinal", &"echo_maggie_final", Vector2(-930, -300))
 	_add_campaign_interactable("choir_final_console", Vector2(0, -695), "Open the Tollard incident record")
+	_add_authored_scene(ROUTE_FINALE_SCENE, "RouteFinaleController", Vector2(0, -205))
 
 	_add_future_enemy("ChoirWestWraith", STATIC_WRAITH_PATH, Vector2(-520, -55), &"ChoirWestWraith", Color(0.48, 0.96, 1.0, 0.88))
 	_add_future_enemy("ChoirEastWraith", STATIC_WRAITH_PATH, Vector2(520, -55), &"ChoirEastWraith", Color(0.48, 0.96, 1.0, 0.88))
@@ -455,6 +574,7 @@ func _build_choir_core() -> void:
 	_add_exit("BackToBroadcastFields", Vector2(0, 840), "Return to Long Acre", "res://scenes/maps/broadcast_fields.tscn", &"from_core", PI)
 	_add_world_bounds(Vector2(2400, 1800))
 	_add_ash_drift("CoreSignalDust", Vector2(0, -80), Vector2(1900, 1450), Vector2(-8, 4))
+	_add_ash_drift("ArchiveAshPocket", Vector2(-1030, -410), Vector2(300, 230), Vector2(-16, 5), 10.0)
 
 
 # ---------------------------------------------------------------------------
@@ -565,7 +685,15 @@ func _add_rect_visual(node_name: String, center: Vector2, size: Vector2, color: 
 
 
 func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Color) -> StaticBody2D:
+	var building_id := BuildingCatalog.structure_id(node_name)
+	if building_id != &"":
+		var minimum_size := BuildingCatalog.minimum_exterior_size(building_id)
+		# Intact buildings must read as architecture beside Ellie, not as props.
+		# Room count drives the minimum visible and physical footprint.
+		size.x = maxf(size.x, minimum_size.x)
+		size.y = maxf(size.y, minimum_size.y)
 	var uses_named_landmark := _uses_named_landmark(node_name)
+	var solid_kind := _solid_kind_for_structure(node_name, building_id)
 	var body := StaticBody2D.new()
 	body.name = node_name
 	body.position = center
@@ -613,9 +741,7 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 	var ruin_texture := load("res://assets/processed/roadside_props/debris_pile.png") as Texture2D
 	if (
 		ruin_texture != null
-		and not uses_named_landmark
-		and size.x >= 260.0
-		and size.x / maxf(size.y, 1.0) >= 1.35
+		and solid_kind == &"blocked_ruin"
 	):
 		var ruin_crown := Sprite2D.new()
 		ruin_crown.name = "RuinCrown"
@@ -629,16 +755,137 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		ruin_crown.z_index = 3
 		body.add_child(ruin_crown)
 	_add_structure_art(body, node_name, size)
-	# Match collision to the authored ruin silhouette. The previous rectangle
-	# left invisible corners that caught the player several pixels outside the
-	# visible wall.
+	# Match collision to the painted foot. Intact facades are split at the real
+	# door, with a short lintel behind it, so the threshold never hides inside a
+	# solid rectangle. Ruins keep one exact convex foot and visibly block entry.
+	if building_id != &"":
+		_add_intact_building_collision(body, visual.polygon, size)
+	else:
+		_add_convex_collision(body, "CollisionShape2D", visual.polygon)
+	WorldLayoutContract.tag_solid(body, solid_kind, visual.polygon, building_id != &"")
+	body.set_meta("footprint_size", size)
+	body.set_meta("player_scale_units", size / WorldLayoutContract.PLAYER_REFERENCE)
+	body.set_meta("building_id", building_id)
+	if solid_kind == &"blocked_ruin":
+		body.set_meta("entry_state", "visibly-blocked")
+	if building_id != &"":
+		body.set_meta("entry_state", "intact-enterable")
+		body.set_meta("room_count", int(BuildingCatalog.get_building(building_id).get("rooms", 1)))
+		_add_building_threshold(building_id, node_name, center, size)
+	return body
+
+
+func _solid_kind_for_structure(node_name: String, building_id: StringName) -> StringName:
+	if building_id != &"":
+		return &"intact_building"
+	var lower := node_name.to_lower()
+	if "ruin" in lower or "collapse" in lower or "collapsed" in lower or "shell" in lower:
+		return &"blocked_ruin"
+	if "fence" in lower or "barrier" in lower or "bulkhead" in lower:
+		return &"barrier"
+	return &"world_structure"
+
+
+func _add_intact_building_collision(
+		body: StaticBody2D,
+		footprint: PackedVector2Array,
+		size: Vector2) -> void:
+	var door_center_x := size.x * 0.24
+	var door_half_width := maxf(34.0, WorldLayoutContract.PLAYER_REFERENCE * 0.56)
+	var front_y := -INF
+	for point in footprint:
+		front_y = maxf(front_y, point.y)
+	var threshold_depth := maxf(56.0, WorldLayoutContract.PLAYER_REFERENCE * 0.86)
+	var left := _clip_polygon_axis(footprint, &"x", door_center_x - door_half_width, true)
+	var right := _clip_polygon_axis(footprint, &"x", door_center_x + door_half_width, false)
+	var lintel := _clip_polygon_axis(footprint, &"x", door_center_x - door_half_width, false)
+	lintel = _clip_polygon_axis(lintel, &"x", door_center_x + door_half_width, true)
+	lintel = _clip_polygon_axis(lintel, &"y", front_y - threshold_depth, true)
+	_add_convex_collision(body, "LeftFootprint", left)
+	_add_convex_collision(body, "RightFootprint", right)
+	_add_convex_collision(body, "DoorLintelFootprint", lintel)
+	body.set_meta("door_gap_center_x", door_center_x)
+	body.set_meta("door_gap_width", door_half_width * 2.0)
+	body.set_meta("door_gap_depth", threshold_depth)
+
+
+func _add_convex_collision(
+		body: StaticBody2D,
+		node_name: String,
+		points: PackedVector2Array) -> void:
+	if points.size() < 3:
+		return
 	var shape := ConvexPolygonShape2D.new()
-	shape.points = visual.polygon
+	shape.points = points
 	var collision := CollisionShape2D.new()
-	collision.name = "CollisionShape2D"
+	collision.name = node_name
 	collision.shape = shape
 	body.add_child(collision)
-	return body
+
+
+func _clip_polygon_axis(
+		points: PackedVector2Array,
+		axis: StringName,
+		boundary: float,
+		keep_less: bool) -> PackedVector2Array:
+	var result := PackedVector2Array()
+	if points.is_empty():
+		return result
+	var previous := points[points.size() - 1]
+	var previous_value := previous.x if axis == &"x" else previous.y
+	var previous_inside := previous_value <= boundary if keep_less else previous_value >= boundary
+	for current in points:
+		var current_value := current.x if axis == &"x" else current.y
+		var current_inside := current_value <= boundary if keep_less else current_value >= boundary
+		if current_inside != previous_inside:
+			var denominator := current_value - previous_value
+			var amount := 0.0 if is_zero_approx(denominator) else (boundary - previous_value) / denominator
+			result.append(previous.lerp(current, clampf(amount, 0.0, 1.0)))
+		if current_inside:
+			result.append(current)
+		previous = current
+		previous_value = current_value
+		previous_inside = current_inside
+	return result
+
+
+func _add_building_threshold(
+		building_id: StringName,
+		exterior_name: String,
+		center: Vector2,
+		size: Vector2) -> void:
+	var return_scene := _campaign_scene_path()
+	if return_scene.is_empty():
+		return
+	var threshold_position := center + Vector2(size.x * 0.24, size.y * 0.5 + 30.0)
+	var spawn_name := StringName("return_%s" % String(building_id))
+	_add_spawn(String(spawn_name), threshold_position + Vector2(0, 104.0))
+	var door := BUILDING_DOOR_SCENE.instantiate() as BuildingDoor
+	if door == null:
+		return
+	door.name = "%sThreshold" % exterior_name
+	door.position = threshold_position
+	door.scale = Vector2(0.82, 0.82)
+	door.building_id = building_id
+	door.return_scene_path = return_scene
+	door.return_spawn = spawn_name
+	door.add_to_group("objective_targets")
+	door.add_to_group("enterable_building_thresholds")
+	door.set_meta("building_id", building_id)
+	door.set_meta("room_count", int(BuildingCatalog.get_building(building_id).get("rooms", 1)))
+	door.set_meta("threshold_clearance", WorldLayoutContract.PLAYER_REFERENCE * 1.12)
+	add_child(door)
+
+
+func _campaign_scene_path() -> String:
+	match campaign_id:
+		"ashmere_verge":
+			return "res://scenes/maps/ashmere_verge.tscn"
+		"broadcast_fields":
+			return "res://scenes/maps/broadcast_fields.tscn"
+		"choir_core":
+			return "res://scenes/maps/choir_core.tscn"
+	return ""
 
 
 func _structure_texture_for(node_name: String, size: Vector2) -> String:
@@ -787,6 +1034,7 @@ func _add_invisible_wall(node_name: String, center: Vector2, size: Vector2) -> v
 	var collision := CollisionShape2D.new()
 	collision.shape = shape
 	body.add_child(collision)
+	WorldLayoutContract.tag_boundary(body, "GroundApron")
 	add_child(body)
 
 
@@ -813,15 +1061,61 @@ func _add_sprite(
 	var texture := load(path) as Texture2D
 	if texture == null:
 		return
+	var physical := _prop_is_solid(path)
+	var parent: Node2D = self
+	if physical:
+		var body := StaticBody2D.new()
+		body.name = node_name
+		body.position = position_value
+		body.collision_layer = 1
+		body.collision_mask = 0
+		add_child(body)
+		parent = body
 	var sprite := Sprite2D.new()
-	sprite.name = node_name
+	sprite.name = "Visual" if physical else node_name
 	sprite.texture = texture
-	sprite.position = position_value
+	sprite.position = Vector2.ZERO if physical else position_value
 	sprite.scale = scale_value
 	sprite.modulate = tint
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	sprite.z_index = z
-	add_child(sprite)
+	parent.add_child(sprite)
+	if physical:
+		var solid_body := parent as StaticBody2D
+		var footprint := _prop_footprint(texture, scale_value)
+		var shape := RectangleShape2D.new()
+		shape.size = footprint.size
+		var collision := CollisionShape2D.new()
+		collision.name = "Footprint"
+		collision.position = footprint.position + footprint.size * 0.5
+		collision.shape = shape
+		solid_body.add_child(collision)
+		WorldLayoutContract.tag_solid(
+			solid_body,
+			&"physical_prop",
+			WorldLayoutContract.rectangle_points(footprint.size, collision.position)
+		)
+
+
+func _prop_is_solid(path: String) -> bool:
+	# Flat paper and hand-sized radios are ground dressing; everything with a
+	# standing base receives the collision footprint of that base.
+	var lower := path.to_lower()
+	return not ("poster" in lower or "portable_radio" in lower)
+
+
+func _prop_footprint(texture: Texture2D, scale_value: Vector2) -> Rect2:
+	var used := Rect2i(Vector2i.ZERO, Vector2i(texture.get_width(), texture.get_height()))
+	var image := texture.get_image()
+	if image != null and not image.is_empty():
+		used = image.get_used_rect()
+	var scaled_width := float(used.size.x) * absf(scale_value.x)
+	var scaled_height := float(used.size.y) * absf(scale_value.y)
+	var width := clampf(scaled_width * 0.72, 14.0, 228.0)
+	var depth := clampf(scaled_height * 0.18, 10.0, 72.0)
+	var used_bottom := float(used.position.y + used.size.y) - float(texture.get_height()) * 0.5
+	var bottom_y := used_bottom * scale_value.y
+	return Rect2(Vector2(-width * 0.5, bottom_y - depth), Vector2(width, depth))
 
 
 func _add_decal(node_name: String, path: String, position_value: Vector2, scale_value: Vector2, z: int) -> void:
@@ -882,16 +1176,34 @@ func _add_ruin_debris(
 	var rubble := load("res://assets/processed/roadside_props/debris_pile.png") as Texture2D
 	if rubble == null:
 		return
+	var body := StaticBody2D.new()
+	body.name = node_name
+	body.position = center
+	body.rotation = rotation_value
+	body.collision_layer = 1
+	body.collision_mask = 0
+	add_child(body)
 	var sprite := Sprite2D.new()
-	sprite.name = node_name
+	sprite.name = "Visual"
 	sprite.texture = rubble
-	sprite.position = center
-	sprite.rotation = rotation_value
 	sprite.scale = scale_value
 	sprite.modulate = Color(0.63, 0.62, 0.54, 0.88)
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	sprite.z_index = 3
-	add_child(sprite)
+	body.add_child(sprite)
+	var footprint := _prop_footprint(rubble, scale_value)
+	var shape := RectangleShape2D.new()
+	shape.size = footprint.size
+	var collision := CollisionShape2D.new()
+	collision.name = "Footprint"
+	collision.position = footprint.position + footprint.size * 0.5
+	collision.shape = shape
+	body.add_child(collision)
+	WorldLayoutContract.tag_solid(
+		body,
+		&"blocked_debris",
+		WorldLayoutContract.rectangle_points(footprint.size, collision.position)
+	)
 
 
 func _add_guardrail_run(
@@ -929,6 +1241,11 @@ func _add_guardrail_piece(node_name: String, center: Vector2, rotation_value: fl
 	collision.name = "CollisionShape2D"
 	collision.shape = shape
 	body.add_child(collision)
+	WorldLayoutContract.tag_solid(
+		body,
+		&"guardrail",
+		WorldLayoutContract.rectangle_points(shape.size)
+	)
 
 
 func _add_landmark_threshold(
@@ -943,7 +1260,10 @@ func _add_landmark_threshold(
 	cluster.name = node_name
 	cluster.position = center
 	cluster.rotation = rotation_value
+	cluster.add_to_group("map_flow_cue_anchors")
 	cluster.add_to_group("lighting_cyan" if accent.b > accent.r * 1.05 else "lighting_amber")
+	cluster.set_meta("flow_role", &"decision_cue")
+	cluster.set_meta("cue_channels", PackedStringArray(["ground", "sign", "light"]))
 	cluster.set_meta("lighting_priority", 285.0)
 	cluster.set_meta("lighting_cast_shadows", false)
 	add_child(cluster)
@@ -981,14 +1301,34 @@ func _add_landmark_threshold(
 		sign.z_index = 4
 		cluster.add_child(sign)
 
+	var lantern_texture := load(PROP_LANTERN) as Texture2D
+	if lantern_texture != null:
+		var lantern := Sprite2D.new()
+		lantern.name = "ServiceLamp"
+		lantern.texture = lantern_texture
+		lantern.position = Vector2(126, -22)
+		lantern.scale = Vector2(0.075, 0.075)
+		lantern.modulate = Color(accent.lightened(0.22), 0.84)
+		lantern.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		lantern.z_index = 4
+		cluster.add_child(lantern)
 
-func _add_loot(node_name: String, position_value: Vector2, loot: Dictionary, prompt_text: String) -> void:
+
+func _add_loot(
+		node_name: String,
+		position_value: Vector2,
+		loot: Dictionary,
+		prompt_text: String,
+		service_contract: Dictionary = {},
+	) -> void:
 	var container := LOOT_SCENE.instantiate()
 	container.name = node_name
 	container.position = position_value
 	container.set("persistent_id", StringName(node_name))
 	container.set("loot", loot)
 	container.set("prompt", prompt_text)
+	for property_name in service_contract:
+		_set_property_if_present(container, StringName(property_name), service_contract[property_name])
 	add_child(container)
 
 
@@ -1023,6 +1363,21 @@ func _add_campaign_interactable(node_name: String, position_value: Vector2, prom
 	node.set_meta("prompt", prompt_text)
 	node.add_to_group("objective_targets")
 	add_child(node)
+
+
+func _add_route_mission_station(
+		node_name: String,
+		position_value: Vector2,
+		mission_slot: int,
+		required_anchor: String,
+	) -> void:
+	var station := _add_authored_scene(ROUTE_MISSION_STATION_SCENE, node_name, position_value, {
+		&"mission_slot": mission_slot,
+		&"required_anchor": required_anchor,
+		&"station_label": "%s route work card" % required_anchor,
+	})
+	if station != null:
+		station.set_meta("route_station", true)
 
 
 func _campaign_interactable_fallback(node_name: String) -> Area2D:
@@ -1129,7 +1484,13 @@ func _add_exit(
 	add_child(exit)
 
 
-func _add_ash_drift(node_name: String, position_value: Vector2, area_value: Vector2, drift_value: Vector2) -> void:
+func _add_ash_drift(
+		node_name: String,
+		position_value: Vector2,
+		area_value: Vector2,
+		drift_value: Vector2,
+		exposure_damage: float = 0.0,
+	) -> void:
 	var drift_script := load("res://scripts/world/ash_drift.gd") as Script
 	if drift_script == null:
 		return
@@ -1140,6 +1501,7 @@ func _add_ash_drift(node_name: String, position_value: Vector2, area_value: Vect
 	ash.set("particle_count", 58)
 	ash.set("area", area_value)
 	ash.set("drift", drift_value)
+	ash.set("exposure_damage", exposure_damage)
 	add_child(ash)
 
 

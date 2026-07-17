@@ -1,8 +1,9 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://scripts/npcs/survivor_npc.gd" id="1_npc"]
 [ext_resource type="Texture2D" path="res://assets/generated/npcs/rafi_idle.png" id="2_art"]
 [ext_resource type="Resource" path="res://resources/quests/wrenfield_lines.tres" id="3_quest"]
+[ext_resource type="Resource" path="res://resources/npcs/rafi_sayeed.tres" id="4_profile"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_npc"]
 radius = 32.0
@@ -17,6 +18,7 @@ story_id = &"rafi_field_contact"
 survivor_name = "Rafi"
 quest_data = ExtResource("3_quest")
 visible_if_flag = &"helped_rafi"
+world_profile = ExtResource("4_profile")
 
 [node name="ContactShadow" type="Polygon2D" parent="."]
 position = Vector2(0, 18)

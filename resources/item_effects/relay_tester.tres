@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"relay_tester"
+effect_kind = &"relay_test"
+action_label = "TEST CARRIER"
+use_summary = "Sends a controlled local test pulse to expose nearby signal-reactive traces without spending receiver charge."
+consequence = "The tester is reusable after ten seconds. Anything sensitive to a carrier pulse can hear the test."
+consumes_on_use = false
+cooldown_seconds = 10.0
+values = {"radius": 260.0}

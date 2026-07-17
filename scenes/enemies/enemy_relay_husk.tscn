@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/enemies/enemy_relay_husk.gd" id="1_relay"]
 [ext_resource type="Script" path="res://scripts/components/health_component.gd" id="2_health"]
-[ext_resource type="SpriteFrames" path="res://resources/spriteframes/hollow_painted_spriteframes.tres" id="3_frames"]
+[ext_resource type="SpriteFrames" path="res://resources/spriteframes/enemy_relay_husk_directional_spriteframes.tres" id="3_frames"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(34, 42)

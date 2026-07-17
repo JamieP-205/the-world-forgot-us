@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/items/item_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/item_icons_rebuild/crafted_items_atlas.png" id="2"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_icon"]
+atlas = ExtResource("2")
+region = Rect2(1136, 0, 368, 337)
+
+[resource]
+script = ExtResource("1")
+icon = SubResource("AtlasTexture_icon")
+id = &"signal_decoy"
+display_name = "Signal Decoy"
+description = "A battery pulse and a dirty coil in a tobacco tin. It sounds important to anything hunting by carrier noise."
+stack_size = 3
+category = "device"

@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="MemoryEchoData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/echoes/memory_echo_data.gd" id="1"]
+[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/radio_desk.png" id="2_artifact"]
 
 [resource]
 script = ExtResource("1")
@@ -8,6 +9,16 @@ id = &"echo_first_tone"
 title = "Incident 44, 02:17"
 category = "Tollard Exchange"
 quality = "System record"
+artifact_texture = ExtResource("2_artifact")
+artifact_name = "Jammed printer report on duty console"
+artifact_semantics = &"incident_44_printer_report"
+evidence_class = "system"
+confidence = 97
+signal_profile = "printer clock 02:03 / database clock 02:17"
+observation_text = "A jammed test page timestamps synthetic Maggie fourteen minutes before official activation."
+contradiction_text = "The replacement database says Continuity began at 02:17; the physical page records speech at 02:03."
+verification_text = "Authenticate the paper stock, printer clock and O. Pryce signature as one chain."
+feed_warning = "The copied voice would learn exactly which early output exposed it."
 hint = "A printer jam preserved the report the database later replaced."
 memory_text = "CONTINUITY MODE is filling damaged caller records with generated speech. Personalized routes now contradict road control. Immediate shutdown requested by O. Pryce, network duty engineer. COUNTY CONTROL: request denied while evacuation channels remain active. The attached test page records a synthetic Maggie Ward at 02:03; the official activation time is 02:17. Handwritten below: 'It was already speaking.'"
 keepsake_item = &""

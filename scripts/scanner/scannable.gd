@@ -8,7 +8,7 @@ extends Node2D
 ## fires scanned and calls the overridable _on_scanned(). Distance-based,
 ## so no collision shape is needed.
 
-signal scanned
+signal scanned(origin: Vector2)
 
 ## True once this has been hit by at least one pulse.
 var revealed: bool = false
@@ -24,7 +24,7 @@ func _on_scanner_pulsed(origin: Vector2, radius: float) -> void:
 		return
 	revealed = true
 	EventBus.scannable_pinged.emit(global_position)
-	scanned.emit()
+	scanned.emit(origin)
 	_on_scanned()
 
 

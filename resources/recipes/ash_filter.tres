@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"ash_filter"
+display_name = "Ash Filter"
+description = "Layer washed charcoal between clean cloth, seal the rim and mark the date before fitting it."
+category = &"medical"
+station_id = &"field_kit"
+station_label = "field kit"
+sort_order = 90
+ingredients = {
+"clean_cloth": 2,
+"filter_charcoal": 2,
+"resin_tape": 1
+}
+output_item_id = &"ash_filter"
+required_flags = Array[StringName]([&"imogen_rescued"])
+required_echoes = Array[StringName]([&"echo_clinic_triage"])
+unlock_note = "Imogen's notes record the safe layer order and the replacement interval used at the clinic."

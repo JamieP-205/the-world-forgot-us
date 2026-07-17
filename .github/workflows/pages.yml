@@ -86,23 +86,48 @@ jobs:
             exit 1
           fi
 
-      - name: Run structural campaign smoke
+      - name: Run game contracts
         shell: bash
         run: |
           set -euo pipefail
 
-          smoke_data="$RUNNER_TEMP/twfu-smoke-data"
-          smoke_log="$RUNNER_TEMP/godot-smoke.log"
-          mkdir -p "$smoke_data"
-          XDG_DATA_HOME="$smoke_data" "$GODOT_BIN" --headless --path . --scene res://tools/complete_game_smoke.tscn 2>&1 | tee "$smoke_log"
-          if grep -Eq 'SCRIPT ERROR:|ERROR:' "$smoke_log"; then
-            echo "Godot reported an error during the structural campaign smoke." >&2
-            exit 1
-          fi
-          if ! grep -qx 'COMPLETE_GAME_SMOKE: PASS' "$smoke_log"; then
-            echo "The structural campaign smoke did not report a pass." >&2
-            exit 1
-          fi
+          contracts=(
+            'audio_release_smoke.tscn|AUDIO RELEASE CONTRACT: PASS'
+            'crafting_smoke.tscn|CRAFTING_SMOKE: PASS'
+            'crafting_progression_reachability.tscn|CRAFTING_PROGRESSION_REACHABILITY: PASS'
+            'crafting_ui_effect_smoke.tscn|CRAFTING_UI_EFFECT_SMOKE: PASS'
+            'narrative_route_smoke.tscn|NARRATIVE_ROUTE_SMOKE: PASS'
+            'route_production_reachability.tscn|ROUTE_PRODUCTION_REACHABILITY: PASS'
+            'npc_population_smoke.tscn|NPC_POPULATION_SMOKE: PASS'
+            'npc_service_contract.tscn|NPC_SERVICE_CONTRACT: PASS'
+            'trace_anchor_smoke.tscn|TRACE ANCHOR CONTRACT PASS'
+            'animation_contract_smoke.tscn|ANIMATION CONTRACT PASS'
+            'mobile_controls_smoke.tscn|MOBILE CONTROLS CONTRACT PASS'
+            'railhome_base_smoke.tscn|RAILHOME_BASE_SMOKE: PASS'
+            'map_flow_collision_smoke.tscn|MAP FLOW + COLLISION SMOKE: PASS'
+            'interior_identity_smoke.tscn|INTERIOR IDENTITY CONTRACT: PASS'
+            'secondary_ui_contract_smoke.tscn|SECONDARY_UI_CONTRACT: PASS'
+            'complete_game_smoke.tscn|COMPLETE_GAME_SMOKE: PASS'
+          )
+
+          for contract in "${contracts[@]}"; do
+            IFS='|' read -r scene marker <<< "$contract"
+            name="${scene%.tscn}"
+            data_dir="$RUNNER_TEMP/twfu-$name-data"
+            log="$RUNNER_TEMP/$name.log"
+            mkdir -p "$data_dir"
+
+            XDG_DATA_HOME="$data_dir" "$GODOT_BIN" --headless --path . --scene "res://tools/$scene" 2>&1 | tee "$log"
+
+            if grep -Eq 'SCRIPT ERROR:|ERROR:' "$log"; then
+              echo "Godot reported an error during $scene." >&2
+              exit 1
+            fi
+            if ! grep -Fq "$marker" "$log"; then
+              echo "$scene did not report its pass marker." >&2
+              exit 1
+            fi
+          done
 
       - name: Export release
         shell: bash
@@ -128,6 +153,24 @@ jobs:
 
           if grep -Eq '\$GODOT_[A-Z_]+' builds/web/index.html; then
             echo "Godot shell placeholders were not expanded." >&2
+            exit 1
+          fi
+
+          pck_bytes="$(stat -c '%s' builds/web/index.pck)"
+          total_bytes="$(find builds/web -maxdepth 1 -type f -printf '%s\n' | awk '{ total += $1 } END { print total + 0 }')"
+          max_pck_bytes=$((64 * 1024 * 1024))
+          max_total_bytes=$((100 * 1024 * 1024))
+
+          printf 'Web payload: %.2f MiB PCK / %.2f MiB total\n' \
+            "$(awk -v bytes="$pck_bytes" 'BEGIN { print bytes / 1048576 }')" \
+            "$(awk -v bytes="$total_bytes" 'BEGIN { print bytes / 1048576 }')"
+
+          if (( pck_bytes > max_pck_bytes )); then
+            echo "Web PCK exceeds the 64 MiB loading budget." >&2
+            exit 1
+          fi
+          if (( total_bytes > max_total_bytes )); then
+            echo "Web artifact exceeds the 100 MiB loading budget." >&2
             exit 1
           fi
 

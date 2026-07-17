@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/tom_arkwright_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"tom"
+display_name = "Tom Arkwright"
+role = "Shepherd and line watcher"
+story_reason = "Tom tracks which Hollows follow sound, heat or remembered routines. His hand bells and wool trip-lines turn enemy movement into warnings instead of map markers."
+home_region = &"broadcast_fields"
+service_id = &"wire_warning"
+service_name = "wire warning"
+service_description = "Sets a route-aware perimeter warning and records which Hollow behaviour to expect next."
+service_flag = &"npc_service_tom_warning"
+service_choice = "STRING A WARNING LINE"
+service_notice = "Tom runs dark wool and one dull bell across the approach. It will warn people without teaching the Hollows a bright new sound."
+helped_flag = &"npc_tom_helped"
+ignored_flag = &"npc_tom_ignored"
+voice_signature = "rural understatement, describing terror as if it were difficult weather"
+greeting = "Wind is wrong. Sheep knew it before the radios did."
+intro_lines = Array[String](["TOM - Something in the hedges walks my evening round exactly, but it has never owned sheep.", "I can bring the warning bells. Need another pair of hands to cut down the loud ones first."])
+helped_lines = Array[String](["TOM - Railhome creaks in honest places. I have marked the three noises that move when nobody does."])
+ignored_lines = Array[String](["TOM - Left the bells hanging. By morning they rang in order, gate to field, without a breath of wind."])
+service_lines = Array[String](["TOM - Dull bell for people. Bright bell for bait. Never swap them because you are tired."])
+anchor_lines = {"clinic": "TOM - Injured Hollows still follow habits. Imogen might learn which habits belong to the person.", "radio": "TOM - Keep broadcasts short. Long voices teach the hedges where you sleep.", "witness": "TOM - Tracks are testimony if you know what weight made them.", "copy": "TOM - A copied shepherd will count the flock. Ask which ewe bites."}
+strategy_lines = {"restore": "TOM - Wake one line and listen before waking the next.", "sever": "TOM - Silence helps until people start calling louder to fill it.", "mesh": "TOM - Little warning lines work. Each farm hears its own gate."}
+help_choice = "CUT DOWN THE LOUD BELLS WITH HIM"
+ignore_choice = "LEAVE HIM TO THE HEDGE ROUND"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "very tall stoop / wide felt hat / one-sided oilskin cape / paired dull bells"
+visual_notes = "Tom reads like a hill figure before he speaks: stooped height, battered brim, off-centre oilskin, black wool trip-line and two dulled bells."
+identity_accent = Color(0.62, 0.42, 0.20, 1)

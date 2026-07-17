@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"tripwire_alarm"
+effect_kind = &"tripwire_alarm"
+action_label = "SET ALARM"
+use_summary = "Watches a small perimeter for one minute and reports the first Hollow that crosses it."
+consequence = "The snapped line and striker are spent when it trips. The warning gives direction, not safety."
+consumes_on_use = true
+values = {"duration": 60.0, "pulse_interval": 0.4, "radius": 190.0}

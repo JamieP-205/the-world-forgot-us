@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="WorldNPCProfile" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/npcs/world_npc_profile.gd" id="1_profile"]
+[ext_resource type="Texture2D" path="res://assets/generated/npcs/leena_shah_walk.png" id="2_atlas"]
+
+[resource]
+script = ExtResource("1_profile")
+npc_id = &"leena"
+display_name = "Leena Shah"
+role = "School registrar and names witness"
+story_reason = "Leena shelters in Bellwether School with the paper admissions register. She remembers the small contradictions that separate missing neighbours from convincing network inventions."
+home_region = &"ashmere_verge"
+service_id = &"witness_ledger"
+service_name = "witness ledger"
+service_description = "Cross-checks current evidence confidence and exposes which claims still have only one source."
+service_flag = &"npc_service_leena_ledger"
+service_choice = "CROSS-CHECK THE LEDGER"
+service_notice = "Leena marks every claim with one witness in red. The neatest story now looks the least trustworthy."
+helped_flag = &"npc_leena_helped"
+ignored_flag = &"npc_leena_ignored"
+voice_signature = "patient teacherly questions sharpened into exact corrections"
+greeting = "Names first. Stories after. Stories are easier to forge."
+intro_lines = Array[String](["LEENA - The exchange added six pupils to this register after the school was empty.", "One invented child has my handwriting. That is either evidence or bait, and I need the original ledger moved before the damp chooses for us."])
+helped_lines = Array[String](["LEENA - I alphabetised the living, the missing and the impossible. Maggie appears in all three columns."])
+ignored_lines = Array[String](["LEENA - The rain took the bottom half of the register. The exchange remembered those children for me. How considerate."])
+service_lines = Array[String](["LEENA - Read the claim aloud. Now tell me who could disagree with it and still be alive."])
+anchor_lines = {"clinic": "LEENA - Patient notes prove presence, not identity. Ask who signed them.", "radio": "LEENA - A public appeal can find witnesses. It can also teach the copy better answers.", "witness": "LEENA - Good. Corroboration is slower than belief and much harder to weaponise.", "copy": "LEENA - Do not ask whether it is Maggie. Ask which Maggie it thinks you need."}
+strategy_lines = {"restore": "LEENA - Restore records with contradictions intact. Clean data is often cleaned by someone.", "sever": "LEENA - Burn the index only after people know where the paper copies are.", "mesh": "LEENA - Give each settlement a ledger and another settlement that can challenge it."}
+help_choice = "CARRY THE ORIGINAL REGISTER"
+ignore_choice = "LEAVE THE LEDGER IN THE SCHOOL"
+sprite_atlas = ExtResource("2_atlas")
+silhouette_signature = "silver low bun / long ink-blue coat / mustard scarf / square ledger case"
+visual_notes = "Leena is deliberately narrow and formal: reading glasses, a long school coat, trailing archive scarf and square case make paper records part of her silhouette."
+identity_accent = Color(0.92, 0.66, 0.28, 1)

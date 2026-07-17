@@ -1,0 +1,241 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/trace_anchor_overlay.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="Style_shell"]
+bg_color = Color(0.075, 0.077, 0.065, 0.995)
+border_width_left = 5
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 5
+border_color = Color(0.32, 0.3, 0.23, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0, 0, 0, 0.8)
+shadow_size = 18
+
+[sub_resource type="StyleBoxFlat" id="Style_paper"]
+bg_color = Color(0.73, 0.69, 0.56, 1)
+border_width_left = 10
+border_width_top = 8
+border_width_right = 8
+border_width_bottom = 10
+border_color = Color(0.37, 0.34, 0.27, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_right = 2
+corner_radius_bottom_left = 2
+content_margin_left = 18.0
+content_margin_top = 16.0
+content_margin_right = 18.0
+content_margin_bottom = 16.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button"]
+bg_color = Color(0.13, 0.135, 0.11, 1)
+border_width_left = 3
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.47, 0.52, 0.41, 0.88)
+content_margin_left = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_button_hover"]
+bg_color = Color(0.2, 0.205, 0.16, 1)
+border_width_left = 5
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.65, 0.42, 1)
+content_margin_left = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_verify"]
+bg_color = Color(0.105, 0.16, 0.135, 1)
+border_width_left = 4
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.37, 0.65, 0.55, 1)
+content_margin_left = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_feed"]
+bg_color = Color(0.18, 0.12, 0.095, 1)
+border_width_left = 4
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.68, 0.43, 0.3, 1)
+content_margin_left = 14.0
+
+[sub_resource type="StyleBoxFlat" id="Style_focus"]
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.77, 0.7, 0.46, 1)
+expand_margin_left = 2.0
+expand_margin_top = 2.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
+[node name="TraceAnchorOverlay" type="CanvasLayer"]
+layer = 92
+script = ExtResource("1_script")
+
+[node name="Root" type="Control" parent="."]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+
+[node name="Dim" type="ColorRect" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.018, 0.018, 0.014, 0.82)
+
+[node name="Center" type="CenterContainer" parent="Root"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ReceiverShell" type="PanelContainer" parent="Root/Center"]
+custom_minimum_size = Vector2(780, 600)
+layout_mode = 2
+theme_override_styles/panel = SubResource("Style_shell")
+
+[node name="Margin" type="MarginContainer" parent="Root/Center/ReceiverShell"]
+layout_mode = 2
+theme_override_constants/margin_left = 28
+theme_override_constants/margin_top = 22
+theme_override_constants/margin_right = 28
+theme_override_constants/margin_bottom = 22
+
+[node name="Layout" type="VBoxContainer" parent="Root/Center/ReceiverShell/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 9
+
+[node name="Eyebrow" type="Label" parent="Root/Center/ReceiverShell/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.58, 0.47, 1)
+theme_override_font_sizes/font_size = 11
+text = "CARRIAGE 317 RECEIVER  /  PAPER CHANNEL"
+
+[node name="Stage" type="Label" parent="Root/Center/ReceiverShell/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.78, 0.7, 0.45, 1)
+theme_override_font_sizes/font_size = 15
+text = "02  /  FOCUS"
+
+[node name="Header" type="BoxContainer" parent="Root/Center/ReceiverShell/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 14
+
+[node name="Artifact" type="Label" parent="Root/Center/ReceiverShell/Margin/Layout/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.86, 0.82, 0.67, 1)
+theme_override_font_sizes/font_size = 22
+text = "TRACE OBJECT"
+autowrap_mode = 2
+
+[node name="Bearing" type="Label" parent="Root/Center/ReceiverShell/Margin/Layout/Header"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.48, 0.68, 0.61, 1)
+theme_override_font_sizes/font_size = 13
+text = "NEEDLE N / 000"
+horizontal_alignment = 2
+
+[node name="Paper" type="PanelContainer" parent="Root/Center/ReceiverShell/Margin/Layout"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_styles/panel = SubResource("Style_paper")
+
+[node name="Readout" type="RichTextLabel" parent="Root/Center/ReceiverShell/Margin/Layout/Paper"]
+layout_mode = 2
+theme_override_colors/default_color = Color(0.13, 0.14, 0.12, 1)
+theme_override_font_sizes/normal_font_size = 15
+bbcode_enabled = true
+text = "Receiver paper"
+fit_content = false
+scroll_active = true
+
+[node name="Noise" type="Label" parent="Root/Center/ReceiverShell/Margin/Layout"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.47, 0.55, 0.44, 1)
+theme_override_font_sizes/font_size = 11
+text = "NOISE  | . || . |"
+autowrap_mode = 2
+
+[node name="Controls" type="VBoxContainer" parent="Root/Center/ReceiverShell/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Primary" type="Button" parent="Root/Center/ReceiverShell/Margin/Layout/Controls"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.84, 0.81, 0.66, 1)
+theme_override_font_sizes/font_size = 15
+theme_override_styles/focus = SubResource("Style_focus")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_button_hover")
+text = "RESOLVE SPATIAL LAYER"
+alignment = 0
+
+[node name="Choices" type="GridContainer" parent="Root/Center/ReceiverShell/Margin/Layout/Controls"]
+visible = false
+layout_mode = 2
+columns = 2
+theme_override_constants/h_separation = 8
+theme_override_constants/v_separation = 8
+
+[node name="Verify" type="Button" parent="Root/Center/ReceiverShell/Margin/Layout/Controls/Choices"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.76, 0.86, 0.75, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/focus = SubResource("Style_focus")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/normal = SubResource("Style_verify")
+theme_override_styles/pressed = SubResource("Style_button_hover")
+text = "VERIFY + FILE"
+alignment = 0
+
+[node name="Feed" type="Button" parent="Root/Center/ReceiverShell/Margin/Layout/Controls/Choices"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.88, 0.72, 0.62, 1)
+theme_override_font_sizes/font_size = 14
+theme_override_styles/focus = SubResource("Style_focus")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/normal = SubResource("Style_feed")
+theme_override_styles/pressed = SubResource("Style_button_hover")
+text = "FEED TRACE TO COPY"
+alignment = 0
+
+[node name="Close" type="Button" parent="Root/Center/ReceiverShell/Margin/Layout/Controls"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.57, 0.58, 0.49, 1)
+theme_override_font_sizes/font_size = 13
+theme_override_styles/focus = SubResource("Style_focus")
+theme_override_styles/hover = SubResource("Style_button_hover")
+theme_override_styles/normal = SubResource("Style_button")
+theme_override_styles/pressed = SubResource("Style_button_hover")
+text = "BACK AWAY"
+alignment = 0

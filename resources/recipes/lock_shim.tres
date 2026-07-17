@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"lock_shim"
+display_name = "Lock Shim"
+description = "Cut two spring tongues from clean scrap, round their shoulders and wrap the grips."
+category = &"access"
+station_id = &"field_kit"
+station_label = "field kit"
+sort_order = 20
+ingredients = {
+"scrap": 2
+}
+output_item_id = &"lock_shim"
+required_echoes = Array[StringName]([&"echo_bus_ledger"])
+unlock_note = "The depot ledger records which emergency boxes used cheap warded padlocks."

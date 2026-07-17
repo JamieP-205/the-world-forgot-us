@@ -4,6 +4,9 @@ extends CharacterBody2D
 ## a receiver discharge overloads it. Health thresholds accelerate the chase,
 ## shorten radial telegraphs, and increase the danger radius.
 
+const CHOIR_WARDEN_FRAMES: SpriteFrames = preload(
+	"res://resources/spriteframes/enemy_choir_warden_directional_spriteframes.tres")
+
 @export var detection_radius: float = 560.0
 @export var contact_range: float = 43.0
 @export var contact_damage: float = 16.0
@@ -11,6 +14,10 @@ extends CharacterBody2D
 @export var shield_down_duration: float = 6.0
 @export var scan_stun_duration: float = 0.75
 @export var persistent_id: StringName = &""
+@export var animation_species: StringName = &"relay_husk"
+@export var movement_acceleration: float = 310.0
+@export var movement_deceleration: float = 520.0
+@export_range(0.0, 0.5, 0.01) var facing_hysteresis: float = 0.2
 
 @onready var _health: HealthComponent = $HealthComponent
 @onready var _collision_shape: CollisionShape2D = $CollisionShape2D
@@ -37,6 +44,9 @@ var _dying := false
 func _ready() -> void:
 	if persistent_id == &"":
 		persistent_id = StringName(name)
+	if _uses_choir_warden_profile():
+		animation_species = &"choir_warden"
+		_visual.sprite_frames = CHOIR_WARDEN_FRAMES.duplicate(true) as SpriteFrames
 	if WorldState.is_defeated(persistent_id):
 		set_physics_process(false)
 		hide()
@@ -48,7 +58,15 @@ func _ready() -> void:
 	_health.health_changed.connect(_on_health_changed)
 	_health.died.connect(_on_died)
 	EventBus.scanner_pulsed.connect(on_signal_burst)
-	_visual.play(&"idle_down")
+	_visual.frame_changed.connect(_on_animation_frame_changed)
+	DirectionalAnimation.play(_visual, &"idle_down")
+
+
+func _uses_choir_warden_profile() -> bool:
+	if animation_species == &"choir_warden":
+		return true
+	var identity := (String(name) + " " + String(persistent_id)).to_lower()
+	return "choir" in identity or "warden" in identity
 
 
 func _physics_process(delta: float) -> void:
@@ -73,7 +91,9 @@ func _physics_process(delta: float) -> void:
 
 	var player := get_tree().get_first_node_in_group("player")
 	if player == null:
-		velocity = Vector2.ZERO
+		velocity = DirectionalAnimation.smooth_velocity(
+			velocity, Vector2.ZERO, movement_acceleration, movement_deceleration, delta)
+		move_and_slide()
 		_update_anim()
 		return
 
@@ -95,17 +115,17 @@ func _physics_process(delta: float) -> void:
 		_start_radial_attack()
 		return
 
+	var target_velocity := Vector2.ZERO
 	if distance <= contact_range:
-		velocity = Vector2.ZERO
 		if _contact_cd <= 0.0 and player.has_method("take_damage"):
 			player.take_damage(_phase_contact_damage())
 			_contact_cd = contact_cooldown
 			_play_action(StringName("attack_" + _face), 0.34)
 	elif distance <= detection_radius:
-		velocity = to_player.normalized() * _phase_move_speed()
-	else:
-		velocity = Vector2.ZERO
+		target_velocity = to_player.normalized() * _phase_move_speed()
 
+	velocity = DirectionalAnimation.smooth_velocity(
+		velocity, target_velocity, movement_acceleration, movement_deceleration, delta)
 	move_and_slide()
 	_update_anim()
 
@@ -258,22 +278,20 @@ func _update_anim() -> void:
 		return
 	var moving := velocity.length() > 1.0
 	if moving:
-		_face = _dir_from(velocity)
+		_face = DirectionalAnimation.select_direction(
+			velocity, _face, facing_hysteresis)
 	var wanted := StringName(("walk_" if moving else "idle_") + _face)
-	if _visual.animation != wanted or not _visual.is_playing():
-		_visual.play(wanted)
-
-
-func _dir_from(direction: Vector2) -> String:
-	if absf(direction.x) > absf(direction.y):
-		return "right" if direction.x > 0.0 else "left"
-	return "down" if direction.y >= 0.0 else "up"
+	DirectionalAnimation.play(_visual, wanted, moving)
 
 
 func _play_action(animation: StringName, lock: float) -> void:
-	if _visual.sprite_frames != null and _visual.sprite_frames.has_animation(animation):
-		_visual.play(animation)
-		_anim_lock = lock
+	if DirectionalAnimation.play(_visual, animation):
+		_anim_lock = maxf(lock, DirectionalAnimation.animation_duration(
+			_visual.sprite_frames, animation, _visual.speed_scale))
+
+
+func _on_animation_frame_changed() -> void:
+	DirectionalAnimation.apply_registration(_visual)
 
 
 func _draw() -> void:

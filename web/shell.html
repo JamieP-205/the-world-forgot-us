@@ -444,6 +444,54 @@
       }
     }
 
+    @media (max-height: 520px) and (orientation: landscape) {
+      .topbar {
+        min-height: 2.8rem;
+        padding-top: 0.45rem;
+        padding-bottom: 0.4rem;
+      }
+
+      .edition,
+      .status-chip,
+      .storage-note {
+        display: none;
+      }
+
+      .bottombar {
+        min-height: 2.35rem;
+        padding-top: 0.35rem;
+        padding-bottom: max(0.4rem, var(--safe-bottom));
+      }
+
+      .overlay {
+        padding: 2.9rem 1rem 2.65rem;
+      }
+
+      .card {
+        width: min(34rem, 100%);
+        padding: 0.85rem 1.4rem;
+      }
+
+      .eyebrow {
+        margin-bottom: 0.35rem;
+      }
+
+      .card h1 {
+        font-size: clamp(1.8rem, 8vh, 2.55rem);
+        line-height: 0.98;
+      }
+
+      .lede {
+        margin: 0.45rem auto 0.65rem;
+        font-size: 0.82rem;
+        line-height: 1.4;
+      }
+
+      .play-button {
+        padding: 0.62rem 1.1rem;
+      }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *,
       *::before,
@@ -514,6 +562,9 @@
           <p class="error-message" id="error-message">
             This browser could not initialize the game.
           </p>
+          <button class="play-button" id="retry-button" type="button">
+            Try again
+          </button>
         </div>
       </section>
     </main>
@@ -521,12 +572,14 @@
     <footer class="chrome bottombar" aria-label="Controls and credits">
       <ul class="controls">
         <li><kbd>WASD</kbd> Move</li>
-        <li><kbd>E</kbd> Interact</li>
-        <li><kbd>J</kbd> Attack</li>
-        <li><kbd>Q</kbd> Receiver</li>
-        <li><kbd>Space</kbd> Dodge</li>
-        <li><kbd>R</kbd> Discharge</li>
-        <li><kbd>F</kbd> Heal</li>
+        <li><kbd>E</kbd> Use</li>
+        <li><kbd>J</kbd> Strike</li>
+        <li><kbd>Q</kbd> Sweep</li>
+        <li><kbd>Space</kbd> Step</li>
+        <li><kbd>C</kbd> Make</li>
+        <li><kbd>R</kbd> Burst</li>
+        <li><kbd>F</kbd> Dress</li>
+        <li><kbd>M</kbd> Map</li>
         <li><kbd>I</kbd> Traces</li>
         <li><kbd>Esc</kbd> Pause</li>
       </ul>
@@ -546,6 +599,7 @@
       const app = document.getElementById("app");
       const canvas = document.getElementById("canvas");
       const launchButton = document.getElementById("launch-button");
+      const retryButton = document.getElementById("retry-button");
       const launchOverlay = document.getElementById("launch-overlay");
       const loadingOverlay = document.getElementById("loading-overlay");
       const errorOverlay = document.getElementById("error-overlay");
@@ -556,6 +610,59 @@
 
       let starting = false;
       let started = false;
+
+      // The launch click happens before the engine creates its AudioContext.
+      // Keep hold of that context once it exists, then resume it from the next
+      // genuine keyboard, pointer or touch gesture before Godot handles input.
+      const audioContexts = new Set();
+      const registerAudioContext = (context) => {
+        audioContexts.add(context);
+        context.addEventListener("statechange", updateAudioState);
+        updateAudioState();
+        return context;
+      };
+      const updateAudioState = () => {
+        const states = [...audioContexts].map((context) => context.state);
+        app.dataset.audioContexts = String(states.length);
+        app.dataset.audioState = states.includes("running")
+          ? "running"
+          : states[0] || "waiting";
+      };
+      const trackAudioConstructor = (property) => {
+        const NativeAudioContext = window[property];
+        if (typeof NativeAudioContext !== "function") {
+          return false;
+        }
+        window[property] = new Proxy(NativeAudioContext, {
+          construct(target, args) {
+            return registerAudioContext(Reflect.construct(target, args, target));
+          },
+        });
+        return true;
+      };
+      const hasAudioContext = trackAudioConstructor("AudioContext")
+        || trackAudioConstructor("webkitAudioContext");
+      app.dataset.audioState = hasAudioContext ? "waiting" : "unavailable";
+      app.dataset.audioContexts = "0";
+
+      const resumeAudio = () => {
+        for (const context of audioContexts) {
+          if (context.state === "suspended" || context.state === "interrupted") {
+            context.resume().catch(() => {
+              // A browser may reject a programmatic attempt. The next genuine
+              // gesture reaches this same handler and retries without a prompt.
+            });
+          }
+        }
+      };
+      window.addEventListener("pointerdown", resumeAudio, { capture: true, passive: true });
+      window.addEventListener("touchstart", resumeAudio, { capture: true, passive: true });
+      window.addEventListener("keydown", resumeAudio, true);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          resumeAudio();
+        }
+      });
 
       const formatBytes = (bytes) => {
         if (!Number.isFinite(bytes) || bytes <= 0) {
@@ -598,6 +705,7 @@
 
         starting = true;
         launchButton.disabled = true;
+        retryButton.disabled = true;
         launchButton.textContent = "Opening signal…";
         launchOverlay.hidden = true;
         errorOverlay.hidden = true;
@@ -616,6 +724,7 @@
           app.classList.add("is-running");
           runtimeStatus.textContent = "Signal live";
           canvas.focus({ preventScroll: true });
+          resumeAudio();
         } catch (error) {
           console.error("Godot Web launch failed:", error);
           showError(error instanceof Error ? error.message : String(error));
@@ -624,11 +733,13 @@
           if (!started) {
             launchButton.disabled = false;
             launchButton.textContent = "Retry";
+            retryButton.disabled = false;
           }
         }
       };
 
       launchButton.addEventListener("click", start);
+      retryButton.addEventListener("click", start);
     })();
   </script>
 </body>

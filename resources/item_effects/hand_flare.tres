@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="CraftedItemEffectData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafted_item_effect_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"hand_flare"
+effect_kind = &"flare"
+action_label = "LIGHT FLARE"
+use_summary = "Burns for thirty-five seconds, pushing nearby Hollows out of the light and exposing the ground around you."
+consequence = "The flare cannot be put out. It makes breathing room and makes your position impossible to miss."
+consumes_on_use = true
+values = {"duration": 35.0, "fear_push": 9.0, "pulse_interval": 0.35, "radius": 260.0}

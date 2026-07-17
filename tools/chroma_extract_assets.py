@@ -203,6 +203,19 @@ CHARACTER_SHEETS = {
 
 
 def main():
+    if len(sys.argv) == 4 and sys.argv[1] == "--key-only":
+        source = Path(sys.argv[2]).resolve()
+        destination = Path(sys.argv[3]).resolve()
+        if not source.is_file():
+            raise SystemExit(f"Missing chroma source: {source}")
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        rgba = chroma_key(Image.open(source))
+        Image.fromarray(rgba, "RGBA").save(destination)
+        transparent = int(np.count_nonzero(rgba[..., 3] == 0))
+        partial = int(np.count_nonzero((rgba[..., 3] > 0) & (rgba[..., 3] < 255)))
+        print(f"KEYED {source.name} -> {destination.name}: "
+              f"{transparent} transparent, {partial} partial-alpha pixels")
+        return 0
     ok = True
     for rel, names in SHEETS.items():
         ok &= slice_sheet(rel, names)

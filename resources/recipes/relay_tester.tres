@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CraftingRecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/crafting/crafting_recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = &"relay_tester"
+display_name = "Relay Tester"
+description = "Wire a protected pulse key to a needle meter and give each lead a permanent mark."
+category = &"tool"
+station_id = &"signal_bench"
+station_label = "signal bench"
+sort_order = 110
+ingredients = {
+"battery": 1,
+"circuit_bridge": 1,
+"copper_wire": 1
+}
+output_item_id = &"relay_tester"
+required_flags = Array[StringName]([&"mara_contacted"])
+required_echoes = Array[StringName]([&"echo_mara_repair"])
+unlock_note = "Maggie's service ledger pairs a hand-keyed test pulse with the needle range she trusted at Ashmere."

@@ -18,7 +18,7 @@ var _touch_ui := false
 const MOBILE_HIDDEN_ROWS := [
 	"BurstAction", "BurstKey", "RationAction", "RationKey",
 	"ArchiveAction", "ArchiveKey", "PauseAction", "PauseKey",
-	"MapAction", "MapKey",
+	"MapAction", "MapKey", "CraftAction", "CraftKey",
 ]
 
 
@@ -27,6 +27,12 @@ func _ready() -> void:
 	_back.pressed.connect(func() -> void: closed.emit())
 	get_viewport().size_changed.connect(_apply_responsive_layout)
 	call_deferred("_apply_responsive_layout")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause")):
+		get_viewport().set_input_as_handled()
+		closed.emit()
 
 
 func _is_touch_device() -> bool:
@@ -41,44 +47,76 @@ func _physical_scale() -> float:
 	return maxf(0.05, minf(window_size.x / size.x, window_size.y / size.y))
 
 
-func _apply_responsive_layout() -> void:
+func apply_responsive_layout(viewport_size: Vector2, touch_override: int = -1) -> void:
+	_apply_responsive_layout(viewport_size, touch_override)
+
+
+func _apply_responsive_layout(size_override: Vector2 = Vector2.ZERO, touch_override: int = -1) -> void:
 	if not is_node_ready() or size.x <= 1.0 or size.y <= 1.0:
 		return
-	var window_size := Vector2(DisplayServer.window_get_size())
-	var portrait := window_size.y > window_size.x
+	var view := size_override if size_override != Vector2.ZERO else size
+	var portrait := view.y > view.x
+	var touch_layout := _touch_ui if touch_override < 0 else touch_override == 1
+	var compact := touch_layout or view.x < 980.0 or view.y < 600.0
 
-	if _touch_ui:
-		_apply_touch_copy()
-		var physical := _physical_scale()
-		var requested_scale := clampf(0.92 / physical, 1.0, 2.85)
-		var base_size := Vector2(620.0, 620.0) if portrait else Vector2(900.0, 520.0)
-		var edge := 16.0 * requested_scale
-		var fit_scale := minf(
-			(size.x - edge * 2.0) / base_size.x,
-			(size.y - edge * 2.0) / base_size.y
+	if compact:
+		if touch_layout:
+			_apply_touch_copy()
+		else:
+			_apply_desktop_copy()
+		var physical := _physical_scale() if size_override == Vector2.ZERO else 1.0
+		var requested_scale := clampf(0.92 / physical, 1.0, 2.85) if touch_layout else 1.0
+		var base_size := (
+			(Vector2(540.0, 620.0) if touch_layout else Vector2(600.0, 820.0))
+			if portrait else
+			(Vector2(900.0, 520.0) if touch_layout else Vector2(940.0, 650.0))
 		)
-		var card_scale := maxf(0.72, minf(requested_scale, fit_scale))
+		var edge := 12.0 * requested_scale
+		var fit_scale := minf(
+			(view.x - edge * 2.0) / base_size.x,
+			(view.y - edge * 2.0) / base_size.y
+		)
+		var card_scale := maxf(0.35, minf(requested_scale, fit_scale))
 		_card.set_anchors_preset(Control.PRESET_TOP_LEFT)
 		_card.pivot_offset = Vector2.ZERO
 		_card.scale = Vector2.ONE * card_scale
 		_card.size = base_size
 		_card.position = Vector2(
-			(size.x - base_size.x * card_scale) * 0.5,
-			(size.y - base_size.y * card_scale) * 0.5
+			(view.x - base_size.x * card_scale) * 0.5,
+			(view.y - base_size.y * card_scale) * 0.5
 		)
 		_grid.columns = 2 if portrait else 4
 		_margin.add_theme_constant_override("margin_left", 20)
 		_margin.add_theme_constant_override("margin_top", 20)
 		_margin.add_theme_constant_override("margin_right", 20)
 		_margin.add_theme_constant_override("margin_bottom", 18)
-		_title.add_theme_font_size_override("font_size", 40 if portrait else 34)
+		_title.add_theme_font_size_override("font_size", 38 if portrait else 32)
 		_dismiss_hint.add_theme_font_size_override("font_size", 15)
 		_back.custom_minimum_size = Vector2(230.0, 62.0)
 		_back.add_theme_font_size_override("font_size", 19)
-		_set_grid_widths(118.0 if portrait else 122.0, 300.0 if portrait else 270.0, 19)
+		_set_grid_widths(112.0 if portrait else 122.0, 270.0 if portrait else 270.0, 18 if touch_layout else 16)
+		# Text and grid changes can raise the panel's true minimum after the
+		# nominal phone card was chosen. Fit the physical card itself, rather
+		# than clipping a child that grew during container layout.
+		var combined_min := _card.get_combined_minimum_size()
+		var layout_size := Vector2(maxf(base_size.x, combined_min.x), maxf(base_size.y, combined_min.y))
+		fit_scale = minf(
+			(view.x - edge * 2.0) / layout_size.x,
+			(view.y - edge * 2.0) / layout_size.y
+		)
+		card_scale = maxf(0.35, minf(requested_scale, fit_scale))
+		_card.grow_horizontal = Control.GROW_DIRECTION_END
+		_card.grow_vertical = Control.GROW_DIRECTION_END
+		_card.position = Vector2(
+			(view.x - layout_size.x * card_scale) * 0.5,
+			(view.y - layout_size.y * card_scale) * 0.5
+		)
+		_card.size = layout_size
 	else:
 		_apply_desktop_copy()
-		_card.set_anchors_preset(Control.PRESET_CENTER)
+		_card.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		_card.grow_horizontal = Control.GROW_DIRECTION_END
+		_card.grow_vertical = Control.GROW_DIRECTION_END
 		_card.scale = Vector2.ONE
 		_card.position = Vector2(size.x * 0.5 - 480.0, size.y * 0.5 - 286.0)
 		_card.size = Vector2(960.0, 572.0)
@@ -113,40 +151,40 @@ func _set_mobile_rows_visible(visible: bool) -> void:
 
 func _apply_touch_copy() -> void:
 	_set_mobile_rows_visible(false)
-	$Card/Margin/Box/Eyebrow.text = "CARRIAGE 317 FIELD MANUAL  /  TOUCH ISSUE"
-	_title.text = "PHONE FIELD GUIDE"
-	_dismiss_hint.text = "TAP RETURN TO CLOSE"
-	$Card/Margin/Box/Grid/MoveAction.text = "MOVE"
+	$Card/Margin/Box/Eyebrow.text = "Carriage 317 field manual  /  touch issue"
+	_title.text = "Phone field guide"
+	_dismiss_hint.text = "Tap Return to close"
+	$Card/Margin/Box/Grid/MoveAction.text = "Move"
 	$Card/Margin/Box/Grid/MoveKey.text = "DRAG LOWER-LEFT"
-	$Card/Margin/Box/Grid/InteractAction.text = "ROAD ACTIONS"
+	$Card/Margin/Box/Grid/InteractAction.text = "Road actions"
 	$Card/Margin/Box/Grid/InteractKey.text = "USE / HIT / SCAN / DODGE"
-	$Card/Margin/Box/Grid/ScanAction.text = "FIELD KIT"
+	$Card/Margin/Box/Grid/ScanAction.text = "Field kit"
 	$Card/Margin/Box/Grid/ScanKey.text = "TAP KIT TO OPEN"
-	$Card/Margin/Box/Grid/AttackAction.text = "KIT ITEMS"
+	$Card/Margin/Box/Grid/AttackAction.text = "Kit items"
 	$Card/Margin/Box/Grid/AttackKey.text = "HEAL / BURST / MAP / LOG"
-	$Card/Margin/Box/Grid/DodgeAction.text = "SYSTEM"
+	$Card/Margin/Box/Grid/DodgeAction.text = "System"
 	$Card/Margin/Box/Grid/DodgeKey.text = "HELP / MENU"
-	_callout.text = "TWO-THUMB LAYOUT  /  Four road actions stay visible on the right. Tap KIT only when you need healing, the receiver burst, records or a system screen. HELP reopens the quick start guide."
+	_callout.text = "Two-thumb note  /  Four road actions stay on the right. KIT holds healing, receiver burst, map, archive and MAKE. HELP reopens this page."
 
 
 func _apply_desktop_copy() -> void:
 	_set_mobile_rows_visible(true)
-	$Card/Margin/Box/Eyebrow.text = "CARRIAGE 317 FIELD MANUAL  /  ISSUE 04"
-	_title.text = "FIELD GUIDE"
-	_dismiss_hint.text = "SELECT RETURN TO CLOSE"
-	$Card/Margin/Box/Grid/MoveAction.text = "MOVE"
+	$Card/Margin/Box/Eyebrow.text = "Carriage 317 field manual  /  issue 04"
+	_title.text = "Field guide"
+	_dismiss_hint.text = "Select Return to close"
+	$Card/Margin/Box/Grid/MoveAction.text = "Move"
 	$Card/Margin/Box/Grid/MoveKey.text = "WASD  /  ARROW KEYS"
-	$Card/Margin/Box/Grid/InteractAction.text = "INTERACT"
+	$Card/Margin/Box/Grid/InteractAction.text = "Interact"
 	$Card/Margin/Box/Grid/InteractKey.text = "E"
-	$Card/Margin/Box/Grid/ScanAction.text = "SCAN / REVEAL"
+	$Card/Margin/Box/Grid/ScanAction.text = "Sweep / reveal"
 	$Card/Margin/Box/Grid/ScanKey.text = "Q  /  RIGHT MOUSE"
-	$Card/Margin/Box/Grid/AttackAction.text = "MELEE"
+	$Card/Margin/Box/Grid/AttackAction.text = "Strike"
 	$Card/Margin/Box/Grid/AttackKey.text = "J  /  LEFT MOUSE"
-	$Card/Margin/Box/Grid/DodgeAction.text = "DODGE"
+	$Card/Margin/Box/Grid/DodgeAction.text = "Dodge"
 	$Card/Margin/Box/Grid/DodgeKey.text = "SPACE"
 	$Card/Margin/Box/Grid/BurstKey.text = "R  /  UNLOCKS IN ACT II"
 	$Card/Margin/Box/Grid/RationKey.text = "F"
 	$Card/Margin/Box/Grid/ArchiveKey.text = "I"
 	$Card/Margin/Box/Grid/PauseKey.text = "ESC"
 	$Card/Margin/Box/Grid/MapKey.text = "M"
-	_callout.text = "TRACE RECEIVER  /  Sweeps expose hidden recordings and carrier Bleeds, and can overload insulated relay suits. Complete field records open safer choices at Tollard."
+	_callout.text = "Receiver note  /  Sweeps expose hidden recordings and carrier bleeds. Complete records leave safer choices at Tollard; C opens Ellie's make notebook."
