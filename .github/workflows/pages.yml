@@ -108,6 +108,7 @@ jobs:
             'interior_identity_smoke.tscn|INTERIOR IDENTITY CONTRACT: PASS'
             'secondary_ui_contract_smoke.tscn|SECONDARY_UI_CONTRACT: PASS'
             'save_corruption_smoke.tscn|SAVE_CORRUPTION_SMOKE: PASS'
+            'progression_gate_smoke.tscn|PROGRESSION_GATE_SMOKE: PASS'
             'complete_game_smoke.tscn|COMPLETE_GAME_SMOKE: PASS'
           )
 
