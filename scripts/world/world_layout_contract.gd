@@ -16,7 +16,7 @@ static var REGIONS := {
 			"Road", "CullbrookServiceLoop", "CullbrookDrainageTrack", "MaintenanceCut",
 		]),
 		"landmarks": [
-			{"name": "RailhomeCarriage", "position": Vector2(-690, 282), "bearing": "south-west"},
+			{"name": "RailhomeCarriage", "position": Vector2(-690, 355), "bearing": "south-west"},
 			{"name": "ServiceStationClock", "position": Vector2(240, -170), "bearing": "centre"},
 			{"name": "FallenRadioMast", "position": Vector2(650, -270), "bearing": "north-east"},
 			{"name": "DrainageYard", "position": Vector2(850, 455), "bearing": "south-east"},

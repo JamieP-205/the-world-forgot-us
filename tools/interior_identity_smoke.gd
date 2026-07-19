@@ -140,8 +140,12 @@ func _check_live_interior(building_id: StringName) -> void:
 	_check(heroes.size() == 1, "%s has exactly one building-specific hero" % building_id)
 	if heroes.size() == 1:
 		var hero := heroes[0]
-		var visual := hero.get_node_or_null("HeroVisual") as Sprite2D
-		_check(visual != null and visual.texture is AtlasTexture, "%s hero renders an atlas region" % building_id)
+		var plate := hero.get_node_or_null("SitePlate") as Polygon2D
+		var stripe := hero.get_node_or_null("IdentityStripe") as Polygon2D
+		_check(plate != null and plate.visible and stripe != null and stripe.visible,
+			"%s identity is a wall plate, not a miniature building collage" % building_id)
+		_check(String(hero.get_meta("presentation", "")) == "site-plate",
+			"%s declares its restrained identity presentation" % building_id)
 		_check(hero.get_meta("atlas_cell", Vector2i(-1, -1)) == identity.get("atlas_cell", Vector2i(-1, -1)), "%s hero uses its assigned cell" % building_id)
 
 	var evidence_nodes: Array[InteriorEvidence] = []

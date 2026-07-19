@@ -7,6 +7,7 @@ const WORLD_NPC_POPULATION_SCENE := preload("res://scenes/npcs/world_npc_populat
 const BuildingCatalog = preload("res://scripts/world/building_catalog.gd")
 const CULLBROOK_SCENE := "res://scenes/maps/test_map.tscn"
 const RAILHOME_EXTERIOR := "res://assets/processed/environment_rebuild/railhome_depot_exterior.png"
+const ASH_ASPHALT_SURFACE := "res://assets/processed/environment/ash_asphalt_seamless.png"
 
 @onready var _mast_glow: Polygon2D = $RadioMast/RecoveredGlow
 @onready var _spark_a: Polygon2D = $RadioMast/StaticSparkA
@@ -21,9 +22,13 @@ var _recovered := false
 func _ready() -> void:
 	ArchiveSystem.echo_recorded.connect(_on_echo_recorded)
 	_author_cullbrook_layout()
+	_remove_world_atlas_fills()
+	_tune_world_palette()
+	_restore_authored_world_surfaces()
+	_dress_cullbrook_exteriors()
 	_add_railhome_exterior()
 	_add_enterable_buildings()
-	_add_cullbrook_prop_footprints()
+	_add_first_route_guidance()
 	_tag_cullbrook_solids()
 	WorldLayoutContract.apply(self, &"cullbrook")
 	_add_world_npc_population()
@@ -100,14 +105,181 @@ func _author_cullbrook_layout() -> void:
 		Vector2(538, 276), Vector2(458, 205), Vector2(352, 145), Vector2(282, 134),
 	])
 	cut.color = Color(0.46, 0.43, 0.35, 0.92)
-	var gravel := load("res://assets/processed/decals/dirt_gravel.png") as Texture2D
-	if gravel != null:
-		cut.texture = gravel
-		cut.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-		cut.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		cut.texture_scale = Vector2(1.04, 1.04)
 	add_child(cut)
 	move_child(cut, 7)
+
+
+func _remove_world_atlas_fills() -> void:
+	# The processed decal sheets contain several objects on transparent cards;
+	# repeating them inside roads or walls creates giant black rectangles.
+	# World polygons keep their authored silhouettes and material colours while
+	# actual props remain individual Sprite2D art.
+	for node in find_children("*", "Polygon2D", true, false):
+		var polygon := node as Polygon2D
+		if polygon != null and polygon.texture != null:
+			polygon.texture = null
+			polygon.uv = PackedVector2Array()
+			polygon.set_meta("atlas_fill_removed", true)
+
+
+func _tune_world_palette() -> void:
+	var palette := {
+		^"Road": Color(0.29, 0.285, 0.255, 1.0),
+		^"PetrolStation/StationFloor": Color(0.25, 0.255, 0.23, 1.0),
+		^"PetrolStation/Office": Color(0.29, 0.27, 0.22, 1.0),
+		^"PetrolStation/OfficeRoof": Color(0.25, 0.15, 0.105, 1.0),
+		^"PetrolStation/Canopy": Color(0.27, 0.16, 0.11, 1.0),
+		^"RoadsideKiosk/KioskWall": Color(0.27, 0.25, 0.20, 1.0),
+		^"RoadsideKiosk/KioskRoof": Color(0.24, 0.145, 0.10, 1.0),
+		^"RoadsideKiosk/KioskWindow": Color(0.105, 0.12, 0.105, 1.0),
+		^"MaintenanceShed/ShedWall": Color(0.25, 0.27, 0.225, 1.0),
+		^"MaintenanceShed/ShedRoof": Color(0.28, 0.22, 0.145, 1.0),
+		^"MaintenanceShed/ShedGap": Color(0.105, 0.11, 0.095, 1.0),
+		^"CullbrookServiceLoop": Color(0.28, 0.275, 0.25, 1.0),
+		^"CullbrookDrainageTrack": Color(0.255, 0.245, 0.21, 0.94),
+		^"ServiceYardApron": Color(0.27, 0.265, 0.235, 0.96),
+		^"ServiceBayNorth/Visual": Color(0.255, 0.245, 0.21, 1.0),
+		^"ServiceBaySouth/Visual": Color(0.24, 0.215, 0.175, 1.0),
+	}
+	for path in palette:
+		var polygon := get_node_or_null(path) as Polygon2D
+		if polygon != null:
+			polygon.color = palette[path]
+
+
+func _restore_authored_world_surfaces() -> void:
+	# Decal sheets are prop atlases and must never be stretched over geometry.
+	# Cullbrook's seamless asphalt is a true material tile, so it can carry
+	# detail across roads, forecourts and building shells without introducing
+	# rectangular cards or mismatched collision.
+	var texture := load(ASH_ASPHALT_SURFACE) as Texture2D
+	if texture == null:
+		return
+	var surfaces := {
+		^"Road": Color(0.66, 0.64, 0.56, 1.0),
+		^"MaintenanceCut": Color(0.62, 0.58, 0.48, 0.94),
+		^"CullbrookServiceLoop": Color(0.64, 0.63, 0.56, 1.0),
+		^"CullbrookDrainageTrack": Color(0.58, 0.55, 0.47, 0.96),
+		^"ServiceYardApron": Color(0.62, 0.61, 0.54, 0.96),
+		^"PetrolStation/StationFloor": Color(0.62, 0.62, 0.56, 1.0),
+		^"PetrolStation/Office": Color(0.55, 0.50, 0.42, 1.0),
+		^"PetrolStation/OfficeRoof": Color(0.50, 0.34, 0.25, 1.0),
+		^"PetrolStation/Canopy": Color(0.54, 0.36, 0.25, 1.0),
+		^"RoadsideKiosk/KioskWall": Color(0.54, 0.50, 0.42, 1.0),
+		^"RoadsideKiosk/KioskRoof": Color(0.50, 0.34, 0.25, 1.0),
+		^"MaintenanceShed/ShedWall": Color(0.52, 0.54, 0.46, 1.0),
+		^"MaintenanceShed/ShedRoof": Color(0.52, 0.42, 0.29, 1.0),
+		^"ServiceBayNorth/Visual": Color(0.52, 0.50, 0.43, 1.0),
+		^"ServiceBayNorth/Roof": Color(0.46, 0.34, 0.25, 1.0),
+		^"ServiceBaySouth/Visual": Color(0.50, 0.45, 0.36, 1.0),
+	}
+	for path in surfaces:
+		var polygon := get_node_or_null(path) as Polygon2D
+		if polygon == null:
+			continue
+		polygon.texture = texture
+		polygon.uv = PackedVector2Array()
+		polygon.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		polygon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		var world_scale := maxf(absf(polygon.global_scale.x), absf(polygon.global_scale.y))
+		polygon.texture_scale = Vector2.ONE * maxf(world_scale, 1.0)
+		polygon.color = surfaces[path]
+		polygon.set_meta("seamless_world_surface", true)
+
+
+func _dress_cullbrook_exteriors() -> void:
+	# These buildings are deliberately architecture-sized. Layered roofs,
+	# shallow front panels and one aligned door keep that mass readable instead
+	# of leaving a large textured rectangle with no sense of facade.
+	_dress_compact_exterior($RoadsideKiosk, Vector2(150, 66), 0.0, Color(0.72, 0.52, 0.35, 1.0))
+	_dress_compact_exterior($MaintenanceShed, Vector2(152, 70), 4.0, Color(0.68, 0.56, 0.38, 1.0))
+	_dress_compact_exterior($ServiceBayNorth, Vector2(150, 70), 0.0, Color(0.62, 0.57, 0.46, 1.0))
+	_dress_compact_exterior($ServiceBaySouth, Vector2(150, 70), 0.0, Color(0.68, 0.50, 0.34, 1.0))
+
+	var office_door := Polygon2D.new()
+	office_door.name = "AlignedOfficeDoor"
+	office_door.position = Vector2(288, -177)
+	office_door.polygon = WorldLayoutContract.rectangle_points(Vector2(34, 48))
+	office_door.color = Color(0.09, 0.105, 0.095, 1.0)
+	office_door.z_index = 3
+	$PetrolStation.add_child(office_door)
+	var office_lintel := Polygon2D.new()
+	office_lintel.name = "AlignedOfficeLintel"
+	office_lintel.position = Vector2(288, -204)
+	office_lintel.polygon = WorldLayoutContract.rectangle_points(Vector2(46, 5))
+	office_lintel.color = Color(0.63, 0.43, 0.20, 0.68)
+	office_lintel.z_index = 4
+	$PetrolStation.add_child(office_lintel)
+
+
+func _dress_compact_exterior(
+		body: StaticBody2D,
+		size: Vector2,
+		door_x: float,
+		roof_tint: Color) -> void:
+	if body == null:
+		return
+	var half := size * 0.5
+	var roof := Polygon2D.new()
+	roof.name = "RoofInset"
+	roof.position = Vector2(0, -size.y * 0.10)
+	roof.polygon = PackedVector2Array([
+		Vector2(-half.x * 0.84, -half.y * 0.66),
+		Vector2(half.x * 0.78, -half.y * 0.72),
+		Vector2(half.x * 0.88, half.y * 0.02),
+		Vector2(half.x * 0.72, half.y * 0.46),
+		Vector2(-half.x * 0.78, half.y * 0.48),
+		Vector2(-half.x * 0.88, -half.y * 0.02),
+	])
+	roof.color = roof_tint
+	roof.z_index = 2
+	var roof_texture := load(ASH_ASPHALT_SURFACE) as Texture2D
+	if roof_texture != null:
+		roof.texture = roof_texture
+		roof.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+		roof.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+		var world_scale := maxf(absf(body.global_scale.x), absf(body.global_scale.y))
+		roof.texture_scale = Vector2.ONE * maxf(world_scale, 1.0)
+		roof.set_meta("seamless_world_surface", true)
+	body.add_child(roof)
+
+	for index in 3:
+		var seam := Line2D.new()
+		seam.name = "RoofSeam%d" % (index + 1)
+		var x := size.x * (-0.25 + float(index) * 0.25)
+		seam.points = PackedVector2Array([
+			Vector2(x - 3, -size.y * 0.36),
+			Vector2(x + 3, size.y * 0.10),
+		])
+		seam.width = 1.2
+		seam.default_color = Color(0.70, 0.45, 0.20, 0.30)
+		seam.z_index = 3
+		body.add_child(seam)
+
+	var door := Polygon2D.new()
+	door.name = "AlignedDoor"
+	door.position = Vector2(door_x, size.y * 0.17)
+	door.polygon = WorldLayoutContract.rectangle_points(Vector2(27, 31))
+	door.color = Color(0.085, 0.10, 0.09, 1.0)
+	door.z_index = 4
+	body.add_child(door)
+
+	var lintel := Polygon2D.new()
+	lintel.name = "AlignedLintel"
+	lintel.position = Vector2(door_x, -1)
+	lintel.polygon = WorldLayoutContract.rectangle_points(Vector2(36, 4))
+	lintel.color = Color(0.60, 0.40, 0.18, 0.68)
+	lintel.z_index = 5
+	body.add_child(lintel)
+
+	for side in [-1.0, 1.0]:
+		var window := Polygon2D.new()
+		window.name = "WindowWest" if side < 0.0 else "WindowEast"
+		window.position = Vector2(size.x * 0.25 * side, size.y * 0.16)
+		window.polygon = WorldLayoutContract.rectangle_points(Vector2(24, 12))
+		window.color = Color(0.07, 0.13, 0.125, 0.78)
+		window.z_index = 4
+		body.add_child(window)
 
 
 func _scale_structure(
@@ -124,8 +296,8 @@ func _scale_structure(
 
 func _add_railhome_exterior() -> void:
 	# Carriage 317 is a converted relay depot, not a freestanding magic door.
-	# The painted shell and its collision share one footprint; the inset
-	# threshold owns a real gap so the player never catches an invisible lip.
+	# Its shell is one honest solid foot; the travel threshold sits on the
+	# exterior apron, so the player can never walk under the painted building.
 	var exterior := StaticBody2D.new()
 	exterior.name = "Carriage317Exterior"
 	# The painted doorway sits left of the depot's visual centre. This offset
@@ -146,38 +318,36 @@ func _add_railhome_exterior() -> void:
 		art.scale = Vector2(0.255, 0.255)
 		art.modulate = Color(0.72, 0.70, 0.61, 0.98)
 		art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		art.z_index = 5
+		art.z_index = 0
 		exterior.add_child(art)
 
-	# The carriage door sits within the isometric foot, so its collision is
-	# three honest pieces rather than a solid rectangle over the threshold.
-	_add_rect_collision(exterior, "DepotFootLeft", Vector2(122, 142), Vector2(-148, -34))
-	_add_rect_collision(exterior, "DepotFootRight", Vector2(202, 142), Vector2(108, -34))
-	_add_rect_collision(exterior, "DepotDoorLintel", Vector2(94, 45), Vector2(-47, -82.5))
+	_add_rect_collision(exterior, "DepotFoot", Vector2(418, 142), Vector2(0, -34))
 	WorldLayoutContract.tag_solid(
 		exterior,
 		&"home_base_exterior",
 		WorldLayoutContract.rectangle_points(Vector2(418, 142), Vector2(0, -34)),
-		true
+		false
 	)
 	exterior.set_meta("door_gap_center_x", -47.0)
-	exterior.set_meta("door_gap_width", 94.0)
+	exterior.set_meta("door_gap_width", 0.0)
 	exterior.set_meta("entry_state", "intact-enterable")
 	exterior.set_meta("player_scale_units", Vector2(418, 142) / WorldLayoutContract.PLAYER_REFERENCE)
 
 	var threshold_shadow := Polygon2D.new()
 	threshold_shadow.name = "ThresholdApron"
-	threshold_shadow.position = Vector2(-690, 293)
+	threshold_shadow.position = Vector2(-690, 351)
 	threshold_shadow.polygon = PackedVector2Array([
-		Vector2(-92, -28), Vector2(92, -28), Vector2(126, 58), Vector2(-126, 58),
+		Vector2(-58, -8), Vector2(58, -8), Vector2(72, 24), Vector2(-72, 24),
 	])
-	threshold_shadow.color = Color(0.09, 0.085, 0.07, 0.84)
+	threshold_shadow.color = Color(0.09, 0.085, 0.07, 0.34)
 	threshold_shadow.z_index = 2
 	add_child(threshold_shadow)
 
 	$BaseDoor.scale = Vector2(0.86, 0.86)
-	$BaseDoor.position = Vector2(-690, 282)
-	$from_base.position = Vector2(-626, 356)
+	$BaseDoor.position = Vector2(-690, 355)
+	$BaseDoor.presentation = "painted_door"
+	$BaseDoor.call("_apply_presentation")
+	$from_base.position = Vector2(-690, 415)
 
 
 func _add_rect_collision(
@@ -267,55 +437,29 @@ func _collision_extent_world(body: StaticBody2D) -> Vector2:
 	return bounds.size * body.scale.abs()
 
 
-func _add_cullbrook_prop_footprints() -> void:
-	var paths: Array[NodePath] = [
-		^"EnvironmentalSilhouettes/WestDebris",
-		^"EnvironmentalSilhouettes/StationDebris",
-		^"EnvironmentalSilhouettes/SouthDebris",
-		^"EnvironmentalSilhouettes/RoadConeA",
-		^"EnvironmentalSilhouettes/RoadConeB",
-		^"EnvironmentalSilhouettes/RoadRailA",
-		^"EnvironmentalSilhouettes/RoadRailB",
-		^"StationSignLandmark",
-		^"YardFloodlight",
+func _add_first_route_guidance() -> void:
+	# Old county crews marked safe service access with three amber dashes.
+	# Repeating that language from the carriage to the first crate guides the
+	# eye without a floating arrow or quest rail.
+	var route_marks := Node2D.new()
+	route_marks.name = "FirstSupplyRouteMarks"
+	route_marks.set_meta("guides_to", "RoadsideCrate")
+	add_child(route_marks)
+	var positions := [
+		Vector2(-656, 365),
+		Vector2(-604, 316),
+		Vector2(-558, 266),
+		Vector2(-520, 226),
 	]
-	for path in paths:
-		var sprite := get_node_or_null(path) as Sprite2D
-		if sprite != null:
-			_add_sprite_footprint(sprite)
-
-
-func _add_sprite_footprint(sprite: Sprite2D) -> void:
-	if sprite.texture == null:
-		return
-	var body := StaticBody2D.new()
-	body.name = "%sFootprint" % sprite.name
-	body.position = to_local(sprite.global_position)
-	body.rotation = sprite.global_rotation - global_rotation
-	body.collision_layer = 1
-	body.collision_mask = 0
-	var global_scale := sprite.global_transform.get_scale().abs()
-	var image := sprite.texture.get_image()
-	var used := Rect2i(Vector2i.ZERO, Vector2i(sprite.texture.get_width(), sprite.texture.get_height()))
-	if image != null and not image.is_empty():
-		used = image.get_used_rect()
-	var width := clampf(float(used.size.x) * global_scale.x * 0.72, 12.0, 210.0)
-	var depth := clampf(float(used.size.y) * global_scale.y * 0.18, 9.0, 62.0)
-	var used_bottom := float(used.position.y + used.size.y) - float(sprite.texture.get_height()) * 0.5
-	var center_y := used_bottom * global_scale.y - depth * 0.5
-	var shape := RectangleShape2D.new()
-	shape.size = Vector2(width, depth)
-	var collision := CollisionShape2D.new()
-	collision.name = "Footprint"
-	collision.position = Vector2(0, center_y)
-	collision.shape = shape
-	body.add_child(collision)
-	add_child(body)
-	WorldLayoutContract.tag_solid(
-		body,
-		&"physical_prop",
-		WorldLayoutContract.rectangle_points(shape.size, collision.position)
-	)
+	for index in positions.size():
+		var mark := Polygon2D.new()
+		mark.name = "WornAmberDash%d" % (index + 1)
+		mark.position = positions[index]
+		mark.rotation = -0.76
+		mark.polygon = WorldLayoutContract.rectangle_points(Vector2(24, 6))
+		mark.color = Color(0.78, 0.55, 0.25, 0.34 + float(index) * 0.06)
+		mark.z_index = -1
+		route_marks.add_child(mark)
 
 
 func _process(delta: float) -> void:

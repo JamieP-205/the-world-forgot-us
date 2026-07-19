@@ -26,6 +26,7 @@ func _ready() -> void:
 func _run() -> void:
 	_check_rejects_malformed_top_level()
 	_check_rejects_unparseable_payload()
+	_check_rejects_non_level_scene()
 	_check_survives_malformed_nested_fields()
 	_check_valid_save_round_trips()
 
@@ -54,6 +55,9 @@ func _check_rejects_malformed_top_level() -> void:
 		{"label": "world as array", "field": "world", "value": []},
 		{"label": "narrative as array", "field": "narrative", "value": []},
 		{"label": "player as array", "field": "player", "value": []},
+		{"label": "player x as string", "field": "player", "value": {"x": "far", "y": 0, "health": 100}},
+		{"label": "player outside map bounds", "field": "player", "value": {"x": 1000000, "y": 0, "health": 100}},
+		{"label": "player health outside bounds", "field": "player", "value": {"x": 0, "y": 0, "health": 1000000}},
 		{"label": "version as dictionary", "field": "version", "value": {}},
 	]
 	for entry in cases:
@@ -81,6 +85,17 @@ func _check_rejects_unparseable_payload() -> void:
 		var ok: bool = SaveManager.load_game()
 		_check(not ok, "%s is rejected" % label)
 		_check_sentinel_intact("after rejecting %s" % label)
+
+
+## A PackedScene is not automatically a valid travel destination. This blocks
+## hand-edited saves from loading menus, test harnesses or user-supplied scenes.
+func _check_rejects_non_level_scene() -> void:
+	_seed_sentinel()
+	var data := _valid_min_save()
+	data.level = "res://scenes/ui/main_menu.tscn"
+	_write_save(JSON.stringify(data))
+	_check(not SaveManager.load_game(), "non-level PackedScene is rejected")
+	_check_sentinel_intact("after rejecting a non-level PackedScene")
 
 
 ## A well-formed top-level payload with a malformed nested field must recover

@@ -37,6 +37,8 @@ extends Resource
 @export var strategy_lines: Dictionary = {}
 @export var help_choice: String = "OFFER A HAND"
 @export var ignore_choice: String = "LEAVE THEM HERE"
+@export var ignore_choice_defers: bool = false
+@export var defer_notice: String = "The decision stays open."
 
 @export_category("Visual Identity")
 @export var sprite_atlas: Texture2D

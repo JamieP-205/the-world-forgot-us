@@ -340,7 +340,7 @@ func _on_cinematic_finished() -> void:
 	_interface.visible = true
 	_hint.visible = true
 	_hint_timer.start()
-	_on_notice("The voice used Maggie's house number. Find the north-road tape and compare it.")
+	_on_notice("Follow the amber marks: 1 battery, 2 scrap.")
 
 
 func _on_setting_changed(section: String, key: String, _value: Variant) -> void:

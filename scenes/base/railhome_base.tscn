@@ -836,6 +836,7 @@ scale = Vector2(0.86, 0.86)
 prompt = "Step out to Cullbrook Service Station"
 target_scene_path = "res://scenes/maps/test_map.tscn"
 target_spawn = &"from_base"
+presentation = "painted_door"
 
 [node name="from_world" type="Marker2D" parent="." groups=["spawn_points"]]
 position = Vector2(466, 0)

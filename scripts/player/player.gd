@@ -65,7 +65,6 @@ var _shake_duration: float = 0.0
 var _shake_strength: float = 0.0
 var _face := "down"
 var _active_visual: AnimatedSprite2D
-var _visual_blend: Tween
 
 ## Seconds during which a one-shot animation (attack/hit/death) keeps priority over
 ## the idle/walk locomotion animation. Purely visual.
@@ -147,36 +146,18 @@ func _update_locomotion(moving: bool) -> void:
 	DirectionalAnimation.play(_visual, idle_anim)
 
 
-## A short alpha hand-off masks the unavoidable crop/pose difference between
-## the painted action set and the registered four-frame walk sheet.
-func _transition_visual(target: AnimatedSprite2D, duration: float) -> void:
-	if _active_visual == target:
-		target.visible = true
-		target.self_modulate.a = 1.0
+## Locomotion and action art use separate registered sheets. Their hand-off is
+## deliberately immediate: interrupted alpha tweens used to leave both sheets
+## transparent when a player changed direction or tapped movement quickly.
+func _transition_visual(target: AnimatedSprite2D, _duration: float) -> void:
+	if target == null:
 		return
-	if _visual_blend != null and _visual_blend.is_valid():
-		_visual_blend.kill()
-	var previous := _active_visual
 	_active_visual = target
-	target.visible = true
-	if previous == null or not previous.visible or duration <= 0.0:
-		target.self_modulate.a = 1.0
-		if previous != null:
-			previous.visible = false
-			previous.self_modulate.a = 1.0
-		return
-	target.self_modulate.a = 0.0
-	previous.visible = true
-	_visual_blend = create_tween().set_parallel(true)
-	_visual_blend.tween_property(target, "self_modulate:a", 1.0, duration)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-	_visual_blend.tween_property(previous, "self_modulate:a", 0.0, duration)\
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
-	_visual_blend.chain().tween_callback(func() -> void:
-		if is_instance_valid(previous) and previous != _active_visual:
-			previous.visible = false
-			previous.self_modulate.a = 1.0
-	)
+	for visual in [_visual, _walk_visual]:
+		if visual == null:
+			continue
+		visual.self_modulate.a = 1.0
+		visual.visible = visual == target
 
 
 ## The generated four-direction walk cycle has two planted-foot beats per

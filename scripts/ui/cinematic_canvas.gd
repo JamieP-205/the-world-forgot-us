@@ -3,12 +3,8 @@ extends Control
 
 const STILLS := [
 	"res://assets/processed/cinematic_rebuild/cin01_receiver_photo.png",
-	"res://assets/processed/cinematic_rebuild/cin02_same_switch.png",
-	"res://assets/processed/cinematic_rebuild/cin03_carriage_depot.png",
-	"res://assets/processed/cinematic_rebuild/cin04_blank_night.png",
-	"res://assets/processed/cinematic_rebuild/cin05_dead_cafe_phone.png",
 	"res://assets/processed/cinematic_rebuild/cin06_other_ellie.png",
-	"res://assets/processed/cinematic_rebuild/cin07_false_safe_print.png",
+	"res://assets/processed/cinematic_rebuild/cin03_carriage_depot.png",
 	"res://assets/processed/cinematic_rebuild/cin08_playable_choice.png",
 ]
 

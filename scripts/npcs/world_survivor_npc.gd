@@ -229,6 +229,9 @@ func _on_dialogue_finished(story_id: StringName, choice_index: int) -> void:
 	elif choice_index == 0:
 		resolve_helped()
 	elif choice_index == 1:
+		if profile.ignore_choice_defers:
+			EventBus.notice_posted.emit(profile.defer_notice)
+			return
 		resolve_ignored()
 
 

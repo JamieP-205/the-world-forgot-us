@@ -1,7 +1,6 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/world/building_door.gd" id="1_door"]
-[ext_resource type="Texture2D" path="res://assets/processed/railhome_props/base_doorway.png" id="2_art"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_trigger"]
 size = Vector2(104, 88)
@@ -14,21 +13,35 @@ script = ExtResource("1_door")
 prompt = "Enter building"
 target_scene_path = "res://scenes/interiors/building_interior.tscn"
 target_spawn = &"from_world"
+presentation = "embedded_door"
 
 [node name="ThresholdShadow" type="Polygon2D" parent="."]
-position = Vector2(0, 24)
-color = Color(0.025, 0.03, 0.028, 0.72)
-polygon = PackedVector2Array(-58, -12, 58, -12, 44, 28, -44, 28)
+position = Vector2(0, 18)
+color = Color(0.025, 0.03, 0.028, 0.30)
+polygon = PackedVector2Array(-36, -6, 36, -6, 44, 18, -44, 18)
 
 [node name="WarmSpill" type="Polygon2D" parent="."]
-position = Vector2(0, 20)
-color = Color(0.92, 0.57, 0.22, 0.12)
-polygon = PackedVector2Array(-36, -8, 36, -8, 60, 46, -60, 46)
+position = Vector2(0, 18)
+color = Color(0.92, 0.57, 0.22, 0.08)
+polygon = PackedVector2Array(-24, -5, 24, -5, 36, 22, -36, 22)
 
-[node name="DoorSprite" type="Sprite2D" parent="."]
-position = Vector2(0, -24)
-scale = Vector2(0.32, 0.32)
-texture = ExtResource("2_art")
+[node name="Frame" type="Polygon2D" parent="."]
+color = Color(0.29, 0.26, 0.21, 0.96)
+polygon = PackedVector2Array(-28, -34, 28, -34, 28, -28, -28, -28)
+
+[node name="Doorway" type="Polygon2D" parent="."]
+visible = false
+color = Color(0.025, 0.034, 0.032, 0.98)
+polygon = PackedVector2Array(-29, 24, -29, -32, -21, -40, 21, -40, 29, -32, 29, 24)
+
+[node name="DoorCrossbar" type="Polygon2D" parent="."]
+color = Color(0.68, 0.48, 0.22, 0.72)
+polygon = PackedVector2Array(-24, 12, 24, 12, 24, 17, -24, 17)
+
+[node name="Handle" type="Polygon2D" parent="."]
+visible = false
+color = Color(0.92, 0.66, 0.28, 0.9)
+polygon = PackedVector2Array(14, -8, 19, -8, 19, 3, 14, 3)
 
 [node name="TriggerShape" type="CollisionShape2D" parent="."]
 position = Vector2(0, 4)

@@ -132,6 +132,13 @@ func _check_menu() -> void:
 	var menu_box := menu.get_node("Box") as GridContainer
 	_check(menu_box.columns == 1, "desktop menu keeps one deliberate reading column")
 	_check(_buttons_are_human(menu_box), "menu actions use authored sentence case")
+	var confirmation := menu.get_node("NewGameConfirm") as ConfirmationDialog
+	_check(confirmation.unresizable, "new-journey confirmation has a bounded desktop frame")
+	for button in [confirmation.get_ok_button(), confirmation.get_cancel_button()]:
+		_check(button.custom_minimum_size.y >= 44.0,
+			"%s keeps a deliberate confirmation target" % button.text)
+		_check(button.custom_minimum_size.x >= 140.0,
+			"%s cannot collapse into a default utility button" % button.text)
 	menu.apply_responsive_layout(PHONE_PORTRAIT, 1)
 	await get_tree().process_frame
 	_check(menu_box.columns == 1, "portrait menu keeps one thumb-readable column")

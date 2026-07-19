@@ -306,14 +306,15 @@ position = Vector2(1000, -10)
 shape = SubResource("RectangleShape2D_wall_v")
 
 [node name="BaseDoor" parent="." instance=ExtResource("2_exit")]
-position = Vector2(-690, 284)
+position = Vector2(-690, 355)
 scale = Vector2(0.68, 0.68)
 prompt = "Enter Carriage 317"
 target_scene_path = "res://scenes/base/railhome_base.tscn"
 target_spawn = &"from_world"
+presentation = "painted_door"
 
 [node name="from_base" type="Marker2D" parent="." groups=["spawn_points"]]
-position = Vector2(-626, 246)
+position = Vector2(-690, 415)
 
 [node name="RailhomeExitGlow" type="Polygon2D" parent="."]
 color = Color(0.88, 0.62, 0.28, 0.10)
@@ -374,12 +375,14 @@ color = Color(0.38, 0.3, 0.2, 0.55)
 polygon = PackedVector2Array(164, -214, 284, -214, 284, -204, 164, -204)
 
 [node name="OfficeAuthoredFacade" type="Sprite2D" parent="PetrolStation"]
+visible = false
 position = Vector2(176, -192)
 scale = Vector2(0.38, 0.38)
 modulate = Color(0.82, 0.79, 0.68, 0.96)
 texture = ExtResource("36_counter")
 
 [node name="OfficeDoorway" type="Sprite2D" parent="PetrolStation"]
+visible = false
 position = Vector2(288, -174)
 scale = Vector2(0.15, 0.15)
 modulate = Color(0.76, 0.74, 0.66, 0.94)
@@ -467,6 +470,7 @@ color = Color(0.50, 0.36, 0.22, 0.50)
 polygon = PackedVector2Array(24, -20, 62, -18, 62, -10, 24, -12)
 
 [node name="AuthoredFacade" type="Sprite2D" parent="RoadsideKiosk"]
+visible = false
 position = Vector2(0, 2)
 scale = Vector2(0.24, 0.24)
 modulate = Color(0.80, 0.76, 0.64, 0.95)
@@ -509,6 +513,7 @@ color = Color(0.52, 0.38, 0.22, 0.36)
 polygon = PackedVector2Array(-70, 14, 62, 8, 64, 13, -72, 21)
 
 [node name="AuthoredDoorway" type="Sprite2D" parent="MaintenanceShed"]
+visible = false
 position = Vector2(4, 2)
 scale = Vector2(0.18, 0.18)
 modulate = Color(0.79, 0.77, 0.68, 0.96)
@@ -723,10 +728,31 @@ position = Vector2(-518, 214)
 prompt = "Search first supply crate"
 loot = {"canned_food": 1, "scrap": 1}
 
-[node name="CarBoot" parent="." instance=ExtResource("1_crate")]
-position = Vector2(-250, 102)
+[node name="CarBoot" type="Area2D" parent="."]
+position = Vector2(-270, 118)
+collision_layer = 4
+collision_mask = 0
+monitoring = false
+script = ExtResource("8_loot")
 prompt = "Search car boot"
+empty_prompt = "Car boot searched"
 loot = {"battery": 1, "scrap": 1}
+
+[node name="Visual" type="Polygon2D" parent="CarBoot"]
+position = Vector2(0, -4)
+color = Color(0.20, 0.18, 0.15, 0.96)
+polygon = PackedVector2Array(-20, -7, 20, -7, 17, 8, -18, 8)
+
+[node name="Latch" type="Polygon2D" parent="CarBoot/Visual"]
+color = Color(0.72, 0.51, 0.24, 0.88)
+polygon = PackedVector2Array(-3, -2, 5, -2, 5, 2, -3, 2)
+
+[node name="Glint" type="Polygon2D" parent="CarBoot"]
+color = Color(0.92, 0.72, 0.34, 0.30)
+polygon = PackedVector2Array(12, -14, 15, -7, 22, -4, 15, -1, 12, 6, 9, -1, 2, -4, 9, -7)
+
+[node name="TriggerShape" type="CollisionShape2D" parent="CarBoot"]
+shape = SubResource("RectangleShape2D_lore")
 
 [node name="PumpLocker" parent="." instance=ExtResource("1_crate")]
 position = Vector2(-44, -112)
@@ -739,7 +765,7 @@ prompt = "Search kiosk drawer"
 loot = {"canned_food": 1, "scrap": 1}
 
 [node name="ShedLocker" parent="." instance=ExtResource("1_crate")]
-position = Vector2(282, 42)
+position = Vector2(346, 118)
 prompt = "Search shed locker"
 loot = {"battery": 1, "scrap": 2}
 
@@ -782,7 +808,7 @@ polygon = PackedVector2Array(16, -18, 20, -8, 30, -4, 20, 0, 16, 10, 12, 0, 2, -
 shape = SubResource("RectangleShape2D_lore")
 
 [node name="RoadHollow" parent="." instance=ExtResource("3_hollow")]
-position = Vector2(46, 64)
+position = Vector2(-105, 36)
 
 [node name="RelayHollow" parent="." instance=ExtResource("3_hollow")]
 position = Vector2(170, 250)
@@ -838,6 +864,7 @@ color = Color(0.29, 0.19, 0.13, 0.82)
 polygon = PackedVector2Array(-82, -40, 82, -40, 70, -26, -70, -26)
 
 [node name="AuthoredFacade" type="Sprite2D" parent="ServiceBayNorth"]
+visible = false
 position = Vector2(0, 3)
 scale = Vector2(0.18, 0.18)
 modulate = Color(0.78, 0.76, 0.67, 0.95)
@@ -860,6 +887,7 @@ color = Color(0.35, 0.31, 0.25, 1)
 polygon = PackedVector2Array(-75, -35, 75, -35, 75, 35, -75, 35)
 
 [node name="AuthoredFacade" type="Sprite2D" parent="ServiceBaySouth"]
+visible = false
 position = Vector2(0, 2)
 scale = Vector2(0.18, 0.18)
 modulate = Color(0.76, 0.73, 0.63, 0.95)

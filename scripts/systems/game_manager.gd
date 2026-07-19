@@ -7,6 +7,14 @@ extends Node
 
 ## Home base -- where the player wakes after dying.
 const BASE_SCENE_PATH := "res://scenes/base/railhome_base.tscn"
+const TRAVEL_DESTINATIONS := [
+	"res://scenes/base/railhome_base.tscn",
+	"res://scenes/maps/test_map.tscn",
+	"res://scenes/maps/ashmere_verge.tscn",
+	"res://scenes/maps/broadcast_fields.tscn",
+	"res://scenes/maps/choir_core.tscn",
+	"res://scenes/interiors/building_interior.tscn",
+]
 
 var is_paused := false
 var dialogue_active := false
@@ -59,6 +67,9 @@ func _sync_tree_pause() -> void:
 func travel_to(scene_path: String, spawn: StringName = &"") -> void:
 	if scene_path.is_empty():
 		return
+	if not is_travel_destination(scene_path):
+		push_warning("GameManager: rejected unknown travel destination '%s'." % scene_path)
+		return
 	var scene := load(scene_path) as PackedScene
 	if scene == null:
 		push_error("GameManager: could not load level '%s'." % scene_path)
@@ -66,6 +77,10 @@ func travel_to(scene_path: String, spawn: StringName = &"") -> void:
 	if is_paused:
 		set_paused(false)
 	EventBus.travel_requested.emit(scene, spawn)
+
+
+func is_travel_destination(scene_path: String) -> bool:
+	return scene_path in TRAVEL_DESTINATIONS
 
 
 ## On death, the player wakes back at the Railhome (the player heals itself).
