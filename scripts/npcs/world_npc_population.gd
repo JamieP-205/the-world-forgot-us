@@ -35,15 +35,15 @@ const REGION_PLACEMENTS := {
 	&"railhome": [
 		# Each short schedule stays in a furnished bay without crossing a solid
 		# footprint or stopping in the carriage's central egress spine.
-		{&"npc_id": &"imogen", &"position": Vector2(-520, 108), &"work": Vector2(90, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"rafi", &"position": Vector2(-180, 110), &"work": Vector2(75, 0), &"settled": Vector2(-25, 0)},
-		{&"npc_id": &"leena", &"position": Vector2(-50, 108), &"work": Vector2(80, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"owen", &"position": Vector2(250, 108), &"work": Vector2(65, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"doyle", &"position": Vector2(365, 108), &"work": Vector2(55, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"idris", &"position": Vector2(-500, -104), &"work": Vector2(70, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"mara", &"position": Vector2(90, -106), &"work": Vector2(80, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"tom", &"position": Vector2(425, -106), &"work": Vector2(80, 0), &"settled": Vector2(-20, 0)},
-		{&"npc_id": &"nia", &"position": Vector2(520, -106), &"work": Vector2(60, 0), &"settled": Vector2(-18, 0)},
+		{&"npc_id": &"imogen", &"position": Vector2(-520, 64), &"work": Vector2(90, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"rafi", &"position": Vector2(-180, 64), &"work": Vector2(75, 0), &"settled": Vector2(-25, 0)},
+		{&"npc_id": &"leena", &"position": Vector2(-50, 64), &"work": Vector2(80, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"owen", &"position": Vector2(250, 64), &"work": Vector2(65, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"doyle", &"position": Vector2(365, 64), &"work": Vector2(55, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"idris", &"position": Vector2(-500, -64), &"work": Vector2(70, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"mara", &"position": Vector2(90, -64), &"work": Vector2(80, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"tom", &"position": Vector2(425, -64), &"work": Vector2(80, 0), &"settled": Vector2(-20, 0)},
+		{&"npc_id": &"nia", &"position": Vector2(520, -64), &"work": Vector2(60, 0), &"settled": Vector2(-18, 0)},
 	],
 }
 

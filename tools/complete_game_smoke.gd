@@ -151,6 +151,7 @@ func _check_full_flow() -> void:
 	_check_school_power_coherence()
 	_check_healing_supplies(player)
 	_check_lighting()
+	await _check_level_camera_framing()
 	await _check_new_encounter_behaviors()
 
 	# Complete Act I requirements and follow the newly playable north signal.
@@ -558,6 +559,30 @@ func _check_lighting() -> void:
 	var player_light := _main.get_node_or_null("Player/__LightingPlayerWarm") as PointLight2D
 	_check(player_light != null, "player light generated")
 	_check(player_light != null and player_light.shadow_enabled, "player light casts shadows")
+
+
+func _check_level_camera_framing() -> void:
+	var camera := _main.get_node_or_null("Player/Camera2D") as Camera2D
+	_check(camera != null, "persistent player camera exists")
+	if camera == null:
+		return
+	_check(camera.zoom == Main.DEFAULT_CAMERA_ZOOM, "field maps keep the authored close camera")
+
+	var base_scene := load(GameManager.BASE_SCENE_PATH) as PackedScene
+	var rustway_scene := load(CampaignSystem.RUSTWAY_SCENE) as PackedScene
+	_check(base_scene != null and rustway_scene != null, "camera framing test levels load")
+	if base_scene == null or rustway_scene == null:
+		return
+
+	_main.call("_on_travel_requested", base_scene, &"from_world")
+	await _frames(4)
+	_expect_level(GameManager.BASE_SCENE_PATH)
+	_check(camera.zoom == Vector2(1.3, 1.3), "Railhome widens to show its connected work bays")
+
+	_main.call("_on_travel_requested", rustway_scene, &"from_base")
+	await _frames(4)
+	_expect_level(CampaignSystem.RUSTWAY_SCENE)
+	_check(camera.zoom == Main.DEFAULT_CAMERA_ZOOM, "leaving Railhome restores the field camera")
 
 
 func _check_atlas_normal_pairing(director: Node) -> void:

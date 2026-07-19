@@ -6,6 +6,8 @@ extends Node2D
 ## Player, the camera (a child of the Player), and the HUD -- and holds a
 ## single swappable "level" underneath LevelHolder.
 
+const DEFAULT_CAMERA_ZOOM := Vector2(1.9, 1.9)
+
 @export var start_level: PackedScene
 @export var start_spawn: StringName = &""
 
@@ -68,7 +70,10 @@ func _place_player(spawn: StringName) -> void:
 func _configure_camera_limits() -> void:
 	if _camera == null or _current_level == null:
 		return
-	var bounds_node := _current_level.get_node_or_null("Ground") as Node2D
+	_camera.zoom = _level_camera_zoom()
+	var bounds_node := _current_level.get_node_or_null("CameraBounds") as Node2D
+	if bounds_node == null:
+		bounds_node = _current_level.get_node_or_null("Ground") as Node2D
 	if bounds_node == null:
 		bounds_node = _current_level.get_node_or_null("Floor") as Node2D
 	if bounds_node == null:
@@ -81,6 +86,15 @@ func _configure_camera_limits() -> void:
 	_camera.limit_right = ceili(bounds.end.x)
 	_camera.limit_bottom = ceili(bounds.end.y)
 	_camera.reset_smoothing()
+
+
+func _level_camera_zoom() -> Vector2:
+	var requested: Variant = _current_level.get_meta("camera_zoom", DEFAULT_CAMERA_ZOOM)
+	if requested is Vector2:
+		var zoom_value := requested as Vector2
+		if zoom_value.x > 0.0 and zoom_value.y > 0.0:
+			return zoom_value
+	return DEFAULT_CAMERA_ZOOM
 
 
 func _world_bounds_for(node: Node2D) -> Rect2:
