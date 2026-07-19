@@ -60,11 +60,11 @@ func is_available() -> bool:
 func get_prompt() -> String:
 	match _stage:
 		Stage.DETECTED:
-			return "Focus receiver on %s" % _artifact_name()
+			return "Tune receiver to %s" % _artifact_name()
 		Stage.FOCUSED:
-			return "Resolve trace on %s" % _artifact_name()
+			return "Hold the signal on %s" % _artifact_name()
 		Stage.REVEALED:
-			return "Review evidence from %s" % _artifact_name()
+			return "Review the recovered memory"
 	return ""
 
 
@@ -88,8 +88,8 @@ func detect_from(origin: Vector2) -> bool:
 	_apply_stage_visual(true)
 	AudioManager.play(&"signal_tick", -7.0, 0.88)
 	EventBus.notice_posted.emit(
-		"01 / DETECT   %s\nNOISE   %s\nObject edge held. Move closer and focus the receiver."
-		% [_bearing_text(origin), _signal_profile()])
+		"Signal found: %s.\n%s\nMove closer and sweep again."
+		% [_artifact_name(), _bearing_text(origin)])
 	EventBus.camera_shake_requested.emit(0.7, 0.06)
 	return true
 
@@ -119,7 +119,7 @@ func reveal_trace() -> bool:
 	_apply_stage_visual(true)
 	EventBus.echo_revealed.emit(echo_data)
 	EventBus.notice_posted.emit(
-		"03 / REVEAL   OBJECT + AFTERIMAGE ALIGNED\n%s"
+		"Memory recovered from the object.\n%s"
 		% (echo_data.evidence_label() if echo_data != null else "UNCLASSIFIED EVIDENCE"))
 	EventBus.camera_shake_requested.emit(1.8, 0.11)
 	_overlay.present_reveal(echo_data, _bearing_text(_last_scan_origin))
@@ -146,12 +146,12 @@ func resolve_trace(disposition: StringName) -> bool:
 	if disposition == ArchiveSystem.FED:
 		AudioManager.play(&"weak_signal", -4.0, 0.74)
 		EventBus.notice_posted.emit(
-			"04 / FED   %s\nThe physical object remains. This trace was not verified.\n%s"
+			"Sent without checking: %s.\n%s"
 			% [_artifact_name(), echo_data.feed_warning])
 	else:
 		AudioManager.play(&"echo_recover")
 		EventBus.notice_posted.emit(
-			"04 / VERIFIED + FILED   %s\n%s\nThe physical object remains in spent state."
+			"Checked and filed: %s.\n%s"
 			% [_artifact_name(), echo_data.verification_text])
 	EventBus.camera_shake_requested.emit(1.6, 0.1)
 	return true
@@ -221,7 +221,7 @@ func _on_scanned(origin: Vector2) -> void:
 				focus_trace(origin)
 			else:
 				EventBus.notice_posted.emit(
-					"01 / DETECT   %s\nCarrier too broad. Move closer to focus."
+					"Signal found, but it is too weak here.\n%s\nMove closer and sweep again."
 					% _bearing_text(origin))
 		Stage.FOCUSED:
 			_last_scan_origin = origin
@@ -288,27 +288,27 @@ func _apply_stage_visual(animated: bool) -> void:
 	match _stage:
 		Stage.DETECTED:
 			artifact_color = Color(1.0, 0.96, 0.86, 0.95)
-			edge_color = Color(0.72, 0.82, 0.72, 0.19)
-			light_energy = 0.45
-			light_radius = 52.0
+			edge_color = Color(0.72, 0.82, 0.72, 0.28)
+			light_energy = 0.65
+			light_radius = 68.0
 			artifact_shadow_lift = 0.52
-			artifact_exposure = 1.50
+			artifact_exposure = 1.58
 		Stage.FOCUSED:
 			artifact_color = Color(1.0, 0.98, 0.9, 1.0)
-			edge_color = Color(0.72, 0.84, 0.74, 0.25)
-			dust_color = Color(0.62, 0.78, 0.68, 0.1)
-			light_energy = 0.85
-			light_radius = 86.0
+			edge_color = Color(0.72, 0.84, 0.74, 0.38)
+			dust_color = Color(0.62, 0.78, 0.68, 0.16)
+			light_energy = 1.02
+			light_radius = 108.0
 			afterimage_alignment = 0.38
 			artifact_shadow_lift = 0.64
-			artifact_exposure = 1.68
+			artifact_exposure = 1.78
 		Stage.REVEALED:
 			artifact_color = Color(1.0, 0.98, 0.9, 1.0)
-			edge_color = Color(0.72, 0.84, 0.74, 0.19)
-			afterimage_color = Color(0.92, 0.94, 0.88, 0.78)
-			dust_color = Color(0.62, 0.78, 0.68, 0.13)
-			light_energy = 1.15
-			light_radius = 118.0
+			edge_color = Color(0.72, 0.84, 0.74, 0.30)
+			afterimage_color = Color(0.92, 0.94, 0.88, 0.86)
+			dust_color = Color(0.62, 0.78, 0.68, 0.20)
+			light_energy = 1.38
+			light_radius = 142.0
 			afterimage_alignment = 0.92
 			artifact_shadow_lift = 0.68
 			artifact_exposure = 1.74
@@ -460,7 +460,7 @@ func _bearing_text(origin: Vector2) -> String:
 	var degrees := fposmod(rad_to_deg(atan2(offset.x, -offset.y)), 360.0)
 	var names := ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
 	var index := int(round(degrees / 45.0)) % names.size()
-	return "NEEDLE %s / %03d° / RANGE %03d" % [
+	return "NEEDLE %s / %03d DEG / RANGE %03d" % [
 		names[index], roundi(degrees), roundi(offset.length())]
 
 

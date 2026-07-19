@@ -79,12 +79,12 @@ func _try_pulse() -> void:
 		if feedback_source.has_method("get_scanner_feedback"):
 			var feedback: Dictionary = feedback_source.call("get_scanner_feedback", global_position)
 			EventBus.notice_posted.emit(
-				"RECEIVER CONTACT   %s\nNOISE   %s"
-				% [feedback.get("bearing", "NEEDLE --"), feedback.get("noise", "unresolved carrier")])
+				"Signal found.\n%s"
+				% feedback.get("bearing", "Direction unknown"))
 		else:
-			EventBus.notice_posted.emit("The receiver catches movement inside the sweep.")
+			EventBus.notice_posted.emit("The receiver catches movement nearby.")
 	else:
-		EventBus.notice_posted.emit("The sweep comes back clean.")
+		EventBus.notice_posted.emit("Nothing answers this sweep.")
 	EventBus.scanner_pulsed.emit(global_position, _effective_radius())
 
 

@@ -203,6 +203,31 @@
       box-shadow: 0 0 0.7rem rgba(105, 212, 209, 0.55);
     }
 
+    .sound-chip {
+      position: fixed;
+      z-index: 12;
+      top: max(0.85rem, var(--safe-top));
+      right: max(1rem, var(--safe-right));
+      padding: 0.42rem 0.72rem;
+      color: var(--ink);
+      background: rgba(93, 66, 28, 0.82);
+      border: 1px solid rgba(214, 169, 93, 0.45);
+      border-radius: 999px;
+      font: inherit;
+      font-size: 0.72rem;
+      letter-spacing: 0.045em;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+
+    .sound-chip:hover,
+    .sound-chip:focus-visible {
+      background: rgba(119, 82, 31, 0.92);
+      outline: 2px solid rgba(105, 212, 209, 0.62);
+      outline-offset: 2px;
+    }
+
     .bottombar {
       bottom: 0;
       min-height: 3.4rem;
@@ -526,6 +551,10 @@
       </span>
     </header>
 
+    <button class="sound-chip" id="sound-unlock" type="button" hidden>
+      Enable sound
+    </button>
+
     <main class="stage" id="game">
       <canvas id="canvas" tabindex="0" aria-label="$GODOT_PROJECT_NAME game canvas">
         Your browser does not support the canvas element required to run this game.
@@ -593,6 +622,73 @@
     This game requires JavaScript and WebAssembly. Enable JavaScript, then reload the page.
   </noscript>
 
+  <script>
+    (() => {
+      "use strict";
+
+      // Godot's runtime can cache AudioContext while its script is evaluated,
+      // so the constructor must be wrapped before that script loads. The
+      // launch gesture starts the download; the next genuine gesture resumes
+      // every context the engine created in the meantime.
+      const audioContexts = new Set();
+      const app = document.getElementById("app");
+      const soundButton = document.getElementById("sound-unlock");
+      const updateAudioState = () => {
+        const states = [...audioContexts].map((context) => context.state);
+        const running = states.includes("running");
+        app.dataset.audioContexts = String(states.length);
+        app.dataset.audioState = running
+          ? "running"
+          : states[0] || "waiting";
+        soundButton.hidden = !(
+          states.length > 0
+          && !running
+          && app.classList.contains("is-running")
+        );
+      };
+      const registerAudioContext = (context) => {
+        audioContexts.add(context);
+        context.addEventListener("statechange", updateAudioState);
+        updateAudioState();
+        return context;
+      };
+      const trackAudioConstructor = (property) => {
+        const NativeAudioContext = window[property];
+        if (typeof NativeAudioContext !== "function") {
+          return false;
+        }
+        window[property] = new Proxy(NativeAudioContext, {
+          construct(target, args, newTarget) {
+            return registerAudioContext(Reflect.construct(target, args, newTarget));
+          },
+        });
+        return true;
+      };
+      const hasAudioContext = trackAudioConstructor("AudioContext")
+        || trackAudioConstructor("webkitAudioContext");
+      app.dataset.audioState = hasAudioContext ? "waiting" : "unavailable";
+      app.dataset.audioContexts = "0";
+      window.__twfuResumeAudio = () => {
+        for (const context of audioContexts) {
+          if (context.state === "suspended" || context.state === "interrupted") {
+            context.resume().catch(() => {
+              // Browsers may reject a non-gesture attempt. The capture-phase
+              // handlers below retry on the next keyboard, pointer or touch.
+            });
+          }
+        }
+      };
+      window.__twfuUpdateAudioState = updateAudioState;
+      window.addEventListener("pointerdown", window.__twfuResumeAudio, { capture: true, passive: true });
+      window.addEventListener("touchstart", window.__twfuResumeAudio, { capture: true, passive: true });
+      window.addEventListener("keydown", window.__twfuResumeAudio, true);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") {
+          window.__twfuResumeAudio();
+        }
+      });
+    })();
+  </script>
   <script src="$GODOT_URL"></script>
   <script>
     (() => {
@@ -609,61 +705,19 @@
       const progress = document.getElementById("load-progress");
       const loadDetail = document.getElementById("load-detail");
       const runtimeStatus = document.getElementById("runtime-status");
+      const soundButton = document.getElementById("sound-unlock");
 
       let starting = false;
       let started = false;
 
-      // The launch click happens before the engine creates its AudioContext.
-      // Keep hold of that context once it exists, then resume it from the next
-      // genuine keyboard, pointer or touch gesture before Godot handles input.
-      const audioContexts = new Set();
-      const registerAudioContext = (context) => {
-        audioContexts.add(context);
-        context.addEventListener("statechange", updateAudioState);
-        updateAudioState();
-        return context;
-      };
-      const updateAudioState = () => {
-        const states = [...audioContexts].map((context) => context.state);
-        app.dataset.audioContexts = String(states.length);
-        app.dataset.audioState = states.includes("running")
-          ? "running"
-          : states[0] || "waiting";
-      };
-      const trackAudioConstructor = (property) => {
-        const NativeAudioContext = window[property];
-        if (typeof NativeAudioContext !== "function") {
-          return false;
-        }
-        window[property] = new Proxy(NativeAudioContext, {
-          construct(target, args) {
-            return registerAudioContext(Reflect.construct(target, args, target));
-          },
-        });
-        return true;
-      };
-      const hasAudioContext = trackAudioConstructor("AudioContext")
-        || trackAudioConstructor("webkitAudioContext");
-      app.dataset.audioState = hasAudioContext ? "waiting" : "unavailable";
-      app.dataset.audioContexts = "0";
-
       const resumeAudio = () => {
-        for (const context of audioContexts) {
-          if (context.state === "suspended" || context.state === "interrupted") {
-            context.resume().catch(() => {
-              // A browser may reject a programmatic attempt. The next genuine
-              // gesture reaches this same handler and retries without a prompt.
-            });
-          }
+        if (typeof window.__twfuResumeAudio === "function") {
+          window.__twfuResumeAudio();
         }
       };
-      window.addEventListener("pointerdown", resumeAudio, { capture: true, passive: true });
-      window.addEventListener("touchstart", resumeAudio, { capture: true, passive: true });
-      window.addEventListener("keydown", resumeAudio, true);
-      document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") {
-          resumeAudio();
-        }
+      soundButton.addEventListener("click", () => {
+        resumeAudio();
+        canvas.focus({ preventScroll: true });
       });
 
       const formatBytes = (bytes) => {
@@ -727,6 +781,9 @@
           runtimeStatus.textContent = "Signal live";
           canvas.focus({ preventScroll: true });
           resumeAudio();
+          if (typeof window.__twfuUpdateAudioState === "function") {
+            window.__twfuUpdateAudioState();
+          }
         } catch (error) {
           console.error("Godot Web launch failed:", error);
           showError(error instanceof Error ? error.message : String(error));

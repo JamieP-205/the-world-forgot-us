@@ -15,6 +15,28 @@ const NPCServiceRulesScript = preload("res://scripts/narrative/npc_service_rules
 
 ## Marker2D name to spawn the player on in the destination level.
 @export var target_spawn: StringName = &""
+@export_enum("road", "embedded_door", "painted_door") var presentation := "road"
+
+
+func _ready() -> void:
+	_apply_presentation()
+
+
+func _apply_presentation() -> void:
+	var embedded := presentation == "embedded_door"
+	var road := presentation == "road"
+	for node_name in [&"Frame", &"DoorCrossbar"]:
+		var item := get_node_or_null(NodePath(String(node_name))) as CanvasItem
+		if item != null:
+			item.visible = embedded
+	for node_name in [&"Doorway", &"Handle"]:
+		var item := get_node_or_null(NodePath(String(node_name))) as CanvasItem
+		if item != null:
+			item.visible = false
+	for node_name in [&"RoadThreshold", &"Beacon", &"Arrow"]:
+		var item := get_node_or_null(NodePath(String(node_name))) as CanvasItem
+		if item != null:
+			item.visible = road
 
 
 func interact(player: Node2D) -> void:

@@ -87,6 +87,8 @@ func _check_region(region_id: StringName, packed: PackedScene) -> void:
 	_check_solid_contracts(map, region_id)
 	_check_quiet_buffers(map, region_id)
 	_check_field_tool_targets(map, region_id)
+	if region_id == &"cullbrook":
+		_check_cullbrook_first_hour(map)
 	map.queue_free()
 	await get_tree().process_frame
 	await get_tree().process_frame
@@ -191,6 +193,10 @@ func _check_solid_contracts(map: Node2D, region_id: StringName) -> void:
 		_check(body != null, "%s collision contract belongs to StaticBody2D" % solid_node.name)
 		if body == null:
 			continue
+		var owns_visible_art := _has_visible_sprite(body)
+		if not owns_visible_art and body.get_parent() != null:
+			owns_visible_art = _has_visible_sprite(body.get_parent())
+		_check(owns_visible_art, "%s/%s has visible art at its collision" % [region_id, body.name])
 		_check(String(body.get_meta("collision_contract", "")) == "visible-foot", "%s/%s uses the visible-foot contract" % [region_id, body.name])
 		var visible: PackedVector2Array = body.get_meta("visible_footprint", PackedVector2Array())
 		_check(visible.size() >= 3, "%s/%s records its visible foot" % [region_id, body.name])
@@ -210,7 +216,54 @@ func _check_solid_contracts(map: Node2D, region_id: StringName) -> void:
 		var base_door := map.get_node_or_null("BaseDoor") as Node2D
 		_check(carriage != null and base_door != null, "Cullbrook has the full Railhome exterior and threshold")
 		if carriage != null and base_door != null:
-			_check(not _point_hits_body(carriage, base_door.global_position), "Railhome threshold sits in the painted carriage-door gap")
+			_check(not _point_hits_body(carriage, base_door.global_position), "Railhome threshold sits outside the solid carriage shell")
+
+
+func _check_cullbrook_first_hour(map: Node2D) -> void:
+	var spawn := map.get_node_or_null("from_base") as Marker2D
+	var crate := map.get_node_or_null("RoadsideCrate") as Node2D
+	var car_boot := map.get_node_or_null("CarBoot") as LootContainer
+	var carriage := map.get_node_or_null("Carriage317Exterior") as StaticBody2D
+	var marks := map.get_node_or_null("FirstSupplyRouteMarks") as Node2D
+	_check(spawn != null and crate != null, "Cullbrook keeps the exterior spawn and first supply crate")
+	if spawn != null and crate != null:
+		_check(spawn.global_position.distance_to(crate.global_position) <= 340.0,
+			"the first supply crate is one readable approach from Railhome")
+		_check(carriage != null and not _point_hits_body(carriage, spawn.global_position),
+			"the exterior spawn is visibly in front of the carriage")
+	_check(marks != null and marks.get_child_count() == 4,
+		"four worn amber marks lead from Railhome to the first supplies")
+	_check(car_boot != null and car_boot.find_child("SolidBody", true, false) == null,
+		"the car boot uses the visible car collision instead of a hidden crate border")
+
+	var nearest_enemy := INF
+	for enemy in _nodes_in_group(map, "enemies"):
+		var actor := enemy as Node2D
+		if actor != null and spawn != null:
+			nearest_enemy = minf(nearest_enemy, actor.global_position.distance_to(spawn.global_position))
+	_check(nearest_enemy >= 300.0 and nearest_enemy <= 850.0,
+		"the opening has breathing room followed by a discoverable enemy")
+
+	var idris: WorldSurvivorNPC
+	for npc in _nodes_in_group(map, "world_npcs"):
+		if StringName(npc.get_meta("npc_id", &"")) == &"idris":
+			idris = npc as WorldSurvivorNPC
+			break
+	_check(idris != null and spawn != null and idris.global_position.distance_to(spawn.global_position) <= 380.0,
+		"Idris is on the first supply route instead of hidden across the map")
+
+	for node in _descendants(map):
+		var polygon := node as Polygon2D
+		if polygon != null and polygon.texture != null:
+			_check(
+				polygon.texture.resource_path == "res://assets/processed/environment/ash_asphalt_seamless.png"
+					and bool(polygon.get_meta("seamless_world_surface", false)),
+				"Cullbrook world geometry uses only the marked seamless surface, never a prop atlas"
+			)
+		var body := node as StaticBody2D
+		if body != null:
+			_check(not String(body.name).ends_with("Footprint"),
+				"Cullbrook does not generate collision-only borders for decorative art")
 
 
 func _check_quiet_buffers(map: Node2D, region_id: StringName) -> void:
@@ -286,8 +339,8 @@ func _check_interiors() -> void:
 			var hero := heroes[0]
 			_check(String(hero.get_meta("interior_identity", "")) == identity_key, "%s hero asset carries the site identity" % building_id)
 			_check(hero.get_meta("atlas_cell", Vector2i(-1, -1)) == atlas_cell, "%s hero asset uses its assigned atlas cell" % building_id)
-			var hero_visual := hero.get_node_or_null("HeroVisual") as Sprite2D
-			_check(hero_visual != null and hero_visual.texture is AtlasTexture, "%s hero renders from the generated atlas" % building_id)
+			var site_plate := hero.get_node_or_null("SitePlate") as Polygon2D
+			_check(site_plate != null and site_plate.visible, "%s uses a restrained site plate instead of miniature architecture" % building_id)
 		var interior_width := 420.0 * float(rooms) + 100.0
 		for room_index in rooms:
 			var room_center := Vector2(-interior_width * 0.5 + 50.0 + 420.0 * (float(room_index) + 0.5), 0)

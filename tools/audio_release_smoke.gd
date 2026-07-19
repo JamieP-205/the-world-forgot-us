@@ -159,9 +159,21 @@ func _test_web_unlock_contract() -> void:
 		"keydown",
 		"capture: true",
 		"app.dataset.audioState",
+		'id="sound-unlock"',
+		"window.__twfuResumeAudio",
 		"resumeAudio();",
 	]:
 		_check(shell.contains(token), "Web shell includes audio unlock token: %s" % token)
+	var wrapper_index := shell.find("new Proxy(NativeAudioContext")
+	var runtime_index := shell.find('<script src="$GODOT_URL"></script>')
+	_check(
+		wrapper_index >= 0 and runtime_index >= 0 and wrapper_index < runtime_index,
+		"Web shell wraps AudioContext before the Godot runtime can cache it",
+	)
+	_check(
+		shell.contains('</header>\n\n    <button class="sound-chip" id="sound-unlock"'),
+		"sound recovery control sits outside the fading launch chrome",
+	)
 	_check(not shell.contains(String.chr(0x00c2)), "Web shell contains no double-decoded UTF-8 artefact")
 	var manager_source := FileAccess.get_file_as_string("res://scripts/systems/audio_manager.gd")
 	for token in ["InputEventKey", "InputEventMouseButton", "InputEventScreenTouch", "InputEventJoypadButton"]:

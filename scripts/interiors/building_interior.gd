@@ -40,25 +40,25 @@ const PROP_PATHS := {
 }
 
 const PROP_SPECS := {
-	"bedroll": {"scale": 0.20, "solid": Vector2(74, 38), "lift": -8.0},
-	"chest": {"scale": 0.20, "solid": Vector2(64, 38), "lift": -9.0},
-	"lantern": {"scale": 0.14, "solid": Vector2(24, 20), "lift": -18.0},
+	"bedroll": {"scale": 0.20, "solid": Vector2.ZERO, "lift": -8.0},
+	"chest": {"scale": 0.20, "solid": Vector2.ZERO, "lift": -9.0},
+	"lantern": {"scale": 0.14, "solid": Vector2.ZERO, "lift": -18.0},
 	"map": {"scale": 0.17, "solid": Vector2.ZERO, "lift": -34.0},
 	"workbench": {"scale": 0.19, "solid": Vector2(94, 44), "lift": -18.0},
 	"empty_bench": {"scale": 0.18, "solid": Vector2(88, 40), "lift": -16.0},
 	"radio_desk": {"scale": 0.20, "solid": Vector2(96, 48), "lift": -22.0},
-	"receiver": {"scale": 0.13, "solid": Vector2(44, 30), "lift": -18.0},
+	"receiver": {"scale": 0.13, "solid": Vector2.ZERO, "lift": -18.0},
 	"counter": {"scale": 0.21, "solid": Vector2(104, 42), "lift": -18.0},
 	"vending": {"scale": 0.18, "solid": Vector2(48, 34), "lift": -24.0},
 	"phone": {"scale": 0.18, "solid": Vector2(44, 34), "lift": -24.0},
-	"barrier": {"scale": 0.18, "solid": Vector2(72, 22), "lift": -8.0},
-	"radio": {"scale": 0.16, "solid": Vector2(34, 24), "lift": -12.0},
+	"barrier": {"scale": 0.18, "solid": Vector2.ZERO, "lift": -8.0},
+	"radio": {"scale": 0.16, "solid": Vector2.ZERO, "lift": -12.0},
 	"poster": {"scale": 0.17, "solid": Vector2.ZERO, "lift": -34.0},
 	"car": {"scale": 0.24, "solid": Vector2(112, 54), "lift": -20.0},
-	"toolbox": {"scale": 0.17, "solid": Vector2(48, 28), "lift": -10.0},
+	"toolbox": {"scale": 0.17, "solid": Vector2.ZERO, "lift": -10.0},
 	"locker": {"scale": 0.18, "solid": Vector2(46, 34), "lift": -22.0},
-	"crate": {"scale": 0.16, "solid": Vector2(52, 32), "lift": -10.0},
-	"medicine": {"scale": 0.18, "solid": Vector2(32, 24), "lift": -12.0},
+	"crate": {"scale": 0.16, "solid": Vector2.ZERO, "lift": -10.0},
+	"medicine": {"scale": 0.18, "solid": Vector2.ZERO, "lift": -12.0},
 	"photo": {"scale": 0.15, "solid": Vector2.ZERO, "lift": -30.0},
 	"compass": {"scale": 0.14, "solid": Vector2.ZERO, "lift": -28.0},
 }
@@ -108,21 +108,15 @@ func _build_geometry() -> void:
 	floor.name = "Floor"
 	floor.polygon = _rect_points(Vector2(_interior_width, _interior_height))
 	floor.color = _floor_tint()
-	floor.texture = load(_floor_texture()) as Texture2D
-	floor.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	floor.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	floor.texture_scale = Vector2(0.74, 0.74)
 	floor.z_index = -3
 	add_child(floor)
+	_add_floor_seams()
 
 	var runner := Polygon2D.new()
 	runner.name = "ThresholdRunner"
 	runner.position = Vector2(0, 86)
 	runner.polygon = _rect_points(Vector2(_interior_width - 110.0, 82.0))
 	runner.color = _runner_tint()
-	runner.texture = load(TEX_WOOD) as Texture2D
-	runner.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	runner.texture_scale = Vector2(0.58, 0.58)
 	runner.z_index = -2
 	add_child(runner)
 
@@ -358,9 +352,6 @@ func _add_wall(node_name: String, position_value: Vector2, size: Vector2) -> voi
 	visual.name = "Visual"
 	visual.polygon = _rect_points(size)
 	visual.color = _wall_tint()
-	visual.texture = load(TEX_WOOD if String(_building.get("theme", "")) in ["home", "school", "shop"] else TEX_METAL) as Texture2D
-	visual.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	visual.texture_scale = Vector2(0.52, 0.52)
 	visual.z_index = 8
 	body.add_child(visual)
 
@@ -437,77 +428,91 @@ func _add_prop(
 
 
 func _add_identity_hero() -> void:
-	var atlas := load(BuildingCatalog.INTERIOR_IDENTITY_ATLAS) as Texture2D
-	if atlas == null:
-		return
 	var cell := _identity.get("atlas_cell", Vector2i(-1, -1)) as Vector2i
 	if cell.x < 0 or cell.y < 0:
 		return
-	var cell_size := Vector2(
-		float(atlas.get_width()) / float(BuildingCatalog.INTERIOR_ATLAS_GRID.x),
-		float(atlas.get_height()) / float(BuildingCatalog.INTERIOR_ATLAS_GRID.y)
-	)
-	var region := AtlasTexture.new()
-	region.atlas = atlas
-	region.region = Rect2(Vector2(cell) * cell_size, cell_size)
 
 	var hero_room := clampi(int(_identity.get("hero_room", 0)), 0, _room_count - 1)
 	var offset := _identity.get("hero_offset", Vector2(0, -112)) as Vector2
-	var hero_id := _hero_prop(String(_building.get("hero", "")))
-	var hero_spec: Dictionary = PROP_SPECS.get(hero_id, {})
-	var solid: Vector2 = hero_spec.get("solid", Vector2.ZERO)
-	var holder: Node2D
-	if solid.length_squared() > 0.0:
-		var body := StaticBody2D.new()
-		body.collision_layer = 1
-		body.collision_mask = 0
-		holder = body
-	else:
-		holder = Node2D.new()
+	var holder := Node2D.new()
 	holder.name = "InteriorIdentity_%s" % String(_identity.get("identity_key", "unknown"))
-	holder.position = Vector2(_room_center_x(hero_room) + offset.x, offset.y)
+	holder.position = Vector2(
+		_room_center_x(hero_room) + clampf(offset.x, -124.0, 124.0),
+		-_interior_height * 0.5 + 58.0
+	)
 	holder.set_meta("building_id", _building_id)
 	holder.set_meta("interior_identity", String(_identity.get("identity_key", "")))
 	holder.set_meta("layout_identity", String(_identity.get("layout_key", "")))
 	holder.set_meta("atlas_cell", cell)
-	holder.set_meta("atlas_path", BuildingCatalog.INTERIOR_IDENTITY_ATLAS)
+	holder.set_meta("presentation", "site-plate")
 	holder.add_to_group("interior_identity_heroes")
 	add_child(holder)
 
-	var sprite := Sprite2D.new()
-	sprite.name = "HeroVisual"
-	sprite.texture = region
-	sprite.scale = Vector2.ONE * float(_identity.get("hero_scale", 0.64))
-	sprite.position = Vector2(0, -14)
-	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	sprite.z_index = 4
-	holder.add_child(sprite)
+	var plate := Polygon2D.new()
+	plate.name = "SitePlate"
+	plate.polygon = _rect_points(Vector2(96, 30))
+	plate.color = Color(0.10, 0.115, 0.105, 0.96)
+	plate.z_index = 6
+	holder.add_child(plate)
 
-	if solid.length_squared() > 0.0:
-		var shape := RectangleShape2D.new()
-		shape.size = solid
-		var collision := CollisionShape2D.new()
-		collision.name = "CollisionShape2D"
-		collision.position = Vector2(0, solid.y * 0.10)
-		collision.shape = shape
-		holder.add_child(collision)
+	var stripe := Polygon2D.new()
+	stripe.name = "IdentityStripe"
+	stripe.position = Vector2(0, 7)
+	stripe.polygon = _rect_points(Vector2(78, 5))
+	stripe.color = (_identity.get("palette", Color(0.68, 0.52, 0.28)) as Color).lightened(0.12)
+	stripe.z_index = 7
+	holder.add_child(stripe)
+
+	var studs := Polygon2D.new()
+	studs.name = "SiteMark"
+	var notch := 4.0 + float((cell.x + cell.y) % 4) * 4.0
+	studs.polygon = PackedVector2Array([
+		Vector2(-34, -8), Vector2(34 - notch, -8), Vector2(34, -2),
+		Vector2(34, 2), Vector2(-34 + notch, 8), Vector2(-34, 2),
+	])
+	studs.color = Color(0.63, 0.59, 0.49, 0.80)
+	studs.z_index = 7
+	holder.add_child(studs)
 
 
 func _add_room_decal(room: int, center_x: float) -> void:
 	var cell := _identity.get("atlas_cell", Vector2i.ZERO) as Vector2i
 	var identity_seed := cell.y * BuildingCatalog.INTERIOR_ATLAS_GRID.x + cell.x
-	var decal := Sprite2D.new()
+	var decal := Polygon2D.new()
 	decal.name = "Room%dWear" % (room + 1)
-	decal.texture = load(TEX_DIRT if (identity_seed + room) % 3 != 1 else TEX_CONCRETE) as Texture2D
 	var x_offset := -46.0 + float((identity_seed * 29 + room * 47) % 93)
 	var y_offset := -8.0 + float((identity_seed * 17 + room * 31) % 47)
 	decal.position = Vector2(center_x + x_offset, y_offset)
 	decal.rotation = -0.14 + float((identity_seed * 11 + room * 7) % 29) * 0.01
-	decal.scale = Vector2(0.48 + float(identity_seed % 4) * 0.035, 0.40 + float((identity_seed + room) % 3) * 0.035)
-	decal.modulate = Color(0.56, 0.53, 0.45, 0.42)
+	decal.polygon = PackedVector2Array([
+		Vector2(-58, -12), Vector2(-20, -18), Vector2(50, -8),
+		Vector2(64, 9), Vector2(12, 16), Vector2(-54, 10),
+	])
+	decal.color = Color(0.11, 0.105, 0.09, 0.16)
 	decal.z_index = -1
 	decal.set_meta("interior_identity", String(_identity.get("identity_key", "")))
 	add_child(decal)
+
+
+func _add_floor_seams() -> void:
+	var seams := Node2D.new()
+	seams.name = "FloorSeams"
+	seams.z_index = -2
+	add_child(seams)
+	for y in [-174.0, -92.0, -10.0, 72.0, 154.0]:
+		var seam := Polygon2D.new()
+		seam.position = Vector2(0, y)
+		seam.polygon = _rect_points(Vector2(_interior_width - 48.0, 2.0))
+		seam.color = Color(0.06, 0.065, 0.058, 0.22)
+		seams.add_child(seam)
+	for room in _room_count:
+		var centre := _room_center_x(room)
+		for offset in [-116.0, 116.0]:
+			var seam := Polygon2D.new()
+			seam.position = Vector2(centre + offset, 0)
+			seam.polygon = _rect_points(Vector2(2.0, _interior_height - 48.0))
+			seam.color = Color(0.06, 0.065, 0.058, 0.16)
+			seams.add_child(seam)
 
 
 func _room_center_x(room: int) -> float:

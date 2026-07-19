@@ -34,8 +34,8 @@ const RELAY_HUSK_PATH := "res://scenes/enemies/enemy_relay_husk.tscn"
 
 const ASH_GROUND := Color(0.16, 0.17, 0.155, 1.0)
 const ASH_LIGHT := Color(0.22, 0.23, 0.20, 1.0)
-const ROAD := Color(0.54, 0.53, 0.47, 1.0)
-const ROAD_EDGE := Color(0.42, 0.38, 0.31, 0.72)
+const ROAD := Color(0.28, 0.285, 0.265, 1.0)
+const ROAD_EDGE := Color(0.20, 0.185, 0.155, 0.78)
 const RUST := Color(0.42, 0.25, 0.16, 1.0)
 const RUST_DARK := Color(0.24, 0.16, 0.13, 1.0)
 const METAL := Color(0.30, 0.33, 0.31, 1.0)
@@ -580,8 +580,8 @@ func _build_choir_core() -> void:
 # ---------------------------------------------------------------------------
 # Shared authoring helpers
 
-func _add_ground(size: Vector2, color: Color = ASH_GROUND, texture_path: String = TEX_DIRT) -> void:
-	var texture := load(texture_path) as Texture2D
+func _add_ground(size: Vector2, color: Color = ASH_GROUND, _texture_path: String = TEX_DIRT) -> void:
+	var texture := load(TEX_ASH_SEAMLESS) as Texture2D
 	if texture != null:
 		var ground := Sprite2D.new()
 		ground.name = "Ground"
@@ -591,7 +591,7 @@ func _add_ground(size: Vector2, color: Color = ASH_GROUND, texture_path: String 
 		ground.region_rect = Rect2(Vector2.ZERO, size)
 		ground.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 		ground.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		ground.modulate = color.lightened(0.66)
+		ground.modulate = color.lightened(0.24)
 		ground.z_index = -6
 		add_child(ground)
 	else:
@@ -617,9 +617,10 @@ func _add_ash_band(
 		Vector2(half.x * 0.52, half.y), Vector2(half.x * 0.05, half.y - stagger * 0.4),
 		Vector2(-half.x * 0.46, half.y + stagger * 0.18), Vector2(-half.x, half.y - stagger * 0.5),
 	])
-	var band := _add_polygon(node_name, points, color, -5)
-	_texture_polygon_once(band, texture_path, points)
+	var band := _add_polygon(node_name, points, _world_surface_color(color, 0.68), -5)
+	band.set_meta("material_reference", texture_path)
 	band.position = center
+	_apply_seamless_surface(band, color, Vector2(0.82, 0.82))
 
 
 func _add_polygon(node_name: String, points: PackedVector2Array, color: Color, z: int) -> Polygon2D:
@@ -639,39 +640,41 @@ func _add_textured_polygon(
 		color: Color,
 		z: int,
 		texture_scale_value: Vector2 = Vector2.ONE) -> Polygon2D:
-	var polygon := _add_polygon(node_name, points, color, z)
-	var texture := load(texture_path) as Texture2D
-	if texture != null:
-		polygon.texture = texture
-		polygon.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-		polygon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		polygon.texture_scale = texture_scale_value
+	var polygon := _add_polygon(node_name, points, _world_surface_color(color, 0.58), z)
+	polygon.set_meta("material_reference", texture_path)
+	_apply_seamless_surface(polygon, color, texture_scale_value)
 	return polygon
 
 
-func _texture_polygon_once(polygon: Polygon2D, texture_path: String, points: PackedVector2Array) -> void:
-	var texture := load(texture_path) as Texture2D
-	if texture == null or points.is_empty():
+func _world_surface_color(source: Color, value_scale: float) -> Color:
+	# Keep paths readable without turning them into bright placeholder cards.
+	# A slight warm-grey pull ties bespoke route colours back to the same ash.
+	var muted := Color(
+		source.r * value_scale,
+		source.g * value_scale,
+		source.b * value_scale,
+		source.a
+	)
+	return muted.lerp(Color(0.17, 0.175, 0.16, source.a), 0.22)
+
+
+func _apply_seamless_surface(polygon: Polygon2D, tint: Color, texture_scale_value: Vector2) -> void:
+	var texture := load(TEX_ASH_SEAMLESS) as Texture2D
+	if polygon == null or texture == null:
 		return
-	var minimum := points[0]
-	var maximum := points[0]
-	for point in points:
-		minimum.x = minf(minimum.x, point.x)
-		minimum.y = minf(minimum.y, point.y)
-		maximum.x = maxf(maximum.x, point.x)
-		maximum.y = maxf(maximum.y, point.y)
-	var span := maximum - minimum
-	span.x = maxf(span.x, 1.0)
-	span.y = maxf(span.y, 1.0)
-	var texture_size := texture.get_size()
-	var mapped_uv := PackedVector2Array()
-	for point in points:
-		var normalized := (point - minimum) / span
-		mapped_uv.append(normalized * texture_size)
 	polygon.texture = texture
-	polygon.uv = mapped_uv
-	polygon.texture_repeat = CanvasItem.TEXTURE_REPEAT_DISABLED
+	polygon.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	polygon.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	polygon.texture_scale = texture_scale_value
+	# The source photograph supplies the value range; this colour only nudges
+	# road, concrete and ash pockets apart without flattening the detail.
+	polygon.color = tint.lightened(0.58)
+
+
+func _texture_polygon_once(polygon: Polygon2D, texture_path: String, points: PackedVector2Array) -> void:
+	if polygon == null or points.is_empty():
+		return
+	polygon.set_meta("material_reference", texture_path)
 
 
 func _add_rect_visual(node_name: String, center: Vector2, size: Vector2, color: Color, z: int) -> Polygon2D:
@@ -727,11 +730,8 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		Vector2(-visual_half.x * 0.78, visual_half.y * 0.88),
 		Vector2(-visual_half.x, visual_half.y * 0.22),
 	])
-	visual.color = Color(0.74, 0.71, 0.62, 1.0).lerp(color.lightened(0.50), 0.28)
-	visual.texture = load(_structure_texture_for(node_name, size)) as Texture2D
-	visual.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
-	visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	visual.texture_scale = Vector2(0.74, 0.74)
+	visual.color = Color(0.19, 0.195, 0.175, 1.0).lerp(color, 0.24)
+	visual.set_meta("material_reference", _structure_texture_for(node_name, size))
 	visual.z_index = 2
 	# Full painted landmark sprites replace the old procedural obstacle face.
 	# Keeping both visible left a long, uniform backing band around the authored
@@ -755,14 +755,14 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		ruin_crown.z_index = 3
 		body.add_child(ruin_crown)
 	_add_structure_art(body, node_name, size)
-	# Match collision to the painted foot. Intact facades are split at the real
-	# door, with a short lintel behind it, so the threshold never hides inside a
-	# solid rectangle. Ruins keep one exact convex foot and visibly block entry.
+	# World entrances are interaction thresholds on the exterior apron. A full
+	# collision foot keeps the player from walking under the painted building;
+	# entering swaps to the authored interior instead.
 	if building_id != &"":
 		_add_intact_building_collision(body, visual.polygon, size)
 	else:
 		_add_convex_collision(body, "CollisionShape2D", visual.polygon)
-	WorldLayoutContract.tag_solid(body, solid_kind, visual.polygon, building_id != &"")
+	WorldLayoutContract.tag_solid(body, solid_kind, visual.polygon, false)
 	body.set_meta("footprint_size", size)
 	body.set_meta("player_scale_units", size / WorldLayoutContract.PLAYER_REFERENCE)
 	body.set_meta("building_id", building_id)
@@ -791,22 +791,10 @@ func _add_intact_building_collision(
 		footprint: PackedVector2Array,
 		size: Vector2) -> void:
 	var door_center_x := size.x * 0.24
-	var door_half_width := maxf(34.0, WorldLayoutContract.PLAYER_REFERENCE * 0.56)
-	var front_y := -INF
-	for point in footprint:
-		front_y = maxf(front_y, point.y)
-	var threshold_depth := maxf(56.0, WorldLayoutContract.PLAYER_REFERENCE * 0.86)
-	var left := _clip_polygon_axis(footprint, &"x", door_center_x - door_half_width, true)
-	var right := _clip_polygon_axis(footprint, &"x", door_center_x + door_half_width, false)
-	var lintel := _clip_polygon_axis(footprint, &"x", door_center_x - door_half_width, false)
-	lintel = _clip_polygon_axis(lintel, &"x", door_center_x + door_half_width, true)
-	lintel = _clip_polygon_axis(lintel, &"y", front_y - threshold_depth, true)
-	_add_convex_collision(body, "LeftFootprint", left)
-	_add_convex_collision(body, "RightFootprint", right)
-	_add_convex_collision(body, "DoorLintelFootprint", lintel)
+	_add_convex_collision(body, "BuildingFootprint", footprint)
 	body.set_meta("door_gap_center_x", door_center_x)
-	body.set_meta("door_gap_width", door_half_width * 2.0)
-	body.set_meta("door_gap_depth", threshold_depth)
+	body.set_meta("door_gap_width", 0.0)
+	body.set_meta("door_gap_depth", 0.0)
 
 
 func _add_convex_collision(
@@ -903,6 +891,12 @@ func _structure_texture_for(node_name: String, size: Vector2) -> String:
 
 func _add_structure_art(body: StaticBody2D, node_name: String, size: Vector2) -> void:
 	var lower := node_name.to_lower()
+	var structure_tint := (
+		METAL if (
+			"clinic" in lower or "relay" in lower or "transformer" in lower
+			or "control" in lower or "generator" in lower or "operations" in lower
+		) else RUST_DARK
+	)
 	if _add_named_landmark_art(body, lower, size):
 		return
 	if "bus" in lower:
@@ -923,29 +917,71 @@ func _add_structure_art(body: StaticBody2D, node_name: String, size: Vector2) ->
 			)
 		return
 
-	var feature_path := PROP_COUNTER
-	if "workshop" in lower or "control" in lower or "operations" in lower:
-		feature_path = PROP_WORKBENCH
-	elif "relay" in lower or "transformer" in lower or "pylon" in lower or "switch" in lower:
-		feature_path = PROP_RADIO_DESK
-	elif "archive" in lower or "school" in lower:
-		feature_path = PROP_MAP_WALL
+	# Furniture sheets and the full Railhome doorway used to be pasted onto
+	# exterior walls, making workbenches read as tiny buildings. Generic
+	# architecture uses a layered roof, restrained panels and one readable
+	# threshold. Nothing here resembles a freestanding interior prop.
+	var roof := Polygon2D.new()
+	roof.name = "RoofInset"
+	roof.position = Vector2(0, -size.y * 0.08)
+	roof.polygon = PackedVector2Array([
+		Vector2(-size.x * 0.40, -size.y * 0.31),
+		Vector2(size.x * 0.35, -size.y * 0.33),
+		Vector2(size.x * 0.43, -size.y * 0.08),
+		Vector2(size.x * 0.34, size.y * 0.24),
+		Vector2(-size.x * 0.36, size.y * 0.26),
+		Vector2(-size.x * 0.43, -size.y * 0.04),
+	])
+	roof.color = Color(0.115, 0.125, 0.115, 0.98).lerp(structure_tint, 0.18)
+	roof.z_index = 3
+	body.add_child(roof)
 
-	# A single authored facade makes the structure read as a place rather than
-	# an obstacle rectangle. It is deliberately centred on the traversable edge
-	# so collision and visual silhouette continue to agree.
-	var feature_scale := clampf(minf(size.x / 620.0, size.y / 430.0), 0.18, 0.46)
-	_add_structure_sprite(body, "AuthoredFacade", feature_path, Vector2(0, size.y * 0.04), feature_scale, 5)
-	if size.x >= 240.0 and not ("pylon" in lower or "bank" in lower):
-		var door_scale := clampf(size.y / 720.0, 0.12, 0.24)
-		_add_structure_sprite(
-			body,
-			"ServiceDoor",
-			PROP_DOORWAY,
-			Vector2(size.x * 0.28, size.y * 0.18),
-			door_scale,
-			6
-		)
+	for seam_index in 3:
+		var seam := Line2D.new()
+		seam.name = "RoofSeam%d" % (seam_index + 1)
+		var seam_x := size.x * (-0.24 + float(seam_index) * 0.24)
+		seam.points = PackedVector2Array([
+			Vector2(seam_x - 8.0, -size.y * 0.34),
+			Vector2(seam_x + 8.0, size.y * 0.18),
+		])
+		seam.width = 2.0
+		seam.default_color = Color(0.48, 0.34, 0.20, 0.28)
+		seam.z_index = 4
+		body.add_child(seam)
+
+	var door_center := Vector2(size.x * 0.24, size.y * 0.22)
+	var door := Polygon2D.new()
+	door.name = "ServiceDoorRecess"
+	door.position = door_center
+	door.polygon = WorldLayoutContract.rectangle_points(Vector2(
+		clampf(size.x * 0.12, 38.0, 58.0),
+		clampf(size.y * 0.34, 34.0, 58.0)
+	))
+	door.color = Color(0.105, 0.11, 0.095, 0.98)
+	door.z_index = 5
+	body.add_child(door)
+
+	var lintel := Polygon2D.new()
+	lintel.name = "ServiceDoorLintel"
+	lintel.position = door_center + Vector2(0, -clampf(size.y * 0.19, 19.0, 31.0))
+	lintel.polygon = WorldLayoutContract.rectangle_points(Vector2(
+		clampf(size.x * 0.15, 46.0, 68.0), 6.0
+	))
+	lintel.color = Color(0.58, 0.39, 0.18, 0.62)
+	lintel.z_index = 6
+	body.add_child(lintel)
+
+	for index in 2:
+		var window := Polygon2D.new()
+		window.name = "Window%d" % (index + 1)
+		window.position = Vector2(-size.x * (0.23 - float(index) * 0.20), size.y * 0.08)
+		window.polygon = WorldLayoutContract.rectangle_points(Vector2(
+			clampf(size.x * 0.12, 34.0, 54.0),
+			clampf(size.y * 0.13, 16.0, 25.0)
+		))
+		window.color = Color(0.09, 0.14, 0.135, 0.72)
+		window.z_index = 5
+		body.add_child(window)
 
 
 func _uses_named_landmark(node_name: String) -> bool:
@@ -1062,6 +1098,7 @@ func _add_sprite(
 	if texture == null:
 		return
 	var physical := _prop_is_solid(path)
+	var composed_story_prop := "maggie_cutting_body" in path.to_lower()
 	var parent: Node2D = self
 	if physical:
 		var body := StaticBody2D.new()
@@ -1071,10 +1108,19 @@ func _add_sprite(
 		body.collision_mask = 0
 		add_child(body)
 		parent = body
+	elif composed_story_prop:
+		# Maggie and her recorder are one authored discovery image, but the body
+		# must not become a navigation obstacle. Keep a named composition root
+		# for story checks and place the artwork beneath it without collision.
+		var composition := Node2D.new()
+		composition.name = node_name
+		composition.position = position_value
+		add_child(composition)
+		parent = composition
 	var sprite := Sprite2D.new()
-	sprite.name = "Visual" if physical else node_name
+	sprite.name = "Visual" if physical or composed_story_prop else node_name
 	sprite.texture = texture
-	sprite.position = Vector2.ZERO if physical else position_value
+	sprite.position = Vector2.ZERO if physical or composed_story_prop else position_value
 	sprite.scale = scale_value
 	sprite.modulate = tint
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
@@ -1098,10 +1144,18 @@ func _add_sprite(
 
 
 func _prop_is_solid(path: String) -> bool:
-	# Flat paper and hand-sized radios are ground dressing; everything with a
-	# standing base receives the collision footprint of that base.
+	# Only large, unmistakable obstacles block movement. Cones, signs, lamps,
+	# radios and scattered dressing remain visual so tiny art cannot create an
+	# invisible navigation border.
 	var lower := path.to_lower()
-	return not ("poster" in lower or "portable_radio" in lower)
+	return (
+		"broken_car" in lower
+		or "guardrail" in lower
+		or "debris_pile" in lower
+		or "warning_barrier" in lower
+		or "phone_booth" in lower
+		or "vending_machine" in lower
+	)
 
 
 func _prop_footprint(texture: Texture2D, scale_value: Vector2) -> Rect2:

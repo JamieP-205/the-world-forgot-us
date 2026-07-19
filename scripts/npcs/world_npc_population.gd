@@ -18,7 +18,7 @@ const ACTOR_SCENES := {
 
 const REGION_PLACEMENTS := {
 	&"cullbrook": [
-		{&"npc_id": &"idris", &"position": Vector2(385, 180), &"work": Vector2(58, -20), &"ignored": Vector2(126, 58)},
+		{&"npc_id": &"idris", &"position": Vector2(-430, 238), &"work": Vector2(34, -16), &"ignored": Vector2(92, 44)},
 	],
 	&"ashmere_verge": [
 		{&"npc_id": &"leena", &"position": Vector2(-1040, -390), &"work": Vector2(74, 12), &"ignored": Vector2(-116, 72)},

@@ -124,7 +124,10 @@ func clear_run_state() -> void:
 
 
 func _is_loadable_level(level_path: String) -> bool:
-	if level_path.is_empty() or not ResourceLoader.exists(level_path, "PackedScene"):
+	if not GameManager.is_travel_destination(level_path):
+		push_warning("SaveManager: save refers to an unknown level; keeping the current session.")
+		return false
+	if not ResourceLoader.exists(level_path, "PackedScene"):
 		return false
 	return load(level_path) is PackedScene
 
@@ -143,7 +146,22 @@ func _has_restorable_shape(data: Dictionary) -> bool:
 			return false
 	if data.has("version") and not (data["version"] is float or data["version"] is int):
 		return false
+	if data.has("player"):
+		var player := data.player as Dictionary
+		for axis in ["x", "y"]:
+			if player.has(axis) and not _is_bounded_number(player[axis], 10000.0):
+				return false
+		if player.has("health") and not _is_bounded_number(player.health, 1000.0):
+			return false
 	return true
+
+
+func _is_bounded_number(value: Variant, absolute_limit: float) -> bool:
+	if not (value is int or value is float):
+		return false
+	var number := float(value)
+	return not is_nan(number) and not is_inf(number) \
+		and absf(number) <= absolute_limit
 
 
 func _cancel_pending_player_restore() -> void:

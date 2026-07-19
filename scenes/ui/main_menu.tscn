@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/main_menu.gd" id="1_menu"]
 [ext_resource type="PackedScene" path="res://scenes/ui/controls_panel.tscn" id="2_ctl"]
@@ -62,7 +62,41 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
+[sub_resource type="StyleBoxFlat" id="Style_confirm_panel"]
+bg_color = Color(0.055, 0.065, 0.059, 0.99)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.72, 0.57, 0.31, 0.5)
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+content_margin_left = 22.0
+content_margin_top = 18.0
+content_margin_right = 22.0
+content_margin_bottom = 18.0
+
+[sub_resource type="StyleBoxFlat" id="Style_confirm_window"]
+bg_color = Color(0.035, 0.044, 0.04, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.25, 0.44, 0.4, 0.88)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+expand_margin_left = 2.0
+expand_margin_top = 42.0
+expand_margin_right = 2.0
+expand_margin_bottom = 2.0
+
 [sub_resource type="Theme" id="Theme_menu"]
+AcceptDialog/constants/buttons_min_height = 46
+AcceptDialog/constants/buttons_min_width = 160
+AcceptDialog/constants/buttons_separation = 24
+AcceptDialog/styles/panel = SubResource("Style_confirm_panel")
 Button/colors/font_color = Color(0.11, 0.14, 0.12, 1)
 Button/colors/font_disabled_color = Color(0.32, 0.33, 0.28, 0.74)
 Button/colors/font_focus_color = Color(0.08, 0.13, 0.11, 1)
@@ -74,6 +108,11 @@ Button/styles/focus = SubResource("Style_button_focus")
 Button/styles/hover = SubResource("Style_button_hover")
 Button/styles/normal = SubResource("Style_button_normal")
 Button/styles/pressed = SubResource("Style_button_pressed")
+Window/colors/title_color = Color(0.92, 0.87, 0.76, 1)
+Window/constants/title_height = 42
+Window/font_sizes/title_font_size = 16
+Window/styles/embedded_border = SubResource("Style_confirm_window")
+Window/styles/embedded_unfocused_border = SubResource("Style_confirm_window")
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -292,9 +331,9 @@ visible = false
 visible = false
 
 [node name="NewGameConfirm" type="ConfirmationDialog" parent="."]
-title = "Begin a new journey?"
-ok_button_text = "Begin Again"
-dialog_text = "This will erase the current field record and start from Carriage 317."
+title = "Start a new journey?"
+ok_button_text = "Start over"
+dialog_text = "Your current journey will be replaced.\nYou will return to Carriage 317."
 
 [node name="CreditsDialog" type="AcceptDialog" parent="."]
 title = "Credits"

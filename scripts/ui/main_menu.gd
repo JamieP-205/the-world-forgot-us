@@ -48,6 +48,7 @@ func _ready() -> void:
 	_settings_panel.visible = false
 	_settings_panel.closed.connect(_on_settings_closed)
 	_confirm.confirmed.connect(_do_new_game)
+	_configure_new_game_confirmation()
 
 	_create_mobile_tag()
 	get_viewport().size_changed.connect(_apply_responsive_layout)
@@ -58,6 +59,23 @@ func _ready() -> void:
 	else:
 		$Box/NewGame.grab_focus()
 	queue_redraw()
+
+
+func _configure_new_game_confirmation() -> void:
+	_confirm.unresizable = true
+	var confirm_button := _confirm.get_ok_button()
+	var cancel_button := _confirm.get_cancel_button()
+	for button in [confirm_button, cancel_button]:
+		button.custom_minimum_size = Vector2(160.0, 46.0)
+		button.add_theme_font_size_override("font_size", 16)
+	var message := _confirm.get_label()
+	message.add_theme_color_override("font_color", Color(0.9, 0.86, 0.77))
+	message.add_theme_font_size_override("font_size", 17)
+	message.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	_confirm.dialog_text = (
+		"Your current journey will be replaced.\n"
+		+ "You will return to Carriage 317."
+	)
 
 
 func _is_touch_device() -> bool:
@@ -342,7 +360,7 @@ func _on_continue() -> void:
 
 func _on_new_game() -> void:
 	if SaveManager.has_save():
-		_confirm.popup_centered()
+		_confirm.popup_centered(Vector2i(560, 220))
 	else:
 		_do_new_game()
 

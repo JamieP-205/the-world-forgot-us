@@ -189,11 +189,11 @@ func _check_verified_flow() -> void:
 	var detected_snapshot: Dictionary = anchor.get_trace_snapshot()
 	_check(bool(detected_snapshot.get("light_enabled", false)),
 		"Detect raises a small pool of real 2D light from the object")
-	_check(float(detected_snapshot.get("light_energy", 0.0)) >= 0.42
-		and float(detected_snapshot.get("light_energy", 0.0)) <= 0.48,
-		"Detect lighting is readable without flattening the scene")
-	_check(float(detected_snapshot.get("light_radius", 0.0)) >= 48.0
-		and float(detected_snapshot.get("light_radius", 0.0)) <= 58.0,
+	_check(float(detected_snapshot.get("light_energy", 0.0)) >= 0.62
+		and float(detected_snapshot.get("light_energy", 0.0)) <= 0.68,
+		"Detect lighting clearly lifts the found object without flattening the scene")
+	_check(float(detected_snapshot.get("light_radius", 0.0)) >= 64.0
+		and float(detected_snapshot.get("light_radius", 0.0)) <= 72.0,
 		"Detect light stays close to the physical carrier")
 	_check(not bool(detected_snapshot.get("afterimage_visible", true)),
 		"Detect does not reveal the memory layer early")

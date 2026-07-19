@@ -1199,8 +1199,8 @@ func get_objective() -> Dictionary:
 	if path == GameManager.BASE_SCENE_PATH:
 		if not BaseUpgradeSystem.is_built(&"scanner_coil"):
 			if not _has_parts(1, 2):
-				return _objective("ACT I / CULLBROOK SERVICES", "Find parts for the receiver coil.", "CULLBROOK / SERVICE CRATES OUTSIDE", _parts_progress(1, 2), "Outside")
-			return _objective("ACT I / CULLBROOK SERVICES", "Fit the receiver's search coil.", "CARRIAGE 317 / RECEIVER BENCH", "PARTS READY", "ScannerCoilBench")
+				return _objective("ACT I / THE UNPLUGGED VOICE", "Find 1 battery and 2 scrap for the receiver.", "OUTSIDE / FOLLOW THE AMBER MARKS", _parts_progress(1, 2), "Outside")
+			return _objective("ACT I / THE UNPLUGGED VOICE", "Build the Search Coil at the receiver bench.", "CARRIAGE 317 / RECEIVER BENCH", "PARTS READY", "ScannerCoilBench")
 		if not ArchiveSystem.has_echo(&"echo_last_signal"):
 			return _objective("ACT I / CULLBROOK SERVICES", "Recover Maggie's mast call.", "CULLBROOK / FALLEN MAST, EAST ROAD", "TRACE 0 / 1", "Outside")
 		if not BaseUpgradeSystem.is_built(&"radio_desk"):
@@ -1213,8 +1213,8 @@ func get_objective() -> Dictionary:
 	if path == RUSTWAY_SCENE or path.is_empty():
 		if not BaseUpgradeSystem.is_built(&"scanner_coil"):
 			if not _has_parts(1, 2):
-				return _objective("ACT I / CULLBROOK SERVICES", "Search the service crates for receiver parts.", "CULLBROOK / LIT CRATES ALONG EAST ROAD", _parts_progress(1, 2), "RoadsideCrate")
-			return _objective("ACT I / CULLBROOK SERVICES", "Take the parts back to the receiver bench.", "CARRIAGE 317 / WEST OF SERVICE YARD", "PARTS READY", "BaseDoor")
+				return _objective("ACT I / THE UNPLUGGED VOICE", "Find 1 battery and 2 scrap for the receiver.", "AMBER MARKS / EAST ROAD", _parts_progress(1, 2), "RoadsideCrate")
+			return _objective("ACT I / THE UNPLUGGED VOICE", "Return home and build the Search Coil.", "CARRIAGE 317 / AMBER DOOR", "PARTS READY", "BaseDoor")
 		if not ArchiveSystem.has_echo(&"echo_last_signal"):
 			return _objective("ACT I / CULLBROOK SERVICES", "Sweep the fallen mast, then catalogue its trace.", "CULLBROOK / FALLEN MAST, EAST ROAD", "TRACE 0 / 1", "MemoryEcho")
 		if not BaseUpgradeSystem.is_built(&"radio_desk"):

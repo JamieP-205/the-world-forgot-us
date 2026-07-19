@@ -181,6 +181,22 @@ func _check_scene_ownership() -> void:
 		"player controller exposes tuned acceleration")
 	_check(float(player.get("movement_deceleration")) > player.move_speed,
 		"player controller exposes tuned deceleration")
+	for direction in DIRECTIONS:
+		player.set("_face", direction)
+		player.call("_update_locomotion", true)
+		_check(player_walk.visible and is_equal_approx(player_walk.self_modulate.a, 1.0),
+			"player remains fully visible while walking %s" % direction)
+		_check(not player_visual.visible and is_equal_approx(player_visual.self_modulate.a, 1.0),
+			"action sheet resets cleanly while walking %s" % direction)
+		_check(player_walk.animation == StringName("walk_" + direction),
+			"walking %s selects the matching row" % direction)
+		player.call("_update_locomotion", false)
+		_check(player_visual.visible and is_equal_approx(player_visual.self_modulate.a, 1.0),
+			"player remains fully visible when stopping from %s" % direction)
+		_check(not player_walk.visible and is_equal_approx(player_walk.self_modulate.a, 1.0),
+			"walk sheet resets cleanly when stopping from %s" % direction)
+		_check(player_visual.animation == StringName("idle_" + direction),
+			"idle after %s keeps the matching facing" % direction)
 	player.queue_free()
 
 

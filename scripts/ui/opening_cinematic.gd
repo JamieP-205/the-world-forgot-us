@@ -7,14 +7,10 @@ const PHONE_PORTRAIT_CARD := Vector2(390.0, 320.0)
 const PHONE_LANDSCAPE_CARD := Vector2(820.0, 184.0)
 
 const BEATS := [
-	{"stamp": "Before dawn", "title": "The receiver wakes first.", "body": "Maggie's voice crosses an old family photograph. The set is not plugged in.", "duration": 5.2},
-	{"stamp": "Blank Night / eighteen years ago", "title": "Ellie remembers the switch.", "body": "Maggie told her to hold it down. Adult Ellie has spent years rebuilding what answered.", "duration": 5.6},
-	{"stamp": "Carriage 317", "title": "A carriage became a shelter.", "body": "A locked depot. A patched roof. Enough power for one lamp and a receiver that will not stay quiet.", "duration": 5.8},
-	{"stamp": "02:03 / Blank Night", "title": "Every sign gave a different answer.", "body": "Maggie held Ellie's red sleeve. It is the last part of that night Ellie trusts.", "duration": 5.8},
-	{"stamp": "Cullbrook services", "title": "“Ellie, don't answer me.”", "body": "A dead payphone rings in an empty café.", "duration": 5.4},
-	{"stamp": "The same moment", "title": "Someone answers first.", "body": "Same coat. Same height. Wrong side of the glass.", "duration": 5.4},
-	{"stamp": "Receiver printout", "title": "Caller confirmed safe.", "body": "The record names Ellie Ward. Ellie is still outside.", "duration": 5.6},
-	{"stamp": "First light", "title": "Three things call at once.", "body": "A phone east. The mast west. A human voice north. None of them will wait.", "duration": 6.0},
+	{"stamp": "Eighteen years after Blank Night", "title": "Maggie's voice comes through an unplugged receiver.", "body": "Maggie is Ellie's missing sister. No one has heard her since the night the warning signs sent them down different roads.", "duration": 6.0},
+	{"stamp": "Carriage 317", "title": "The voice may be a recording. It may be something copying her.", "body": "It knows their old house number, but the signal ends before Ellie can answer.", "duration": 5.8},
+	{"stamp": "Cullbrook service road", "title": "The signal left a trace at a fallen radio mast.", "body": "Ellie's receiver cannot scan it yet. The Search Coil needs one battery and two usable pieces of metal.", "duration": 5.8},
+	{"stamp": "First light", "title": "Start with the amber-marked crates.", "body": "Idris has marked the safe approach. Find the parts, return to the receiver bench, and learn who is using Maggie's voice.", "duration": 6.2},
 ]
 
 @onready var _canvas = $Illustration
