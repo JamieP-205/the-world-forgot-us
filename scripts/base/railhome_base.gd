@@ -7,7 +7,7 @@ extends Node2D
 signal shelter_state_changed(snapshot: Dictionary)
 
 const CELL_PITCH := 68.0
-const SHELTER_BOUNDS := Rect2(-612.0, -306.0, 1224.0, 612.0)
+const SHELTER_BOUNDS := Rect2(-612.0, -220.0, 1224.0, 440.0)
 const MAIN_ROUTE := Rect2(-552.0, -60.0, 1136.0, 120.0)
 
 var _snapshot: Dictionary = {}

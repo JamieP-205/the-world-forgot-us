@@ -44,6 +44,17 @@ func _run() -> void:
 
 func _check_named_contracts(base: RailhomeBase) -> void:
 	_check(base.y_sort_enabled, "Railhome root enables Y-sort")
+	_check(
+		base.get_meta("camera_zoom", Vector2.ZERO) == Vector2(1.3, 1.3),
+		"Railhome widens the camera enough to read its connected work bays",
+	)
+	var camera_bounds := base.get_node_or_null("CameraBounds") as Polygon2D
+	_check(camera_bounds != null, "Railhome defines carriage-only camera bounds")
+	if camera_bounds != null:
+		_check(
+			_polygon_rect(camera_bounds.polygon) == RailhomeBase.SHELTER_BOUNDS,
+			"camera bounds match the authored carriage shell",
+		)
 	var floor := base.get_node_or_null("Floor") as Polygon2D
 	_check(floor != null, "Floor remains a direct Polygon2D contract")
 	if floor != null:
@@ -54,6 +65,7 @@ func _check_named_contracts(base: RailhomeBase) -> void:
 	if spawn != null:
 		_check(spawn.is_in_group("spawn_points"), "from_world remains registered as a spawn point")
 		_check(spawn.position == Vector2(466, 0), "from_world lands in the clear egress spine")
+		_check_entry_frame(base, spawn)
 
 	var outside := base.get_node_or_null("Outside") as Area2D
 	_check(outside != null, "Outside remains a direct scene exit")
@@ -84,10 +96,49 @@ func _check_named_contracts(base: RailhomeBase) -> void:
 		_check(lantern_data != null and lantern_data.id == &"base_lantern", "Signal lantern keeps the base_lantern upgrade ID")
 
 
+func _check_entry_frame(base: RailhomeBase, spawn: Marker2D) -> void:
+	var zoom: Vector2 = base.get_meta("camera_zoom", Vector2.ZERO)
+	if zoom.x <= 0.0 or zoom.y <= 0.0:
+		return
+	var camera_bounds := base.get_node_or_null("CameraBounds") as Polygon2D
+	if camera_bounds == null:
+		return
+	var bounds_rect := _polygon_rect(camera_bounds.polygon)
+	var half_view := Vector2(1280.0 / zoom.x, 720.0 / zoom.y) * 0.5
+	var camera_center := bounds_rect.get_center()
+	if bounds_rect.size.x > half_view.x * 2.0:
+		camera_center.x = clampf(
+			spawn.position.x,
+			bounds_rect.position.x + half_view.x,
+			bounds_rect.end.x - half_view.x,
+		)
+	if bounds_rect.size.y > half_view.y * 2.0:
+		camera_center.y = clampf(
+			spawn.position.y,
+			bounds_rect.position.y + half_view.y,
+			bounds_rect.end.y - half_view.y,
+		)
+	var entry_frame := Rect2(camera_center - half_view, half_view * 2.0)
+	for node_path in [
+		"Workbench",
+		"PowerLockerA",
+		"PowerLockerB",
+		"StorageBox",
+		"MudBench",
+		"CarvedInitials",
+		"Outside",
+	]:
+		var fixture := base.get_node_or_null(node_path) as Node2D
+		_check(
+			fixture != null and entry_frame.has_point(fixture.position),
+			"%s is visible in the first shelter frame" % node_path,
+		)
+
+
 func _check_layout_contract(base: RailhomeBase) -> void:
 	var contract := base.get_layout_contract()
 	_check(float(contract.get("cell_pitch", 0.0)) == 68.0, "layout keeps the 68-pixel authored pitch")
-	_check(contract.get("shelter_bounds", Rect2()) == Rect2(-612, -306, 1224, 612), "layout exposes the carriage shell bounds")
+	_check(contract.get("shelter_bounds", Rect2()) == Rect2(-612, -220, 1224, 440), "layout exposes the carriage shell bounds")
 	var route: Rect2 = contract.get("main_route", Rect2())
 	_check(route == Rect2(-552, -60, 1136, 120), "layout exposes a continuous 120-pixel travel spine")
 	var zones: Dictionary = contract.get("zones", {})
