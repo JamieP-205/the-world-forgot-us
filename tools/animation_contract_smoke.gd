@@ -197,6 +197,22 @@ func _check_scene_ownership() -> void:
 			"walk sheet resets cleanly when stopping from %s" % direction)
 		_check(player_visual.animation == StringName("idle_" + direction),
 			"idle after %s keeps the matching facing" % direction)
+	var movement_actions := {
+		"left": &"move_left",
+		"right": &"move_right",
+		"up": &"move_up",
+		"down": &"move_down",
+	}
+	for direction in movement_actions:
+		var action := movement_actions[direction] as StringName
+		player.velocity = Vector2.ZERO
+		Input.action_press(action)
+		player.call("_handle_movement", 0.12)
+		Input.action_release(action)
+		_check(String(player.get("_face")) == direction,
+			"real %s input updates player facing before locomotion renders" % direction)
+		_check(player_walk.animation == StringName("walk_" + direction),
+			"real %s input renders the matching walk row" % direction)
 	player.queue_free()
 
 

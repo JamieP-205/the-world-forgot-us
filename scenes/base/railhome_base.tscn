@@ -32,16 +32,16 @@
 [ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_battery.png" id="30_battery"]
 [ext_resource type="Texture2D" path="res://assets/processed/item_icons_pack_01/icon_medicine.png" id="31_medicine"]
 [ext_resource type="Texture2D" path="res://assets/processed/roadside_props/portable_radio.png" id="32_portable_radio"]
-[ext_resource type="Texture2D" path="res://assets/generated/environments/railhome_carriage_317_interior.png" id="33_carriage"]
+[ext_resource type="Texture2D" path="res://assets/generated/environments/railhome_carriage_317_shell.png" id="33_shell"]
 
 [sub_resource type="RectangleShape2D" id="Shape_wall_h"]
 size = Vector2(1224, 28)
 
 [sub_resource type="RectangleShape2D" id="Shape_wall_v"]
-size = Vector2(28, 440)
+size = Vector2(28, 584)
 
 [sub_resource type="RectangleShape2D" id="Shape_wall_door_segment"]
-size = Vector2(28, 152)
+size = Vector2(28, 222)
 
 [sub_resource type="RectangleShape2D" id="Shape_bedroll_trigger"]
 size = Vector2(68, 54)
@@ -101,10 +101,10 @@ polygon = PackedVector2Array(-33, -20, 33, -20, 33, 20, -33, 20)
 polygon = PackedVector2Array(-612, -14, 612, -14, 612, 14, -612, 14)
 
 [sub_resource type="OccluderPolygon2D" id="Occ_wall_v"]
-polygon = PackedVector2Array(-14, -220, 14, -220, 14, 220, -14, 220)
+polygon = PackedVector2Array(-14, -292, 14, -292, 14, 292, -14, 292)
 
 [sub_resource type="OccluderPolygon2D" id="Occ_wall_door_segment"]
-polygon = PackedVector2Array(-14, -76, 14, -76, 14, 76, -14, 76)
+polygon = PackedVector2Array(-14, -111, 14, -111, 14, 111, -14, 111)
 
 [sub_resource type="Gradient" id="Gradient_cold"]
 offsets = PackedFloat32Array(0, 0.58, 1)
@@ -188,10 +188,10 @@ uv = PackedVector2Array(0, 0, 480, 0, 480, 320, 0, 320)
 color = Color(0.39, 0.37, 0.31, 1)
 polygon = PackedVector2Array(-612, -306, 612, -306, 612, 306, -612, 306)
 
-[node name="CarriageInteriorPlate" type="Sprite2D" parent="."]
+[node name="CarriageStructuralShell" type="Sprite2D" parent="."]
 z_index = -6
 scale = Vector2(0.689189, 0.689189)
-texture = ExtResource("33_carriage")
+texture = ExtResource("33_shell")
 
 [node name="RecoveryFloor" type="Polygon2D" parent="."]
 z_index = -7
@@ -364,11 +364,11 @@ color = Color(0.29, 0.24, 0.20, 1)
 polygon = PackedVector2Array(584, 76, 612, 76, 612, 306, 584, 306)
 
 [node name="TopShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(0, -220)
+position = Vector2(0, -292)
 shape = SubResource("Shape_wall_h")
 
 [node name="BottomShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(0, 220)
+position = Vector2(0, 292)
 shape = SubResource("Shape_wall_h")
 
 [node name="LeftShape" type="CollisionShape2D" parent="Walls"]
@@ -376,19 +376,19 @@ position = Vector2(-598, 0)
 shape = SubResource("Shape_wall_v")
 
 [node name="RightTopShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(598, -144)
+position = Vector2(598, -181)
 shape = SubResource("Shape_wall_door_segment")
 
 [node name="RightBottomShape" type="CollisionShape2D" parent="Walls"]
-position = Vector2(598, 144)
+position = Vector2(598, 181)
 shape = SubResource("Shape_wall_door_segment")
 
 [node name="TopOccluder" type="LightOccluder2D" parent="Walls"]
-position = Vector2(0, -220)
+position = Vector2(0, -292)
 occluder = SubResource("Occ_wall_h")
 
 [node name="BottomOccluder" type="LightOccluder2D" parent="Walls"]
-position = Vector2(0, 220)
+position = Vector2(0, 292)
 occluder = SubResource("Occ_wall_h")
 
 [node name="LeftOccluder" type="LightOccluder2D" parent="Walls"]
@@ -396,11 +396,11 @@ position = Vector2(-598, 0)
 occluder = SubResource("Occ_wall_v")
 
 [node name="RightTopOccluder" type="LightOccluder2D" parent="Walls"]
-position = Vector2(598, -144)
+position = Vector2(598, -181)
 occluder = SubResource("Occ_wall_door_segment")
 
 [node name="RightBottomOccluder" type="LightOccluder2D" parent="Walls"]
-position = Vector2(598, 144)
+position = Vector2(598, 181)
 occluder = SubResource("Occ_wall_door_segment")
 
 [node name="Bunks" type="Node2D" parent="."]
@@ -482,6 +482,7 @@ position = Vector2(0, 5)
 occluder = SubResource("Occ_locker")
 
 [node name="MedicalBoard" type="Sprite2D" parent="." groups=["railhome_wall_props"]]
+visible = false
 position = Vector2(-332, -190)
 scale = Vector2(0.12, 0.12)
 modulate = Color(0.83, 0.78, 0.65, 0.96)
@@ -500,6 +501,7 @@ modulate = Color(0.68, 0.78, 0.76, 1)
 texture = ExtResource("27_crate")
 
 [node name="WaterMark" type="Polygon2D" parent="WaterCrate"]
+visible = false
 position = Vector2(0, -2)
 color = Color(0.30, 0.65, 0.67, 0.82)
 polygon = PackedVector2Array(-9, -4, 9, -4, 9, 4, -9, 4)
@@ -525,6 +527,7 @@ modulate = Color(0.82, 0.72, 0.51, 1)
 texture = ExtResource("27_crate")
 
 [node name="FoodMark" type="Sprite2D" parent="FoodCrate"]
+visible = false
 position = Vector2(0, -3)
 scale = Vector2(0.085, 0.085)
 texture = ExtResource("29_food")
@@ -735,6 +738,7 @@ position = Vector2(0, 5)
 occluder = SubResource("Occ_locker")
 
 [node name="PowerPanel" type="Node2D" parent="." groups=["railhome_wall_props"]]
+visible = false
 position = Vector2(548, -184)
 
 [node name="Backplate" type="Polygon2D" parent="PowerPanel"]

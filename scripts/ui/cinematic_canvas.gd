@@ -2,9 +2,9 @@ extends Control
 ## Image-led opening with a restrained dissolve and camera drift.
 
 const STILLS := [
+	"res://assets/processed/cinematic_rebuild/cin03_carriage_depot.png",
 	"res://assets/processed/cinematic_rebuild/cin01_receiver_photo.png",
 	"res://assets/processed/cinematic_rebuild/cin06_other_ellie.png",
-	"res://assets/processed/cinematic_rebuild/cin03_carriage_depot.png",
 	"res://assets/processed/cinematic_rebuild/cin08_playable_choice.png",
 ]
 

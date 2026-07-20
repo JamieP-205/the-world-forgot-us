@@ -7,10 +7,10 @@ const PHONE_PORTRAIT_CARD := Vector2(390.0, 320.0)
 const PHONE_LANDSCAPE_CARD := Vector2(820.0, 184.0)
 
 const BEATS := [
-	{"stamp": "Eighteen years after Blank Night", "title": "Maggie's voice comes through an unplugged receiver.", "body": "Maggie is Ellie's missing sister. No one has heard her since the night the warning signs sent them down different roads.", "duration": 6.0},
-	{"stamp": "Carriage 317", "title": "The voice may be a recording. It may be something copying her.", "body": "It knows their old house number, but the signal ends before Ellie can answer.", "duration": 5.8},
-	{"stamp": "Cullbrook service road", "title": "The signal left a trace at a fallen radio mast.", "body": "Ellie's receiver cannot scan it yet. The Search Coil needs one battery and two usable pieces of metal.", "duration": 5.8},
-	{"stamp": "First light", "title": "Start with the amber-marked crates.", "body": "Idris has marked the safe approach. Find the parts, return to the receiver bench, and learn who is using Maggie's voice.", "duration": 6.2},
+	{"stamp": "Cullbrook / 02:03", "title": "The receiver has been unplugged for three years.", "body": "It switches itself on. A woman says, \"Ellie. Fourteen B. Yellow lead. Do not let it finish the sentence.\"", "duration": 5.2},
+	{"stamp": "Carriage 317", "title": "The voice belongs to Maggie. Maggie vanished eighteen years ago.", "body": "Nobody else knew the yellow-lead joke. But the recording contains the same breath twice, perfectly identical.", "duration": 5.4},
+	{"stamp": "Cullbrook service road", "title": "A dead payphone rings once.", "body": "In its glass, Ellie's reflection lifts the receiver before she does. Her own set burns out its Search Coil. The signal moves to the fallen radio mast.", "duration": 5.4},
+	{"stamp": "First light", "title": "Listen before you believe.", "body": "Follow Idris's amber paint: search the crate beside him and the car boot east. Take one battery and two scrap to the receiver bench, build the coil, then scan the mast.", "duration": 6.0},
 ]
 
 @onready var _canvas = $Illustration

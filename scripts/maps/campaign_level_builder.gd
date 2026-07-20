@@ -61,9 +61,45 @@ const PROP_BARRIER := "res://assets/processed/petrol_station_props/warning_barri
 const PROP_STATION_SIGN := "res://assets/processed/petrol_station_props/station_sign_tall.png"
 const PROP_LANTERN := "res://assets/processed/railhome_props/lantern.png"
 const PROP_MAGGIE_BODY := "res://assets/generated/npcs/maggie_cutting_body.png"
-const LANDMARK_BELLWETHER := "res://assets/processed/environment_landmarks_v2/bellwether_civic_ruin.png"
-const LANDMARK_LONG_ACRE := "res://assets/processed/environment_landmarks_v2/long_acre_relay_station.png"
-const LANDMARK_TOLLARD := "res://assets/processed/environment_landmarks_v2/tollard_exchange_ruin.png"
+const ASHMERE_BUILDING_ATLAS := \
+	"res://assets/processed/campaign_architecture_v2/ashmere_buildings.png"
+const LONG_ACRE_BUILDING_ATLAS := \
+	"res://assets/processed/campaign_architecture_v2/long_acre_buildings.png"
+const CHOIR_EQUIPMENT_ATLAS := \
+	"res://assets/processed/choir_core_v2/choir_equipment.png"
+
+const ENTERABLE_ARCHITECTURE := {
+	&"ashmere_terrace_north": [ASHMERE_BUILDING_ATLAS, Rect2(0, 118, 486, 382), 0.24],
+	&"ashmere_terrace_south": [ASHMERE_BUILDING_ATLAS, Rect2(500, 120, 242, 382), 0.0],
+	&"ashmere_clinic": [ASHMERE_BUILDING_ATLAS, Rect2(740, 180, 300, 326), 0.0],
+	&"ashmere_relay_workshop": [ASHMERE_BUILDING_ATLAS, Rect2(1028, 190, 226, 320), 0.0],
+	&"bellwether_school": [ASHMERE_BUILDING_ATLAS, Rect2(0, 612, 520, 480), 0.0],
+	&"bellwether_school_hall": [ASHMERE_BUILDING_ATLAS, Rect2(505, 620, 286, 474), 0.0],
+	&"ashmere_clinic_annex": [ASHMERE_BUILDING_ATLAS, Rect2(780, 784, 274, 320), 0.0],
+	&"wrenfield_west_transformer": [LONG_ACRE_BUILDING_ATLAS, Rect2(48, 64, 344, 366), 0.0],
+	&"wrenfield_east_transformer": [LONG_ACRE_BUILDING_ATLAS, Rect2(452, 92, 342, 344), 0.0],
+	&"wrenfield_control_shed": [LONG_ACRE_BUILDING_ATLAS, Rect2(850, 96, 320, 342), 0.0],
+	&"wrenfield_cable_house": [LONG_ACRE_BUILDING_ATLAS, Rect2(36, 466, 354, 374), 0.0],
+	&"wrenfield_antenna_bunker": [LONG_ACRE_BUILDING_ATLAS, Rect2(404, 438, 402, 408), 0.0],
+	&"wrenfield_generator_hall": [LONG_ACRE_BUILDING_ATLAS, Rect2(806, 494, 424, 360), 0.0],
+	&"wrenfield_repeater_shelter": [LONG_ACRE_BUILDING_ATLAS, Rect2(72, 848, 246, 316), 0.0],
+}
+
+const CHOIR_EQUIPMENT := {
+	"CorePylonNW": [Rect2(48, 20, 300, 470), 0.34],
+	"CorePylonNE": [Rect2(420, 20, 280, 475), 0.34],
+	"CorePylonSW": [Rect2(48, 20, 300, 470), 0.32],
+	"CorePylonSE": [Rect2(420, 20, 280, 475), 0.32],
+	"ArchiveBankWest": [Rect2(720, 35, 440, 445), 0.42],
+	"ArchiveBankEast": [Rect2(1165, 35, 360, 430), 0.45],
+	"TollardArchiveStacksNorth": [Rect2(25, 520, 360, 450), 0.72],
+	"TollardArchiveStacksSouth": [Rect2(25, 520, 360, 450), 0.62],
+	"TollardOperationsDesk": [Rect2(370, 545, 430, 410), 0.82],
+	"TollardSwitchBank": [Rect2(370, 545, 430, 410), 0.72],
+	"ReceptionBarrierWest": [Rect2(800, 540, 360, 370), 0.72],
+	"ReceptionBarrierEast": [Rect2(800, 540, 360, 370), 0.72],
+	"CountyRecordsAnnexCollapse": [Rect2(1150, 530, 380, 450), 0.56],
+}
 
 
 func _ready() -> void:
@@ -640,9 +676,14 @@ func _add_textured_polygon(
 		color: Color,
 		z: int,
 		texture_scale_value: Vector2 = Vector2.ONE) -> Polygon2D:
-	var polygon := _add_polygon(node_name, points, _world_surface_color(color, 0.58), z)
+	# Ground owns the one continuous asphalt texture. These shapes only change
+	# wear and value; local textures on each polygon made the map look tiled.
+	var overlay := _world_surface_color(color, 0.72)
+	overlay.a = 0.12 if "road" in node_name.to_lower() else 0.09
+	var polygon := _add_polygon(node_name, points, overlay, z)
 	polygon.set_meta("material_reference", texture_path)
-	_apply_seamless_surface(polygon, color, texture_scale_value)
+	polygon.set_meta("surface_policy", "continuous-ground-overlay")
+	polygon.set_meta("requested_texture_scale", texture_scale_value)
 	return polygon
 
 
@@ -695,7 +736,16 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		# Room count drives the minimum visible and physical footprint.
 		size.x = maxf(size.x, minimum_size.x)
 		size.y = maxf(size.y, minimum_size.y)
-	var uses_named_landmark := _uses_named_landmark(node_name)
+	var uses_enterable_architecture := building_id in ENTERABLE_ARCHITECTURE
+	var lower_name := node_name.to_lower()
+	var uses_object_art := (
+		uses_enterable_architecture
+		or CHOIR_EQUIPMENT.has(node_name)
+		or "bus" in lower_name
+		or "fence" in lower_name
+		or "barrier" in lower_name
+		or size.y <= 105.0
+	)
 	var solid_kind := _solid_kind_for_structure(node_name, building_id)
 	var body := StaticBody2D.new()
 	body.name = node_name
@@ -718,6 +768,7 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 	])
 	shadow.color = Color(0.025, 0.03, 0.028, 0.56)
 	shadow.z_index = 1
+	shadow.visible = not uses_object_art
 	body.add_child(shadow)
 	var visual := Polygon2D.new()
 	visual.name = "Visual"
@@ -736,12 +787,13 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 	# Full painted landmark sprites replace the old procedural obstacle face.
 	# Keeping both visible left a long, uniform backing band around the authored
 	# building, especially at the South Generator Hall and Tollard structures.
-	visual.visible = not uses_named_landmark
+	visual.visible = not uses_object_art
 	body.add_child(visual)
 	var ruin_texture := load("res://assets/processed/roadside_props/debris_pile.png") as Texture2D
 	if (
 		ruin_texture != null
 		and solid_kind == &"blocked_ruin"
+		and not CHOIR_EQUIPMENT.has(node_name)
 	):
 		var ruin_crown := Sprite2D.new()
 		ruin_crown.name = "RuinCrown"
@@ -754,12 +806,13 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		ruin_crown.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		ruin_crown.z_index = 3
 		body.add_child(ruin_crown)
-	_add_structure_art(body, node_name, size)
+	_add_choir_equipment_art(body, node_name, size)
+	_add_structure_art(body, node_name, size, building_id)
 	# World entrances are interaction thresholds on the exterior apron. A full
 	# collision foot keeps the player from walking under the painted building;
 	# entering swaps to the authored interior instead.
 	if building_id != &"":
-		_add_intact_building_collision(body, visual.polygon, size)
+		_add_intact_building_collision(body, visual.polygon, size, building_id)
 	else:
 		_add_convex_collision(body, "CollisionShape2D", visual.polygon)
 	WorldLayoutContract.tag_solid(body, solid_kind, visual.polygon, false)
@@ -773,6 +826,31 @@ func _add_obstacle(node_name: String, center: Vector2, size: Vector2, color: Col
 		body.set_meta("room_count", int(BuildingCatalog.get_building(building_id).get("rooms", 1)))
 		_add_building_threshold(building_id, node_name, center, size)
 	return body
+
+
+func _add_choir_equipment_art(body: StaticBody2D, node_name: String, size: Vector2) -> void:
+	if body == null or not CHOIR_EQUIPMENT.has(node_name):
+		return
+	var atlas_source := load(CHOIR_EQUIPMENT_ATLAS) as Texture2D
+	if atlas_source == null:
+		push_error("Choir equipment atlas could not be loaded.")
+		return
+	var brief := CHOIR_EQUIPMENT[node_name] as Array
+	var atlas := AtlasTexture.new()
+	atlas.atlas = atlas_source
+	atlas.region = brief[0] as Rect2
+	atlas.filter_clip = true
+	var sprite := Sprite2D.new()
+	sprite.name = "AuthoredEquipment"
+	sprite.texture = atlas
+	var authored_scale := float(brief[1])
+	sprite.scale = Vector2(authored_scale, authored_scale)
+	# Raise the painted object so its floor contact sits over the collision foot.
+	# The collision remains deliberately shallower than the visible cabinet.
+	sprite.position = Vector2(0, -maxf(8.0, size.y * 0.20))
+	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	sprite.z_index = 3
+	body.add_child(sprite)
 
 
 func _solid_kind_for_structure(node_name: String, building_id: StringName) -> StringName:
@@ -789,8 +867,9 @@ func _solid_kind_for_structure(node_name: String, building_id: StringName) -> St
 func _add_intact_building_collision(
 		body: StaticBody2D,
 		footprint: PackedVector2Array,
-		size: Vector2) -> void:
-	var door_center_x := size.x * 0.24
+		size: Vector2,
+		building_id: StringName) -> void:
+	var door_center_x := size.x * _building_door_ratio(building_id)
 	_add_convex_collision(body, "BuildingFootprint", footprint)
 	body.set_meta("door_gap_center_x", door_center_x)
 	body.set_meta("door_gap_width", 0.0)
@@ -845,7 +924,9 @@ func _add_building_threshold(
 	var return_scene := _campaign_scene_path()
 	if return_scene.is_empty():
 		return
-	var threshold_position := center + Vector2(size.x * 0.24, size.y * 0.5 + 30.0)
+	var threshold_position := center + Vector2(
+		size.x * _building_door_ratio(building_id),
+		size.y * 0.5 + 30.0)
 	var spawn_name := StringName("return_%s" % String(building_id))
 	_add_spawn(String(spawn_name), threshold_position + Vector2(0, 104.0))
 	var door := BUILDING_DOOR_SCENE.instantiate() as BuildingDoor
@@ -857,6 +938,7 @@ func _add_building_threshold(
 	door.building_id = building_id
 	door.return_scene_path = return_scene
 	door.return_spawn = spawn_name
+	door.presentation = "painted_door"
 	door.add_to_group("objective_targets")
 	door.add_to_group("enterable_building_thresholds")
 	door.set_meta("building_id", building_id)
@@ -889,7 +971,11 @@ func _structure_texture_for(node_name: String, size: Vector2) -> String:
 	return TEX_CONCRETE
 
 
-func _add_structure_art(body: StaticBody2D, node_name: String, size: Vector2) -> void:
+func _add_structure_art(
+		body: StaticBody2D,
+		node_name: String,
+		size: Vector2,
+		building_id: StringName = &"") -> void:
 	var lower := node_name.to_lower()
 	var structure_tint := (
 		METAL if (
@@ -897,7 +983,12 @@ func _add_structure_art(body: StaticBody2D, node_name: String, size: Vector2) ->
 			or "control" in lower or "generator" in lower or "operations" in lower
 		) else RUST_DARK
 	)
-	if _add_named_landmark_art(body, lower, size):
+	if _add_enterable_architecture_art(body, building_id, size):
+		return
+	if CHOIR_EQUIPMENT.has(node_name):
+		# These functional objects have dedicated painted silhouettes. Adding the
+		# old generic roof-and-door treatment over them recreated the exact
+		# floating polygon blocks this rebuild is intended to remove.
 		return
 	if "bus" in lower:
 		_add_structure_sprite(body, "VehicleShell", PROP_BROKEN_CAR, Vector2(0, -4), minf(size.x / 480.0, size.y / 300.0) * 1.35, 5)
@@ -984,50 +1075,44 @@ func _add_structure_art(body: StaticBody2D, node_name: String, size: Vector2) ->
 		body.add_child(window)
 
 
-func _uses_named_landmark(node_name: String) -> bool:
-	var lower := node_name.to_lower()
-	return (
-		"bellwetherschool" in lower or "ashmereclinic" in lower
-		or "relayworkshop" in lower or "cablehouse" in lower
-		or "antennabunker" in lower or "generatorhall" in lower
-		or "tollardoperationsdesk" in lower or "tollardarchivestacks" in lower
-	)
-
-
-func _add_named_landmark_art(body: Node2D, lower: String, size: Vector2) -> bool:
-	var path := ""
-	var reference_width := 1.0
-	if "bellwetherschool" in lower or "ashmereclinic" in lower:
-		path = LANDMARK_BELLWETHER
-		reference_width = 1773.0
-	elif (
-		"relayworkshop" in lower or "cablehouse" in lower
-		or "antennabunker" in lower or "generatorhall" in lower
-	):
-		path = LANDMARK_LONG_ACRE
-		reference_width = 1704.0
-	elif "tollardoperationsdesk" in lower or "tollardarchivestacks" in lower:
-		path = LANDMARK_TOLLARD
-		reference_width = 1902.0
-	if path.is_empty():
+func _add_enterable_architecture_art(
+		body: StaticBody2D,
+		building_id: StringName,
+		size: Vector2) -> bool:
+	if building_id not in ENTERABLE_ARCHITECTURE:
 		return false
-	var texture := load(path) as Texture2D
-	if texture == null:
+	var spec := ENTERABLE_ARCHITECTURE[building_id] as Array
+	var atlas := load(String(spec[0])) as Texture2D
+	if atlas == null:
 		return false
-	var art_scale := clampf(size.x / reference_width, 0.18, 0.27)
+	var region := spec[1] as Rect2
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = region
+	texture.filter_clip = true
+	var art_scale := clampf(size.x / region.size.x, 0.54, 1.36)
 	var art := Sprite2D.new()
-	art.name = "AuthoredLandmark"
+	art.name = "UniqueExteriorArt"
 	art.texture = texture
 	art.scale = Vector2.ONE * art_scale
-	# Align the painted building's front step with the obstacle footprint. This
-	# keeps collision honest while allowing antennas and rooflines to rise above
-	# the nominal map block.
-	art.position = Vector2(0, size.y * 0.5 - texture.get_height() * art_scale * 0.5)
-	art.modulate = Color(0.92, 0.90, 0.83, 0.99)
+	# The collision rectangle is the building's ground contact. Roof and upper
+	# facade rise above it while the painted front step lands on its lower edge.
+	art.position = Vector2(
+		0,
+		size.y * 0.5 - region.size.y * art_scale * 0.5)
 	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	art.z_index = 5
 	body.add_child(art)
+	body.set_meta("unique_exterior_art", true)
+	body.set_meta("architecture_region", region)
 	return true
+
+
+func _building_door_ratio(building_id: StringName) -> float:
+	if building_id not in ENTERABLE_ARCHITECTURE:
+		return 0.24
+	var spec := ENTERABLE_ARCHITECTURE[building_id] as Array
+	return float(spec[2])
 
 
 func _add_structure_sprite(
@@ -1209,15 +1294,15 @@ func _add_signal_channel(node_name: String, points: PackedVector2Array) -> void:
 	var shadow := Line2D.new()
 	shadow.name = node_name + "Bed"
 	shadow.points = points
-	shadow.width = 10.0
-	shadow.default_color = Color(0.025, 0.04, 0.04, 0.78)
+	shadow.width = 6.0
+	shadow.default_color = Color(0.025, 0.04, 0.04, 0.42)
 	shadow.z_index = 1
 	add_child(shadow)
 	var channel := Line2D.new()
 	channel.name = node_name
 	channel.points = points
-	channel.width = 2.25
-	channel.default_color = Color(CYAN, 0.24)
+	channel.width = 1.5
+	channel.default_color = Color(CYAN, 0.16)
 	channel.z_index = 2
 	add_child(channel)
 

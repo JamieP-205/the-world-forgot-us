@@ -66,7 +66,7 @@ static var INTERIOR_IDENTITIES := {
 		"hero_room": 1, "hero_offset": Vector2(8, -118), "hero_scale": 0.66,
 		"dressing": [
 			[["workbench", Vector2(-118, -126), 0.90, -0.02], ["toolbox", Vector2(124, 128), 0.92, 0.04], ["barrier", Vector2(-92, 144), 0.76, -0.08]],
-			[["receiver", Vector2(-132, 126), 1.04, 0.02], ["chest", Vector2(126, 132), 0.84, -0.03]],
+			[["empty_bench", Vector2(-126, -126), 0.86, -0.02], ["receiver", Vector2(-132, 126), 1.04, 0.02], ["chest", Vector2(126, 132), 0.84, -0.03]],
 		],
 	},
 	&"cullbrook_north_bay": {
@@ -186,7 +186,7 @@ static var INTERIOR_IDENTITIES := {
 		"runner_tint": Color(0.26, 0.28, 0.18, 0.50),
 		"hero_room": 0, "hero_offset": Vector2(52, -122), "hero_scale": 0.62,
 		"dressing": [[
-			["receiver", Vector2(-130, -128), 0.94, -0.03], ["toolbox", Vector2(-128, 134), 0.88, 0.02], ["locker", Vector2(132, 136), 0.82, 0.0],
+			["workbench", Vector2(126, -126), 0.82, 0.02], ["receiver", Vector2(-130, -128), 0.94, -0.03], ["toolbox", Vector2(-128, 134), 0.88, 0.02], ["locker", Vector2(132, 136), 0.82, 0.0],
 		]],
 	},
 	&"wrenfield_east_transformer": {
@@ -246,7 +246,7 @@ static var INTERIOR_IDENTITIES := {
 		"dressing": [
 			[["barrier", Vector2(-126, -142), 0.78, -0.05], ["toolbox", Vector2(128, 132), 0.92, 0.04], ["locker", Vector2(128, -136), 0.82, 0.0]],
 			[["workbench", Vector2(-128, -126), 0.84, -0.03], ["radio_desk", Vector2(128, 132), 0.78, 0.02]],
-			[["receiver", Vector2(-130, 132), 0.94, -0.02], ["toolbox", Vector2(130, 136), 0.88, 0.04]],
+			[["empty_bench", Vector2(126, -126), 0.82, 0.02], ["receiver", Vector2(-130, 132), 0.94, -0.02], ["toolbox", Vector2(130, 136), 0.88, 0.04]],
 		],
 	},
 	&"wrenfield_repeater_shelter": {
@@ -683,11 +683,12 @@ static func region_buildings(region_id: StringName) -> Array[StringName]:
 
 static func minimum_exterior_size(building_id: StringName) -> Vector2:
 	var rooms := clampi(int(get_building(building_id).get("rooms", 1)), 1, 3)
-	# The foot of even a one-room hut is over four player widths. Extra rooms
-	# widen the silhouette instead of shrinking the player to sell scale.
+	# Exteriors must read as architecture beside a 68 px actor, but room count
+	# does not map directly to facade width: a kiosk is narrow and the service
+	# office's three rooms run into the depth of the building.
 	return Vector2(
-		PLAYER_REFERENCE * (4.5 + float(rooms - 1) * 1.35),
-		PLAYER_REFERENCE * (2.0 + float(rooms - 1) * 0.50)
+		PLAYER_REFERENCE * (2.75 + float(rooms - 1) * 0.22),
+		PLAYER_REFERENCE * (2.0 + float(rooms - 1) * 0.20)
 	)
 
 
@@ -753,8 +754,8 @@ static func validate() -> PackedStringArray:
 			var room_details: Array = []
 			if room_index < details.size():
 				room_details = details[room_index] as Array
-			if placements.size() + room_details.size() < 4:
-				errors.append("building %s room %d has fewer than four authored placements" % [building_id, room_index + 1])
+			if placements.size() < 2:
+				errors.append("building %s room %d has fewer than two structural placements" % [building_id, room_index + 1])
 			for placement_value in placements:
 				var placement := placement_value as Array
 				if placement.size() != 4 or String(placement[0]).is_empty():
