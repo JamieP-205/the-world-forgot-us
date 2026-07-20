@@ -32,7 +32,10 @@ func _apply_presentation() -> void:
 	for node_name in [&"Doorway", &"Handle"]:
 		var item := get_node_or_null(NodePath(String(node_name))) as CanvasItem
 		if item != null:
-			item.visible = false
+			# Interior thresholds need a visible, closed door. Hiding the panel
+			# exposed the black world apron through the wall gap and made the
+			# exit look like an untextured rectangle.
+			item.visible = embedded
 	for node_name in [&"RoadThreshold", &"Beacon", &"Arrow"]:
 		var item := get_node_or_null(NodePath(String(node_name))) as CanvasItem
 		if item != null:

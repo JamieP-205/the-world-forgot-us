@@ -8,6 +8,8 @@ const BuildingCatalog = preload("res://scripts/world/building_catalog.gd")
 const CULLBROOK_SCENE := "res://scenes/maps/test_map.tscn"
 const RAILHOME_EXTERIOR := "res://assets/processed/environment_rebuild/railhome_depot_exterior.png"
 const ASH_ASPHALT_SURFACE := "res://assets/processed/environment/ash_asphalt_seamless.png"
+const CULLBROOK_BUILDING_ATLAS := \
+	"res://assets/processed/environment_rebuild_v2/cullbrook_buildings.png"
 
 @onready var _mast_glow: Polygon2D = $RadioMast/RecoveredGlow
 @onready var _spark_a: Polygon2D = $RadioMast/StaticSparkA
@@ -25,12 +27,26 @@ func _ready() -> void:
 	_remove_world_atlas_fills()
 	_tune_world_palette()
 	_restore_authored_world_surfaces()
-	_dress_cullbrook_exteriors()
+	_install_cullbrook_buildings()
+	_clean_cullbrook_interactables()
 	_add_railhome_exterior()
 	_add_enterable_buildings()
 	_add_first_route_guidance()
 	_tag_cullbrook_solids()
-	WorldLayoutContract.apply(self, &"cullbrook")
+	# Cullbrook now communicates its route through the road, aligned buildings
+	# and the first-supply dashes. The old generic sign/lamp bundles read as
+	# loose props and are intentionally omitted here.
+	var flow_contract := WorldLayoutContract.apply(self, &"cullbrook", false)
+	if flow_contract != null:
+		flow_contract.set_meta("route_nodes", PackedStringArray(["Road", "ServiceLane"]))
+		flow_contract.set_meta("layout_language", "road-spine")
+		flow_contract.set_meta(
+			"guidance_rule",
+			"road shape+recognisable architecture+painted thresholds; no prop bundles; no route rail")
+		flow_contract.set_meta("cue_policy", "architecture-led")
+		var shortcut := flow_contract.get_node_or_null("MaintenanceCutShortcut")
+		if shortcut != null:
+			shortcut.set_meta("route_node", "ServiceLane")
 	_add_world_npc_population()
 	if ArchiveSystem.has_echo(&"echo_last_signal"):
 		_apply_mast_recovered()
@@ -51,11 +67,13 @@ func _add_world_npc_population() -> void:
 
 
 func _add_enterable_buildings() -> void:
-	_add_building_door(&"cullbrook_service_office", Vector2(389, -188))
+	_add_building_door(&"cullbrook_service_office", Vector2(-6, -7))
 	_add_building_door(&"cullbrook_kiosk", Vector2(-405, 88))
 	_add_building_door(&"cullbrook_maintenance_shed", Vector2(235, 176))
-	_add_building_door(&"cullbrook_north_bay", Vector2(690, 350))
-	_add_building_door(&"cullbrook_south_bay", Vector2(770, 520), Vector2(-108, 0))
+	# The service garage is one honest exterior. Its two shutters lead to the
+	# independently authored north and south workshop bays.
+	_add_building_door(&"cullbrook_north_bay", Vector2(640, 390))
+	_add_building_door(&"cullbrook_south_bay", Vector2(722, 390))
 
 
 func _add_building_door(
@@ -78,6 +96,9 @@ func _add_building_door(
 	door.building_id = building_id
 	door.return_scene_path = CULLBROOK_SCENE
 	door.return_spawn = spawn_name
+	# The generated building art already contains a properly aligned door or
+	# shutter. Keep only the threshold spill and interaction area here.
+	door.presentation = "painted_door"
 	door.add_to_group("objective_targets")
 	door.add_to_group("enterable_building_thresholds")
 	door.set_meta("building_id", building_id)
@@ -87,26 +108,32 @@ func _add_building_door(
 
 
 func _author_cullbrook_layout() -> void:
-	# Cullbrook is a compact hub with a forecourt loop, a service-yard loop and
-	# a narrow maintenance cut between them. Scaling the entire bodies keeps the
-	# painted walls and their collision perfectly registered.
-	_scale_structure("PetrolStation", Vector2(1.35, 1.35))
-	_scale_structure("RoadsideKiosk", Vector2(2.07, 2.07))
-	_scale_structure("MaintenanceShed", Vector2(2.67, 2.67))
-	_scale_structure("ServiceBayNorth", Vector2(2.10, 2.10), Vector2(690, 245))
-	_scale_structure("ServiceBaySouth", Vector2(2.10, 2.10), Vector2(770, 415))
+	# Cullbrook reads as a service stop on one road: kiosk, station, shed, then
+	# the shared two-bay garage. Buildings are kept at world scale so their
+	# art, entrance threshold and collision use the same coordinates.
+	_scale_structure("PetrolStation", Vector2.ONE, Vector2(-30, -150))
+	_scale_structure("RoadsideKiosk", Vector2.ONE, Vector2(-405, -20))
+	_scale_structure("MaintenanceShed", Vector2.ONE, Vector2(235, 75))
+	_scale_structure("ServiceBayNorth", Vector2.ONE, Vector2(700, 280))
+	_scale_structure("ServiceBaySouth", Vector2.ONE, Vector2(700, 280))
 	$RadioMast.position = Vector2(650, -270)
 
-	var cut := Polygon2D.new()
-	cut.name = "MaintenanceCut"
-	cut.z_index = -1
-	cut.polygon = PackedVector2Array([
-		Vector2(300, 84), Vector2(386, 92), Vector2(520, 172), Vector2(596, 238),
-		Vector2(538, 276), Vector2(458, 205), Vector2(352, 145), Vector2(282, 134),
+	# The old map stacked three differently coloured polygons here. A single
+	# worn service lane is clearer and cannot expose rectangular texture cards.
+	var lane := Line2D.new()
+	lane.name = "ServiceLane"
+	lane.z_index = -2
+	lane.width = 118.0
+	lane.joint_mode = Line2D.LINE_JOINT_ROUND
+	lane.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	lane.end_cap_mode = Line2D.LINE_CAP_ROUND
+	lane.default_color = Color(0.16, 0.17, 0.16, 0.72)
+	lane.points = PackedVector2Array([
+		Vector2(90, -12), Vector2(310, 66), Vector2(480, 178),
+		Vector2(690, 382), Vector2(900, 490),
 	])
-	cut.color = Color(0.46, 0.43, 0.35, 0.92)
-	add_child(cut)
-	move_child(cut, 7)
+	add_child(lane)
+	move_child(lane, 7)
 
 
 func _remove_world_atlas_fills() -> void:
@@ -185,6 +212,116 @@ func _restore_authored_world_surfaces() -> void:
 		polygon.texture_scale = Vector2.ONE * maxf(world_scale, 1.0)
 		polygon.color = surfaces[path]
 		polygon.set_meta("seamless_world_surface", true)
+
+
+func _install_cullbrook_buildings() -> void:
+	var atlas := load(CULLBROOK_BUILDING_ATLAS) as Texture2D
+	if atlas == null:
+		push_error("Cullbrook building atlas could not be loaded.")
+		return
+
+	# Remove the old placeholder footprints and their collisions before adding
+	# the exterior that the player actually sees.
+	_install_building_sprite(
+		$PetrolStation, atlas, Rect2(40, 74, 590, 484),
+		Vector2.ONE * 0.54, Vector2(302, 224), Vector2(0, -8))
+	_install_building_sprite(
+		$RoadsideKiosk, atlas, Rect2(714, 136, 430, 420),
+		Vector2.ONE * 0.48, Vector2(196, 182), Vector2(0, -4))
+	_install_building_sprite(
+		$MaintenanceShed, atlas, Rect2(54, 696, 476, 426),
+		Vector2.ONE * 0.48, Vector2(214, 184), Vector2(0, -5))
+	_install_building_sprite(
+		$ServiceBayNorth, atlas, Rect2(582, 692, 612, 450),
+		Vector2.ONE * 0.48, Vector2(284, 194), Vector2(0, -4))
+
+	# Both garage thresholds belong to the one two-shutter building above.
+	_clear_structure_children($ServiceBaySouth)
+	$ServiceBaySouth.set_meta("shared_exterior", &"ServiceBayNorth")
+
+	for path in [
+		^"CullbrookServiceLoop", ^"CullbrookDrainageTrack",
+		^"ServiceYardApron", ^"ForecourtOilStain",
+		^"GroundDecals", ^"ForecourtThreshold",
+	]:
+		var old_layer := get_node_or_null(path) as CanvasItem
+		if old_layer != null:
+			old_layer.visible = false
+
+	# Keep a few landmarks, but put them beside the actual architecture rather
+	# than across doorways and travel lanes.
+	$StationSignLandmark.position = Vector2(-214, -58)
+	$EnvironmentalSilhouettes.visible = false
+
+
+func _install_building_sprite(
+		body: StaticBody2D,
+		atlas: Texture2D,
+		region: Rect2,
+		art_scale: Vector2,
+		collision_size: Vector2,
+		collision_offset: Vector2
+) -> void:
+	if body == null:
+		return
+	_clear_structure_children(body)
+
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = region
+	var art := Sprite2D.new()
+	art.name = "ExteriorArt"
+	art.texture = texture
+	art.scale = art_scale
+	art.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	art.z_index = 1
+	body.add_child(art)
+
+	var shape := RectangleShape2D.new()
+	shape.size = collision_size
+	var collision := CollisionShape2D.new()
+	collision.name = "ExteriorFootprint"
+	collision.position = collision_offset
+	collision.shape = shape
+	body.add_child(collision)
+	body.set_meta("visual_bounds", Rect2(
+		-region.size * art_scale * 0.5,
+		region.size * art_scale))
+	body.set_meta("collision_matches_visible_exterior", true)
+
+
+func _clear_structure_children(body: StaticBody2D) -> void:
+	if body == null:
+		return
+	for child in body.get_children():
+		body.remove_child(child)
+		child.queue_free()
+
+
+func _clean_cullbrook_interactables() -> void:
+	# Interior drawers and lockers no longer float as duplicate crates outside.
+	for path in [
+		^"PumpLocker", ^"KioskDrawer", ^"ShedLocker",
+		^"DeadVendingMachine", ^"AbandonedBackpack",
+	]:
+		var duplicate := get_node_or_null(path)
+		if duplicate != null:
+			remove_child(duplicate)
+			duplicate.queue_free()
+
+	# The broken car itself is the visual for its boot. The former black
+	# Polygon2D box was the placeholder the player reported.
+	var boot_visual := get_node_or_null(^"CarBoot/Visual") as CanvasItem
+	if boot_visual != null:
+		boot_visual.visible = false
+	$BrokenCar.position = Vector2(-210, 158)
+	$CarBoot.position = $BrokenCar.position + Vector2(12, -2)
+
+	# Place the remaining readable props against a facade or in a clear pocket.
+	$CrackedPublicPhone.position = Vector2(-184, -10)
+	$ChildLunchbox.position = Vector2(-420, 132)
+	$BrokenRadioProp.position = Vector2(610, -214)
+	$RelayCache.position = Vector2(548, -164)
 
 
 func _dress_cullbrook_exteriors() -> void:
@@ -372,24 +509,21 @@ func _tag_cullbrook_solids() -> void:
 	)
 	_tag_enterable_exterior(
 		$PetrolStation, &"cullbrook_service_office",
-		WorldLayoutContract.rectangle_points(Vector2(388, 215), Vector2(110, -125))
+		WorldLayoutContract.rectangle_points(Vector2(302, 224), Vector2(0, -8))
 	)
 	_tag_enterable_exterior(
 		$RoadsideKiosk, &"cullbrook_kiosk",
-		WorldLayoutContract.rectangle_points(Vector2(150, 66))
+		WorldLayoutContract.rectangle_points(Vector2(196, 182), Vector2(0, -4))
 	)
 	_tag_enterable_exterior(
 		$MaintenanceShed, &"cullbrook_maintenance_shed",
-		WorldLayoutContract.rectangle_points(Vector2(152, 70))
+		WorldLayoutContract.rectangle_points(Vector2(214, 184), Vector2(0, -5))
 	)
 	_tag_enterable_exterior(
 		$ServiceBayNorth, &"cullbrook_north_bay",
-		WorldLayoutContract.rectangle_points(Vector2(150, 70))
+		WorldLayoutContract.rectangle_points(Vector2(284, 194), Vector2(0, -4))
 	)
-	_tag_enterable_exterior(
-		$ServiceBaySouth, &"cullbrook_south_bay",
-		WorldLayoutContract.rectangle_points(Vector2(150, 70))
-	)
+	_tag_shared_exterior($ServiceBaySouth, &"cullbrook_south_bay", $ServiceBayNorth)
 	_tag_existing_solid(
 		$RadioMast, &"signal_landmark",
 		WorldLayoutContract.rectangle_points(Vector2(180, 80))
@@ -418,6 +552,18 @@ func _tag_enterable_exterior(
 	body.set_meta("room_count", int(building.get("rooms", 1)))
 	body.set_meta("entry_state", "intact-enterable")
 	body.set_meta("player_scale_units", _collision_extent_world(body) / WorldLayoutContract.PLAYER_REFERENCE)
+
+
+func _tag_shared_exterior(
+		body: StaticBody2D,
+		building_id: StringName,
+		solid_exterior: StaticBody2D) -> void:
+	var building := BuildingCatalog.get_building(building_id)
+	body.set_meta("building_id", building_id)
+	body.set_meta("room_count", int(building.get("rooms", 1)))
+	body.set_meta("entry_state", "shared-enterable")
+	body.set_meta("shared_exterior", solid_exterior.get_path())
+	body.set_meta("player_scale_units", Vector2(284, 194) / WorldLayoutContract.PLAYER_REFERENCE)
 
 
 func _collision_extent_world(body: StaticBody2D) -> Vector2:

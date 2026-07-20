@@ -39,17 +39,44 @@ func _install(spec: Array) -> bool:
 		var direction: StringName = DIRECTIONS[row]
 		var idle_name := StringName("idle_%s" % direction)
 		var walk_name := StringName("walk_%s" % direction)
+		var attack_name := StringName("attack_%s" % direction)
+		var hit_name := StringName("hit_%s" % direction)
+		var death_name := StringName("death_%s" % direction)
 		var idle_speed := frames.get_animation_speed(idle_name) if frames.has_animation(idle_name) else 2.4
 		var walk_speed := frames.get_animation_speed(walk_name) if frames.has_animation(walk_name) else 5.0
+		var attack_speed := frames.get_animation_speed(attack_name) if frames.has_animation(attack_name) else 8.0
+		var hit_speed := frames.get_animation_speed(hit_name) if frames.has_animation(hit_name) else 10.0
+		var death_speed := frames.get_animation_speed(death_name) if frames.has_animation(death_name) else 6.0
 		_replace_animation(frames, idle_name, atlas, row, 1, idle_speed)
 		# Two identical idle frames preserve the shared animation contract while
 		# avoiding a false shuffle when the enemy is standing still.
 		frames.add_frame(idle_name, _cell(atlas, row, 0))
 		_replace_animation(frames, walk_name, atlas, row, 4, walk_speed)
+		# Combat state used to jump to the same oversized Hollow concept art for
+		# every species. Reusing each species' own registered motion frames keeps
+		# its silhouette stable while script-driven tint, recoil and telegraph
+		# communicate the action.
+		_replace_sequence(frames, attack_name, atlas, row, [0, 1, 2, 3], attack_speed)
+		_replace_sequence(frames, hit_name, atlas, row, [2, 0], hit_speed)
+		_replace_sequence(frames, death_name, atlas, row, [0, 1, 2, 3], death_speed)
 
 	frames.set_meta(&"source_status", "production_four_direction_walk_atlas")
 	frames.set_meta(&"walk_atlas", texture_path)
 	frames.set_meta(&"walk_atlas_grid", Vector2i(4, 4))
+	frames.set_meta(&"combat_frames_use_species_atlas", true)
+	var registration: Dictionary = (frames.get_meta(&"registration", {}) as Dictionary).duplicate(true)
+	registration["state_offsets"] = {
+		"idle": Vector2.ZERO,
+		"walk": Vector2.ZERO,
+		"attack": Vector2.ZERO,
+		"hit": Vector2.ZERO,
+		"death": Vector2.ZERO,
+	}
+	frames.set_meta(&"registration", registration)
+	var replacement: Dictionary = (
+		frames.get_meta(&"replacement_sheet_contract", {}) as Dictionary).duplicate(true)
+	replacement["cell_size"] = Vector2i(314, 314)
+	frames.set_meta(&"replacement_sheet_contract", replacement)
 	var error := ResourceSaver.save(frames, resource_path)
 	if error != OK:
 		push_error("Walk atlas save failed for %s: %s" % [owner, error_string(error)])
@@ -73,6 +100,23 @@ func _replace_animation(
 	frames.set_animation_speed(animation, speed)
 	for column in range(columns):
 		frames.add_frame(animation, _cell(atlas, row, column))
+
+
+func _replace_sequence(
+		frames: SpriteFrames,
+		animation: StringName,
+		atlas: Texture2D,
+		row: int,
+		columns: Array,
+		speed: float
+) -> void:
+	if frames.has_animation(animation):
+		frames.remove_animation(animation)
+	frames.add_animation(animation)
+	frames.set_animation_loop(animation, false)
+	frames.set_animation_speed(animation, speed)
+	for column_value in columns:
+		frames.add_frame(animation, _cell(atlas, row, int(column_value)))
 
 
 func _cell(atlas: Texture2D, row: int, column: int) -> AtlasTexture:

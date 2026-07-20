@@ -148,7 +148,16 @@ func resolve_helped(persist: bool = true) -> void:
 	WorldState.set_flag(profile.ignored_flag, false)
 	WorldState.set_flag(profile.state_flag("decision"), "helped")
 	_sync_narrative_decision(true)
-	EventBus.notice_posted.emit("%s will bring %s to Railhome." % [profile.display_name, profile.service_name])
+	if profile.npc_id == &"idris":
+		# Idris's first decision pays off immediately instead of asking the
+		# player to find him again before he becomes useful.
+		WorldState.set_flag(&"idris_marked_first_salvage")
+		WorldState.set_flag(profile.service_flag)
+		WorldState.set_flag(&"railhome_recovery_bonus", 25)
+		EventBus.notice_posted.emit(
+			"Idris marks the dry salvage, then takes the braces to Railhome. Future returns restore 25 extra health.")
+	else:
+		EventBus.notice_posted.emit("%s will bring %s to Railhome." % [profile.display_name, profile.service_name])
 	_refresh_state(true)
 	_update_schedule_target(true)
 	if persist:

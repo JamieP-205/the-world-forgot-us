@@ -12,6 +12,10 @@ const TEX_METAL := "res://assets/processed/decals/metal_floor.png"
 const TEX_WOOD := "res://assets/processed/decals/wood_floor.png"
 const TEX_CONCRETE := "res://assets/processed/decals/concrete_broken.png"
 const TEX_DIRT := "res://assets/processed/decals/dirt_debris.png"
+const MISLEADING_DECORATIVE_PROPS := [
+	"chest", "crate", "toolbox", "locker", "vending",
+	"medicine", "photo", "compass", "receiver",
+]
 
 static var _shared_practical_light_texture: GradientTexture2D
 
@@ -67,8 +71,8 @@ var _building_id: StringName = &""
 var _building: Dictionary = {}
 var _identity: Dictionary = {}
 var _room_count := 1
-var _room_width := 420.0
-var _interior_height := 520.0
+var _room_width := 380.0
+var _interior_height := 460.0
 var _interior_width := 760.0
 
 
@@ -79,7 +83,7 @@ func _ready() -> void:
 	_building = BuildingCatalog.get_building(_building_id)
 	_identity = BuildingCatalog.get_interior_identity(_building_id)
 	_room_count = clampi(int(_building.get("rooms", 1)), 1, 3)
-	_interior_width = _room_width * float(_room_count) + 100.0
+	_interior_width = _room_width * float(_room_count) + 80.0
 	set_meta("interior_identity", String(_identity.get("identity_key", "")))
 	set_meta("layout_identity", String(_identity.get("layout_key", "")))
 	set_meta("layout_signature", BuildingCatalog.interior_layout_signature(_building_id))
@@ -88,7 +92,6 @@ func _ready() -> void:
 	_build_geometry()
 	_dress_rooms()
 	_add_practical_lights()
-	_add_evidence()
 	_add_salvage()
 	_add_thresholds()
 	if not WorldState.has_flag(StringName("interior_arrival_%s" % String(_building_id))):
@@ -110,12 +113,13 @@ func _build_geometry() -> void:
 	floor.color = _floor_tint()
 	floor.z_index = -3
 	add_child(floor)
+	_add_floor_insets()
 	_add_floor_seams()
 
 	var runner := Polygon2D.new()
 	runner.name = "ThresholdRunner"
-	runner.position = Vector2(0, 86)
-	runner.polygon = _rect_points(Vector2(_interior_width - 110.0, 82.0))
+	runner.position = Vector2(0, 74)
+	runner.polygon = _rect_points(Vector2(_interior_width - 96.0, 46.0))
 	runner.color = _runner_tint()
 	runner.z_index = -2
 	add_child(runner)
@@ -132,27 +136,36 @@ func _build_geometry() -> void:
 	_add_wall("SouthWallEast", Vector2(entry_x + 70.0 + east_length * 0.5, half_h), Vector2(east_length, 34.0))
 
 	for divider in range(1, _room_count):
-		var x := -_interior_width * 0.5 + 50.0 + _room_width * float(divider)
-		_add_wall("Divider%dNorth" % divider, Vector2(x, -142.0), Vector2(24.0, 202.0))
-		_add_wall("Divider%dSouth" % divider, Vector2(x, 154.0), Vector2(24.0, 178.0))
-		_add_door_header(x)
+		var x := -_interior_width * 0.5 + 40.0 + _room_width * float(divider)
+		var passage_y := _divider_passage_y(divider)
+		var gap_half := 58.0
+		var north_length := passage_y - gap_half + half_h
+		var south_length := half_h - (passage_y + gap_half)
+		_add_wall(
+			"Divider%dNorth" % divider,
+			Vector2(x, -half_h + north_length * 0.5),
+			Vector2(24.0, north_length))
+		_add_wall(
+			"Divider%dSouth" % divider,
+			Vector2(x, passage_y + gap_half + south_length * 0.5),
+			Vector2(24.0, south_length))
+		_add_door_header(x, passage_y)
 
 
 func _dress_rooms() -> void:
 	var dressing := _identity.get("dressing", []) as Array
-	var details := BuildingCatalog.get_interior_details(_building_id)
 	for room in _room_count:
 		var center_x := _room_center_x(room)
 		var placements: Array = []
 		if room < dressing.size():
 			placements.append_array(dressing[room] as Array)
-		if room < details.size():
-			placements.append_array(details[room] as Array)
 		for placement_index in placements.size():
 			var placement := placements[placement_index] as Array
 			if placement.size() < 4:
 				continue
 			var prop_id := String(placement[0])
+			if prop_id in MISLEADING_DECORATIVE_PROPS:
+				continue
 			var local_position := placement[1] as Vector2
 			_add_prop(
 				"Room%d_%02d_%s" % [room + 1, placement_index + 1, prop_id],
@@ -320,8 +333,44 @@ func _add_salvage() -> void:
 	cache.persistent_id = StringName(cache.name)
 	cache.prompt = "Search the useful remains"
 	cache.loot = (_building.get("loot", {&"scrap": 1}) as Dictionary).duplicate(true)
-	cache.position = Vector2(_room_center_x(0) + 118.0, -108.0)
+	cache.position = _choose_cache_position()
+	cache.set_meta("interaction_visual_contract", "one-visible-cache-one-trigger")
+	cache.set_meta("building_id", _building_id)
 	add_child(cache)
+
+
+func _choose_cache_position() -> Vector2:
+	# Put the one real cache where it does not sit on top of a map, desk or the
+	# building-specific evidence fixture. The last room rewards exploration.
+	var room := _room_count - 1
+	var centre := _room_center_x(room)
+	var candidates := [
+		Vector2(centre - 118.0, -112.0),
+		Vector2(centre + 118.0, -112.0),
+		Vector2(centre - 118.0, 112.0),
+		Vector2(centre + 118.0, 112.0),
+		Vector2(centre - 104.0, 34.0),
+		Vector2(centre + 104.0, 34.0),
+	]
+	var occupied: Array[Vector2] = []
+	for child in get_children():
+		if child is Node2D and (
+				bool(child.get_meta("authored_placement", false))
+				or child.is_in_group("interior_identity_heroes")):
+			occupied.append((child as Node2D).position)
+	var entry := Vector2(_entry_x(), _interior_height * 0.5 - 82.0)
+	occupied.append(entry)
+	var best := candidates[0] as Vector2
+	var best_clearance := -1.0
+	for candidate_value in candidates:
+		var candidate := candidate_value as Vector2
+		var clearance := INF
+		for occupied_position in occupied:
+			clearance = minf(clearance, candidate.distance_to(occupied_position))
+		if clearance > best_clearance:
+			best_clearance = clearance
+			best = candidate
+	return best
 
 
 func _add_thresholds() -> void:
@@ -363,10 +412,10 @@ func _add_wall(node_name: String, position_value: Vector2, size: Vector2) -> voi
 	body.add_child(collision)
 
 
-func _add_door_header(x: float) -> void:
+func _add_door_header(x: float, passage_y: float) -> void:
 	var header := Polygon2D.new()
 	header.name = "RoomThreshold"
-	header.position = Vector2(x, 8)
+	header.position = Vector2(x, passage_y)
 	# A narrow worn sill marks the passage without painting a false door-sized
 	# blocker over the deliberately open collision gap.
 	header.polygon = PackedVector2Array([Vector2(-5, -48), Vector2(5, -48), Vector2(5, 48), Vector2(-5, 48)])
@@ -434,45 +483,81 @@ func _add_identity_hero() -> void:
 
 	var hero_room := clampi(int(_identity.get("hero_room", 0)), 0, _room_count - 1)
 	var offset := _identity.get("hero_offset", Vector2(0, -112)) as Vector2
-	var holder := Node2D.new()
-	holder.name = "InteriorIdentity_%s" % String(_identity.get("identity_key", "unknown"))
+	var holder := InteriorEvidence.new()
+	holder.name = "Evidence_%s" % String(_identity.get("identity_key", "unknown"))
+	holder.evidence_id = _building_id
+	holder.title = "%s / FIELD EVIDENCE" % String(
+		_building.get("title", "UNKNOWN SITE")).to_upper()
+	holder.prompt = String(_building.get("evidence_prompt", "Inspect the evidence"))
+	holder.observation = String(_building.get("evidence", ""))
+	holder.carrier_reading = String(_building.get("scanned", ""))
 	holder.position = Vector2(
-		_room_center_x(hero_room) + clampf(offset.x, -124.0, 124.0),
-		-_interior_height * 0.5 + 58.0
+		_room_center_x(hero_room) + clampf(offset.x, -118.0, 118.0),
+		clampf(offset.y, -132.0, -76.0)
 	)
+	holder.collision_layer = 4
+	holder.collision_mask = 0
+	holder.monitoring = false
 	holder.set_meta("building_id", _building_id)
 	holder.set_meta("interior_identity", String(_identity.get("identity_key", "")))
 	holder.set_meta("layout_identity", String(_identity.get("layout_key", "")))
 	holder.set_meta("atlas_cell", cell)
-	holder.set_meta("presentation", "site-plate")
+	holder.set_meta("presentation", "interactive-identity-fixture")
 	holder.add_to_group("interior_identity_heroes")
 	add_child(holder)
 
-	var plate := Polygon2D.new()
-	plate.name = "SitePlate"
-	plate.polygon = _rect_points(Vector2(96, 30))
-	plate.color = Color(0.10, 0.115, 0.105, 0.96)
-	plate.z_index = 6
-	holder.add_child(plate)
+	var atlas := load(BuildingCatalog.INTERIOR_IDENTITY_ATLAS) as Texture2D
+	if atlas == null:
+		return
+	var cell_size := atlas.get_size() / Vector2(BuildingCatalog.INTERIOR_ATLAS_GRID)
+	var crop_inset := Vector2(14, 10)
+	var texture := AtlasTexture.new()
+	texture.atlas = atlas
+	texture.region = Rect2(
+		Vector2(cell) * cell_size + crop_inset,
+		cell_size - crop_inset * 2.0)
+	texture.filter_clip = true
+	var visual := Sprite2D.new()
+	visual.name = "Visual"
+	visual.texture = texture
+	visual.scale = Vector2.ONE * float(_identity.get("hero_scale", 0.64))
+	visual.position = Vector2(0, -12)
+	visual.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
+	visual.z_index = 4
+	holder.add_child(visual)
 
-	var stripe := Polygon2D.new()
-	stripe.name = "IdentityStripe"
-	stripe.position = Vector2(0, 7)
-	stripe.polygon = _rect_points(Vector2(78, 5))
-	stripe.color = (_identity.get("palette", Color(0.68, 0.52, 0.28)) as Color).lightened(0.12)
-	stripe.z_index = 7
-	holder.add_child(stripe)
+	var trigger_shape := RectangleShape2D.new()
+	trigger_shape.size = Vector2(150, 92)
+	var trigger := CollisionShape2D.new()
+	trigger.name = "TriggerShape"
+	trigger.position = Vector2(0, 10)
+	trigger.shape = trigger_shape
+	holder.add_child(trigger)
 
-	var studs := Polygon2D.new()
-	studs.name = "SiteMark"
-	var notch := 4.0 + float((cell.x + cell.y) % 4) * 4.0
-	studs.polygon = PackedVector2Array([
-		Vector2(-34, -8), Vector2(34 - notch, -8), Vector2(34, -2),
-		Vector2(34, 2), Vector2(-34 + notch, 8), Vector2(-34, 2),
+	var solid := StaticBody2D.new()
+	solid.name = "SolidFootprint"
+	solid.collision_layer = 1
+	solid.collision_mask = 0
+	holder.add_child(solid)
+	var solid_shape := RectangleShape2D.new()
+	solid_shape.size = Vector2(118, 48)
+	var solid_collision := CollisionShape2D.new()
+	solid_collision.name = "CollisionShape2D"
+	solid_collision.position = Vector2(0, 22)
+	solid_collision.shape = solid_shape
+	solid.add_child(solid_collision)
+
+	var glint := Polygon2D.new()
+	glint.name = "EvidenceGlint"
+	glint.position = Vector2(0, -58)
+	glint.polygon = PackedVector2Array([
+		Vector2(-4, -9), Vector2(0, -2), Vector2(8, 0),
+		Vector2(0, 3), Vector2(-4, 11), Vector2(-8, 3),
+		Vector2(-16, 0), Vector2(-8, -3),
 	])
-	studs.color = Color(0.63, 0.59, 0.49, 0.80)
-	studs.z_index = 7
-	holder.add_child(studs)
+	glint.color = Color(0.48, 0.88, 0.84, 0.66)
+	glint.z_index = 6
+	holder.add_child(glint)
 
 
 func _add_room_decal(room: int, center_x: float) -> void:
@@ -494,29 +579,59 @@ func _add_room_decal(room: int, center_x: float) -> void:
 	add_child(decal)
 
 
+func _add_floor_insets() -> void:
+	var theme := String(_building.get("theme", "service"))
+	for room in _room_count:
+		var inset := Polygon2D.new()
+		inset.name = "Room%dMaterialInset" % (room + 1)
+		inset.position = Vector2(_room_center_x(room), -8)
+		inset.polygon = _rect_points(Vector2(_room_width - 38.0, _interior_height - 62.0))
+		inset.color = {
+			"home": Color(0.19, 0.145, 0.105, 0.64),
+			"school": Color(0.20, 0.16, 0.105, 0.60),
+			"shop": Color(0.17, 0.15, 0.105, 0.62),
+			"clinic": Color(0.145, 0.18, 0.17, 0.62),
+			"garage": Color(0.115, 0.135, 0.13, 0.70),
+			"workshop": Color(0.12, 0.145, 0.135, 0.68),
+			"utility": Color(0.105, 0.13, 0.125, 0.72),
+			"bunker": Color(0.10, 0.115, 0.11, 0.74),
+			"industrial": Color(0.11, 0.125, 0.115, 0.72),
+			"service": Color(0.155, 0.145, 0.115, 0.66),
+		}.get(theme, Color(0.14, 0.145, 0.125, 0.66))
+		inset.z_index = -2
+		add_child(inset)
+
+
 func _add_floor_seams() -> void:
 	var seams := Node2D.new()
 	seams.name = "FloorSeams"
 	seams.z_index = -2
 	add_child(seams)
-	for y in [-174.0, -92.0, -10.0, 72.0, 154.0]:
-		var seam := Polygon2D.new()
-		seam.position = Vector2(0, y)
-		seam.polygon = _rect_points(Vector2(_interior_width - 48.0, 2.0))
-		seam.color = Color(0.06, 0.065, 0.058, 0.22)
-		seams.add_child(seam)
 	for room in _room_count:
 		var centre := _room_center_x(room)
-		for offset in [-116.0, 116.0]:
+		var horizontal_material := String(_building.get("theme", "")) in [
+			"home", "school", "shop", "service"]
+		for stripe in range(-2, 3):
 			var seam := Polygon2D.new()
-			seam.position = Vector2(centre + offset, 0)
-			seam.polygon = _rect_points(Vector2(2.0, _interior_height - 48.0))
-			seam.color = Color(0.06, 0.065, 0.058, 0.16)
+			if horizontal_material:
+				seam.position = Vector2(centre, float(stripe) * 68.0 - 8.0)
+				seam.polygon = _rect_points(Vector2(_room_width - 52.0, 2.0))
+			else:
+				seam.position = Vector2(centre + float(stripe) * 64.0, -8.0)
+				seam.polygon = _rect_points(Vector2(2.0, _interior_height - 76.0))
+			seam.color = Color(0.035, 0.042, 0.039, 0.32)
 			seams.add_child(seam)
 
 
 func _room_center_x(room: int) -> float:
-	return -_interior_width * 0.5 + 50.0 + _room_width * (float(room) + 0.5)
+	return -_interior_width * 0.5 + 40.0 + _room_width * (float(room) + 0.5)
+
+
+func _divider_passage_y(divider: int) -> float:
+	var layout_key := String(_identity.get("layout_key", ""))
+	var hash_value: int = absi(layout_key.hash() + divider * 97)
+	var passage_options: PackedFloat32Array = PackedFloat32Array([-78.0, 0.0, 78.0])
+	return passage_options[hash_value % 3]
 
 
 func _entry_x() -> float:
@@ -570,7 +685,7 @@ func _floor_texture() -> String:
 func _floor_tint() -> Color:
 	if _identity.has("palette"):
 		var authored := _identity["palette"] as Color
-		return authored.lerp(Color(0.78, 0.73, 0.63, 1.0), 0.48)
+		return authored.darkened(0.34)
 	var theme := String(_building.get("theme", ""))
 	if theme in ["home", "school", "shop"]:
 		return Color(0.34, 0.30, 0.24, 1.0)
@@ -581,14 +696,14 @@ func _floor_tint() -> Color:
 
 func _wall_tint() -> Color:
 	var authored := _identity.get("palette", Color(0.28, 0.27, 0.23, 1.0)) as Color
-	return authored.lerp(Color(0.66, 0.60, 0.50, 1.0), 0.46)
+	return authored.darkened(0.48).lerp(Color(0.12, 0.13, 0.12, 1.0), 0.46)
 
 
 func _runner_tint() -> Color:
 	var authored := _identity.get("runner_tint", Color(0.28, 0.25, 0.20, 0.54)) as Color
-	var lifted := authored.lerp(Color(0.72, 0.59, 0.40, authored.a), 0.46)
-	lifted.a = maxf(authored.a, 0.64)
-	return lifted
+	var grounded := authored.darkened(0.34)
+	grounded.a = 0.62
+	return grounded
 
 
 func _arrival_line() -> String:

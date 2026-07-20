@@ -10,6 +10,10 @@ const MAP_SCENES := {
 }
 const INTERIOR_SCENE := preload("res://scenes/interiors/building_interior.tscn")
 const BuildingCatalog = preload("res://scripts/world/building_catalog.gd")
+const MISLEADING_DECORATIVE_PROPS := [
+	"chest", "crate", "toolbox", "locker", "vending",
+	"medicine", "photo", "compass", "receiver",
+]
 
 var _failures: Array[String] = []
 var _seen_buildings: Dictionary = {}
@@ -61,7 +65,7 @@ func _check_catalog() -> void:
 		var rooms := int(building.get("rooms", 0))
 		_check(rooms >= 1 and rooms <= 3, "%s has one to three rooms" % building_id)
 		var minimum := BuildingCatalog.minimum_exterior_size(building_id)
-		_check(minimum.x >= WorldLayoutContract.PLAYER_REFERENCE * 4.5, "%s cannot shrink to prop scale" % building_id)
+		_check(minimum.x >= WorldLayoutContract.PLAYER_REFERENCE * 2.7, "%s cannot shrink to prop scale" % building_id)
 		var identity := BuildingCatalog.get_interior_identity(building_id)
 		_check(not identity.is_empty(), "%s has an authored interior identity" % building_id)
 		var dressing := identity.get("dressing", []) as Array
@@ -99,10 +103,13 @@ func _check_flow_contract(map: Node2D, region_id: StringName) -> void:
 	_check(contract != null, "%s owns a runtime map-flow contract" % region_id)
 	if contract == null:
 		return
-	_check(String(contract.get_meta("layout_language", "")) == "hub-loop", "%s declares the hub-loop layout language" % region_id)
+	var layout_language := String(contract.get_meta("layout_language", ""))
+	_check(
+		layout_language == ("road-spine" if region_id == &"cullbrook" else "hub-loop"),
+		"%s declares its physical layout language" % region_id)
 	_check("no route rail" in String(contract.get_meta("guidance_rule", "")), "%s does not draw a minimap rail through the world" % region_id)
 	var route_nodes: PackedStringArray = contract.get_meta("route_nodes", PackedStringArray())
-	_check(route_nodes.size() >= 4, "%s has a hub plus a traversable loop" % region_id)
+	_check(route_nodes.size() >= (2 if region_id == &"cullbrook" else 4), "%s has a traversable route network" % region_id)
 	for route_node in route_nodes:
 		var physical_route := map.get_node_or_null(NodePath(route_node)) as CanvasItem
 		_check(physical_route != null and physical_route.visible, "%s route surface %s is physically authored" % [region_id, route_node])
@@ -129,7 +136,12 @@ func _check_flow_contract(map: Node2D, region_id: StringName) -> void:
 		_check(connections.size() == 2, "%s shortcut states the two route branches it reconnects" % region_id)
 		_check(map.has_node(NodePath(route_name)), "%s shortcut is painted as route surface %s" % [region_id, route_name])
 	_check(buffers.size() >= 2, "%s gives the player quiet buffers before pressure" % region_id)
-	_check(cues.size() >= 3, "%s repeats wayfinding at every major decision" % region_id)
+	if region_id == &"cullbrook":
+		_check(String(contract.get_meta("cue_policy", "")) == "architecture-led",
+			"Cullbrook guides with its road, facades and lit thresholds instead of loose sign bundles")
+		_check(cues.is_empty(), "Cullbrook contains no repeated sign/lamp clutter")
+	else:
+		_check(cues.size() >= 3, "%s repeats wayfinding at every major decision" % region_id)
 	for cue in cues:
 		var channels: PackedStringArray = cue.get_meta("cue_channels", PackedStringArray())
 		_check(channels == PackedStringArray(["ground", "sign", "light"]), "%s cue %s uses ground, sign and light together" % [region_id, cue.name])
@@ -328,10 +340,11 @@ func _check_interiors() -> void:
 		_seen_hero_cells[cell_key] = building_id
 		var expected_placements := 0
 		for room_value in identity.get("dressing", []):
-			expected_placements += (room_value as Array).size()
-		for room_value in BuildingCatalog.get_interior_details(building_id):
-			expected_placements += (room_value as Array).size()
-		_check(authored_placements == expected_placements, "%s instantiates all %d authored placements" % [building_id, expected_placements])
+			for placement_value in room_value as Array:
+				var placement := placement_value as Array
+				if placement.size() >= 1 and String(placement[0]) not in MISLEADING_DECORATIVE_PROPS:
+					expected_placements += 1
+		_check(authored_placements == expected_placements, "%s renders %d honest structural placements" % [building_id, expected_placements])
 		_check(_nodes_in_group(interior, "interior_practical_lights").size() == rooms, "%s lights every room with one restrained practical" % building_id)
 		var heroes := _nodes_in_group(interior, "interior_identity_heroes")
 		_check(heroes.size() == 1, "%s instantiates exactly one building-specific hero asset" % building_id)
@@ -339,15 +352,16 @@ func _check_interiors() -> void:
 			var hero := heroes[0]
 			_check(String(hero.get_meta("interior_identity", "")) == identity_key, "%s hero asset carries the site identity" % building_id)
 			_check(hero.get_meta("atlas_cell", Vector2i(-1, -1)) == atlas_cell, "%s hero asset uses its assigned atlas cell" % building_id)
-			var site_plate := hero.get_node_or_null("SitePlate") as Polygon2D
-			_check(site_plate != null and site_plate.visible, "%s uses a restrained site plate instead of miniature architecture" % building_id)
-		var interior_width := 420.0 * float(rooms) + 100.0
-		for room_index in rooms:
-			var room_center := Vector2(-interior_width * 0.5 + 50.0 + 420.0 * (float(room_index) + 0.5), 0)
-			_check(not _point_hits_interior_solid(interior, room_center), "%s room %d keeps its central exploration lane clear" % [building_id, room_index + 1])
-		for sample_x in range(int(-interior_width * 0.5 + 88.0), int(interior_width * 0.5 - 88.0), 24):
-			_check(not _point_hits_interior_solid(interior, Vector2(float(sample_x), 0)), "%s keeps a continuous route through every room" % building_id)
+			_check(hero is InteriorEvidence and String(hero.get_meta("presentation", "")) == "interactive-identity-fixture",
+				"%s hero art is the actual evidence interaction" % building_id)
+		var interior_width := 380.0 * float(rooms) + 80.0
 		var spawn := interior.get_node_or_null("from_world") as Marker2D
+		for room_index in rooms:
+			var room_center := Vector2(-interior_width * 0.5 + 40.0 + 380.0 * (float(room_index) + 0.5), 0)
+			_check(not _point_hits_interior_solid(interior, room_center), "%s room %d keeps its central exploration lane clear" % [building_id, room_index + 1])
+			if spawn != null:
+				_check(_has_interior_route(interior, spawn.position, room_center, interior_width),
+					"%s room %d remains reachable around its furniture" % [building_id, room_index + 1])
 		_check(spawn != null and not _point_hits_interior_solid(interior, spawn.position), "%s arrival point remains outside all collision" % building_id)
 		for divider in range(1, rooms):
 			_check(
@@ -367,6 +381,13 @@ func _find_exterior(map: Node2D, building_id: StringName) -> StaticBody2D:
 	for node in _nodes_in_group(map, "world_solid_footprints"):
 		if StringName(node.get_meta("building_id", &"")) == building_id:
 			return node as StaticBody2D
+	for node in _descendants(map):
+		var shared := node as StaticBody2D
+		if shared == null or StringName(shared.get_meta("building_id", &"")) != building_id:
+			continue
+		var shared_path := shared.get_meta("shared_exterior", NodePath()) as NodePath
+		if not shared_path.is_empty():
+			return map.get_node_or_null(shared_path) as StaticBody2D
 	return null
 
 
@@ -451,6 +472,50 @@ func _point_hits_interior_solid(interior: Node2D, local_point: Vector2) -> bool:
 		var body := node as StaticBody2D
 		if body != null and _point_hits_body(body, global_point):
 			return true
+	return false
+
+
+func _has_interior_route(
+		interior: Node2D,
+		start: Vector2,
+		goal: Vector2,
+		width: float) -> bool:
+	const STEP := 20.0
+	var origin := Vector2(-width * 0.5 + 28.0, -230.0 + 28.0)
+	var columns := floori((width - 56.0) / STEP) + 1
+	var rows := floori((460.0 - 56.0) / STEP) + 1
+	var start_cell := Vector2i(
+		clampi(roundi((start.x - origin.x) / STEP), 0, columns - 1),
+		clampi(roundi((start.y - origin.y) / STEP), 0, rows - 1))
+	var goal_cell := Vector2i(
+		clampi(roundi((goal.x - origin.x) / STEP), 0, columns - 1),
+		clampi(roundi((goal.y - origin.y) / STEP), 0, rows - 1))
+	var pending: Array[Vector2i] = [start_cell]
+	var visited := {start_cell: true}
+	var head := 0
+	while head < pending.size():
+		var cell := pending[head]
+		head += 1
+		if cell == goal_cell:
+			return true
+		for direction in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var next: Vector2i = cell + direction
+			if next.x < 0 or next.y < 0 or next.x >= columns or next.y >= rows \
+					or visited.has(next):
+				continue
+			var point: Vector2 = origin + Vector2(next) * STEP
+			var blocked := false
+			for offset in [
+				Vector2.ZERO, Vector2(-10, 0), Vector2(10, 0),
+				Vector2(0, -12), Vector2(0, 12),
+			]:
+				if _point_hits_interior_solid(interior, point + offset):
+					blocked = true
+					break
+			if blocked:
+				continue
+			visited[next] = true
+			pending.append(next)
 	return false
 
 

@@ -323,7 +323,7 @@ func _check_opening() -> void:
 	await get_tree().create_timer(0.78, true, false, true).timeout
 	var current_still := canvas.get_node("CurrentStill") as TextureRect
 	var incoming_still := canvas.get_node("IncomingStill") as TextureRect
-	_check(current_still.texture == load("res://assets/processed/cinematic_rebuild/cin03_carriage_depot.png")
+	_check(current_still.texture == load("res://assets/processed/cinematic_rebuild/cin06_other_ellie.png")
 		and incoming_still.texture == null,
 		"rapid cinematic advance settles on the newest illustration without a blank race")
 	opening.set("_running", true)

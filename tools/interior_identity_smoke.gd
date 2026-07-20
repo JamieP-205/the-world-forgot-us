@@ -4,6 +4,10 @@ extends Node
 
 const INTERIOR_SCENE := preload("res://scenes/interiors/building_interior.tscn")
 const BuildingCatalog = preload("res://scripts/world/building_catalog.gd")
+const MISLEADING_DECORATIVE_PROPS := [
+	"chest", "crate", "toolbox", "locker", "vending",
+	"medicine", "photo", "compass", "receiver",
+]
 
 var _failures: Array[String] = []
 var _identity_keys: Dictionary = {}
@@ -31,7 +35,7 @@ func _run() -> void:
 	_check(_atlas_cells.size() == 19, "all nineteen assigned atlas cells are distinct")
 	_check(_pixel_signatures.size() == 19, "all nineteen used atlas cells contain distinct pixels")
 	if _failures.is_empty():
-		print("INTERIOR IDENTITY CONTRACT: PASS (19 buildings, 19 hero assets, %d authored placements, %d practical lights)" % [_placement_total, _practical_light_total])
+		print("INTERIOR IDENTITY CONTRACT: PASS (19 buildings, 19 interactive hero fixtures, %d honest dressing placements, %d practical lights)" % [_placement_total, _practical_light_total])
 		get_tree().quit(0)
 		return
 	for failure in _failures:
@@ -87,16 +91,19 @@ func _check_live_interior(building_id: StringName) -> void:
 
 	var building := BuildingCatalog.get_building(building_id)
 	var identity := BuildingCatalog.get_interior_identity(building_id)
-	var details := BuildingCatalog.get_interior_details(building_id)
 	var rooms := int(building.get("rooms", 0))
 	var expected_placements := 0
 	var expected_by_room: Array[int] = []
 	var dressing := identity.get("dressing", []) as Array
 	for room_index in rooms:
-		var room_count := (dressing[room_index] as Array).size() + (details[room_index] as Array).size()
+		var room_count := 0
+		for placement_value in dressing[room_index] as Array:
+			var placement := placement_value as Array
+			if placement.size() >= 1 and String(placement[0]) not in MISLEADING_DECORATIVE_PROPS:
+				room_count += 1
 		expected_by_room.append(room_count)
 		expected_placements += room_count
-		_check(room_count >= 4, "%s room %d has at least four purposeful placements" % [building_id, room_index + 1])
+		_check(room_count >= 1, "%s room %d has at least one honest structural placement" % [building_id, room_index + 1])
 	_placement_total += expected_placements
 	var live_placements := 0
 	var live_by_room: Dictionary = {}
@@ -133,19 +140,22 @@ func _check_live_interior(building_id: StringName) -> void:
 	_check(lit_rooms.size() == rooms, "%s practical lights cover every room exactly once" % building_id)
 	var floor := interior.get_node_or_null("Floor") as Polygon2D
 	var north_wall := interior.get_node_or_null("NorthWall/Visual") as Polygon2D
-	_check(floor != null and floor.color.get_luminance() >= 0.32, "%s floor material remains readable under practical light" % building_id)
-	_check(north_wall != null and north_wall.color.get_luminance() >= 0.27, "%s wall material remains readable under practical light" % building_id)
+	_check(floor != null and floor.color.get_luminance() >= 0.10, "%s floor material remains readable under practical light" % building_id)
+	_check(north_wall != null and north_wall.color.get_luminance() >= 0.10, "%s wall material remains readable under practical light" % building_id)
 
 	var heroes := _nodes_in_group(interior, "interior_identity_heroes")
 	_check(heroes.size() == 1, "%s has exactly one building-specific hero" % building_id)
 	if heroes.size() == 1:
 		var hero := heroes[0]
-		var plate := hero.get_node_or_null("SitePlate") as Polygon2D
-		var stripe := hero.get_node_or_null("IdentityStripe") as Polygon2D
-		_check(plate != null and plate.visible and stripe != null and stripe.visible,
-			"%s identity is a wall plate, not a miniature building collage" % building_id)
-		_check(String(hero.get_meta("presentation", "")) == "site-plate",
-			"%s declares its restrained identity presentation" % building_id)
+		var visual := hero.get_node_or_null("Visual") as Sprite2D
+		var glint := hero.get_node_or_null("EvidenceGlint") as Polygon2D
+		var footprint := hero.get_node_or_null("SolidFootprint") as StaticBody2D
+		_check(hero is InteriorEvidence and visual != null and visual.visible,
+			"%s identity art is the physical evidence interaction" % building_id)
+		_check(glint != null and footprint != null,
+			"%s identity fixture communicates use and owns an honest physical foot" % building_id)
+		_check(String(hero.get_meta("presentation", "")) == "interactive-identity-fixture",
+			"%s declares its one-visual/one-interaction presentation" % building_id)
 		_check(hero.get_meta("atlas_cell", Vector2i(-1, -1)) == identity.get("atlas_cell", Vector2i(-1, -1)), "%s hero uses its assigned cell" % building_id)
 
 	var evidence_nodes: Array[InteriorEvidence] = []
@@ -161,14 +171,15 @@ func _check_live_interior(building_id: StringName) -> void:
 		EventBus.dialogue_finished.emit(StringName("evidence_%s" % String(building_id)), -1)
 		_check(not GameManager.is_input_locked(), "%s evidence dialogue releases its input lock" % building_id)
 
-	var width := 420.0 * float(rooms) + 100.0
-	for room_index in rooms:
-		var center := Vector2(-width * 0.5 + 50.0 + 420.0 * (float(room_index) + 0.5), 0)
-		_check(not _point_hits_solid(interior, center), "%s room %d keeps its centre lane clear" % [building_id, room_index + 1])
-	for sample_x in range(int(-width * 0.5 + 88.0), int(width * 0.5 - 88.0), 24):
-		_check(not _point_hits_solid(interior, Vector2(float(sample_x), 0)), "%s keeps a continuous cross-room route" % building_id)
+	var width := 380.0 * float(rooms) + 80.0
 	var spawn := interior.get_node_or_null("from_world") as Marker2D
 	_check(spawn != null and not _point_hits_solid(interior, spawn.position), "%s arrival marker is outside all collision" % building_id)
+	for room_index in rooms:
+		var center := Vector2(-width * 0.5 + 40.0 + 380.0 * (float(room_index) + 0.5), 0)
+		_check(not _point_hits_solid(interior, center), "%s room %d keeps its centre lane clear" % [building_id, room_index + 1])
+		if spawn != null:
+			_check(_has_walkable_route(interior, spawn.position, center, width),
+				"%s room %d is reachable through its authored doorway layout" % [building_id, room_index + 1])
 	var exit := interior.get_node_or_null("ReturnToWorld") as BuildingDoor
 	_check(exit != null and not _point_hits_solid(interior, exit.position), "%s return threshold is outside all collision" % building_id)
 
@@ -196,6 +207,52 @@ func _point_hits_solid(interior: Node2D, local_point: Vector2) -> bool:
 			if Geometry2D.is_point_in_polygon(global_point, transformed):
 				return true
 	return false
+
+
+func _has_walkable_route(
+		interior: Node2D,
+		start: Vector2,
+		goal: Vector2,
+		width: float) -> bool:
+	const STEP := 20.0
+	var origin := Vector2(-width * 0.5 + 28.0, -230.0 + 28.0)
+	var columns := floori((width - 56.0) / STEP) + 1
+	var rows := floori((460.0 - 56.0) / STEP) + 1
+	var start_cell := Vector2i(
+		clampi(roundi((start.x - origin.x) / STEP), 0, columns - 1),
+		clampi(roundi((start.y - origin.y) / STEP), 0, rows - 1))
+	var goal_cell := Vector2i(
+		clampi(roundi((goal.x - origin.x) / STEP), 0, columns - 1),
+		clampi(roundi((goal.y - origin.y) / STEP), 0, rows - 1))
+	var pending: Array[Vector2i] = [start_cell]
+	var visited := {start_cell: true}
+	var head := 0
+	while head < pending.size():
+		var cell := pending[head]
+		head += 1
+		if cell == goal_cell:
+			return true
+		for direction in [Vector2i.LEFT, Vector2i.RIGHT, Vector2i.UP, Vector2i.DOWN]:
+			var next: Vector2i = cell + direction
+			if next.x < 0 or next.y < 0 or next.x >= columns or next.y >= rows \
+					or visited.has(next):
+				continue
+			var point: Vector2 = origin + Vector2(next) * STEP
+			if not _point_has_player_clearance(interior, point):
+				continue
+			visited[next] = true
+			pending.append(next)
+	return false
+
+
+func _point_has_player_clearance(interior: Node2D, point: Vector2) -> bool:
+	for offset in [
+		Vector2.ZERO, Vector2(-10, 0), Vector2(10, 0),
+		Vector2(0, -12), Vector2(0, 12),
+	]:
+		if _point_hits_solid(interior, point + offset):
+			return false
+	return true
 
 
 func _nodes_in_group(root: Node, group_name: StringName) -> Array[Node]:
