@@ -1,0 +1,16 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+*~
+.vscode/
+.idea/
+
+# Local tooling / scratch
+node_modules/
+*.log
+.cache/
+
+# Local preview artefacts
+/preview*.jpg
+/*.local.*
