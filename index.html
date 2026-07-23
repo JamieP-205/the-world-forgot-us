@@ -2,30 +2,43 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>The World Forgot Us</title>
 <style>
   :root { color-scheme: dark; }
-  html,body{margin:0;height:100%;background:#07090b;overflow:hidden;
+  html,body{margin:0;height:100%;background:#07090b;overflow:hidden;overscroll-behavior:none;
     font-family:ui-monospace,"Cascadia Mono","Consolas",monospace;color:#d8cfbf;}
   #wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;}
   canvas{image-rendering:pixelated;image-rendering:crisp-edges;background:#000;
     box-shadow:0 0 60px #000 inset;touch-action:none;}
   #hint{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);
     font-size:12px;color:#7d7566;letter-spacing:.5px;opacity:.8;pointer-events:none;
-    text-shadow:0 1px 2px #000;text-align:center;white-space:nowrap;}
+    text-shadow:0 1px 2px #000;text-align:center;white-space:nowrap;transition:opacity .25s ease;}
+  body.playing #hint{opacity:0;}
   /* touch controls, hidden until a touch is seen */
   .touch{position:fixed;display:none;z-index:10;user-select:none;-webkit-user-select:none;touch-action:none;}
   #stick{left:22px;bottom:22px;width:150px;height:150px;border-radius:50%;
     background:rgba(30,34,38,.35);border:1px solid rgba(120,120,120,.3);}
   #nub{position:absolute;left:50px;top:50px;width:50px;height:50px;border-radius:50%;
     background:rgba(180,170,150,.35);border:1px solid rgba(200,200,200,.4);}
-  #pads{right:14px;bottom:22px;display:grid;grid-template-columns:64px 64px;gap:10px;}
-  .pad{width:64px;height:64px;border-radius:12px;background:rgba(30,34,38,.5);
+  #pads{right:12px;bottom:18px;display:none;grid-template-columns:56px 56px 56px;gap:8px;}
+  #utility{right:12px;bottom:146px;display:none;grid-template-columns:repeat(7,40px);gap:6px;}
+  #touchSettings{right:12px;top:18px;display:none;grid-template-columns:repeat(3,58px);gap:6px;}
+  #touchTitle{left:50%;bottom:64px;transform:translateX(-50%);display:none;grid-template-columns:112px 112px;gap:10px;}
+  .pad{width:56px;height:54px;border-radius:12px;background:rgba(22,27,31,.68);
     border:1px solid rgba(120,120,120,.35);display:flex;align-items:center;justify-content:center;
-    font-size:11px;color:#c9c0b0;letter-spacing:.5px;}
-  body.touch-on .touch{display:block;}
-  body.touch-on #pads{display:grid;}
+    font-size:10px;color:#c9c0b0;letter-spacing:.25px;}
+  #utility .pad{width:40px;height:34px;border-radius:9px;font-size:9px;background:rgba(18,23,27,.72);}
+  #touchSettings .pad{width:58px;height:36px;border-radius:9px;font-size:9px;background:rgba(18,23,27,.9);}
+  #touchTitle .pad{width:112px;height:44px;border-radius:10px;background:rgba(18,23,27,.9);}
+  body.touch-on .touch{display:none;}
+  body.touch-on #touchTitle{display:grid;}
+  body.touch-on.playing #stick{display:block;}
+  body.touch-on.playing #pads{display:grid;}
+  body.touch-on.playing #utility{display:grid;}
+  body.touch-on.playing #touchTitle{display:none;}
+  body.touch-on #touchSettings{display:none;}
+  body.touch-on.playing.paused #touchSettings{display:grid;}
 </style>
 </head>
 <body>
@@ -37,17 +50,42 @@
   <div class="pad" data-k="KeyE">E</div>
   <div class="pad" data-k="KeyJ">J</div>
   <div class="pad" data-k="KeyQ">Q</div>
-  <div class="pad" data-k="Space">DGE</div>
+  <div class="pad" data-k="Space">DODGE</div>
+  <div class="pad" data-k="KeyR">PULSE</div>
+  <div class="pad" data-k="KeyF">HEAL</div>
+</div>
+<div id="utility" class="touch">
+  <div class="pad" data-k="KeyC">CRAFT</div>
+  <div class="pad" data-k="KeyG">FLARE</div>
+  <div class="pad" data-k="KeyB">DECOY</div>
+  <div class="pad" data-k="KeyM">MAP</div>
+  <div class="pad" data-k="KeyI">FILES</div>
+  <div class="pad" data-k="Tab">PAGE</div>
+  <div class="pad" data-k="Escape">PAUSE</div>
+</div>
+<div id="touchSettings" class="touch" aria-label="Pause settings">
+  <div class="pad" data-k="Digit1">MUSIC</div>
+  <div class="pad" data-k="Digit2">WEATHER</div>
+  <div class="pad" data-k="Digit3">EFFECTS</div>
+  <div class="pad" data-k="Digit4">VOICES</div>
+  <div class="pad" data-k="Digit5">REDUCE FX</div>
+  <div class="pad" data-k="Digit6">BRIGHTER</div>
+  <div class="pad" data-k="KeyN">MUTE</div>
+  <div class="pad" data-k="Escape">RESUME</div>
+</div>
+<div id="touchTitle" class="touch" aria-label="Title actions">
+  <div class="pad" data-k="KeyE">BEGIN / CONTINUE</div>
+  <div class="pad" data-k="KeyN">NEW NIGHT</div>
 </div>
 
 <script>
 "use strict";
 /* =====================================================================
-   THE WORLD FORGOT US — vertical slice (Cullbrook Services opening)
-   Single-file HTML5 canvas game. No external assets (CSP-safe).
-   Implements: 4-dir movement, Trace Receiver sweep, salvage->rebuild->scan
-   loop, one signal enemy (Static Wraith) + one Hollow, crafting, the field
-   archive, day/night tint, rain, procedural WebAudio, save/continue.
+   THE WORLD FORGOT US — complete browser campaign
+   Static HTML5 canvas game with original local music assets.
+   Implements four-region exploration, Trace Receiver investigation,
+   combat and crafting, archive/evidence systems, branching finale,
+   dynamic lighting and weather, layered WebAudio, and persistent saves.
    ===================================================================== */
 
 const CANVAS = document.getElementById('c');
@@ -75,6 +113,9 @@ const PREVENT = new Set(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight',
 addEventListener('keydown', e=>{
   const code = CODE_ALIAS[e.code] || e.code;
   if (PREVENT.has(e.code)) e.preventDefault();
+  // Held interaction keys must not repeatedly advance overlays or re-trigger
+  // receiver/audio sequences. Movement still works because `keys` remains true.
+  if (e.repeat){ keys[code]=true; return; }
   if (!keys[code]) pressed[code] = true;
   keys[code] = true;
   Audio.unlock();
@@ -102,19 +143,28 @@ let touchSeen=false;
 function enableTouch(){ if(touchSeen) return; touchSeen=true; document.body.classList.add('touch-on'); }
 (function touchSetup(){
   const stick=document.getElementById('stick'), nub=document.getElementById('nub');
-  let sid=null, cx=0, cy=0;
+  let sid=null, cx=0, cy=0, lastY=0, menuDir=null;
   const setNub=(dx,dy)=>{ nub.style.left=(50+dx)+'px'; nub.style.top=(50+dy)+'px'; };
   stick.addEventListener('touchstart',e=>{ enableTouch(); Audio.unlock();
     const t=e.changedTouches[0]; sid=t.identifier; const r=stick.getBoundingClientRect();
-    cx=r.left+r.width/2; cy=r.top+r.height/2; e.preventDefault(); },{passive:false});
+    cx=r.left+r.width/2; cy=r.top+r.height/2; lastY=t.clientY; e.preventDefault(); },{passive:false});
   addEventListener('touchmove',e=>{ if(sid===null) return;
     for(const t of e.changedTouches){ if(t.identifier!==sid) continue;
       let dx=t.clientX-cx, dy=t.clientY-cy; const m=Math.hypot(dx,dy)||1, cap=48;
+      const deltaY=t.clientY-lastY; lastY=t.clientY;
       const k=Math.min(1,m/60); const nx=dx/m, ny=dy/m;
       setNub(nx*Math.min(m,cap), ny*Math.min(m,cap));
-      Game.touchMove(nx*k, ny*k);
+      const menuNav=Game.overlay==='craft'||Game.overlay==='choice';
+      if(Game.overlay==='reader'){
+        menuDir=null; Game.touchMove(0,0); Reader.scroll=Math.max(0,Reader.scroll-deltaY*1.4);
+      }else if(menuNav){
+        Game.touchMove(0,0);
+        if(m>24){ const code=Math.abs(dx)>Math.abs(dy)?(dx<0?'KeyA':'KeyD'):(dy<0?'KeyW':'KeyS');
+          if(code!==menuDir){ menuDir=code; Game.onKey(code); }
+        }else menuDir=null;
+      }else{ menuDir=null; Game.touchMove(nx*k, ny*k); }
     } e.preventDefault(); },{passive:false});
-  const end=e=>{ if(sid===null) return; for(const t of e.changedTouches) if(t.identifier===sid){ sid=null; setNub(0,0); Game.touchMove(0,0);} };
+  const end=e=>{ if(sid===null) return; for(const t of e.changedTouches) if(t.identifier===sid){ sid=null; lastY=0; menuDir=null; setNub(0,0); Game.touchMove(0,0);} };
   addEventListener('touchend',end); addEventListener('touchcancel',end);
   document.querySelectorAll('.pad').forEach(p=>{
     const k=p.dataset.k;
@@ -122,31 +172,75 @@ function enableTouch(){ if(touchSeen) return; touchSeen=true; document.body.clas
       pressed[k]=true; keys[k]=true; Game.onKey(k); e.preventDefault(); },{passive:false});
     p.addEventListener('touchend',e=>{ keys[k]=false; e.preventDefault(); },{passive:false});
   });
+  addEventListener('touchstart',enableTouch,{passive:true,once:true});
+  if((navigator.maxTouchPoints||0)>0 && matchMedia('(pointer:coarse)').matches) enableTouch();
 })();
 
 /* ------------------------------- audio ----------------------------- */
-/* Procedural WebAudio. Nothing recorded — Continuity's voice is generated,
-   which is also the game's fiction. Unlocks on first valid input. */
+/* Layered WebAudio plus two original local music recordings. Dialogue remains
+   procedurally voiced, which is also part of the fiction. Unlocks on input. */
 const Audio = (()=> {
-  let ctx=null, master=null, ambGain=null, rainGain=null, ready=false, on=true;
-  let _speakBus=null;                    // active fake-speech bus (so a recording can be cut off)
-  const drones=[];
+  let ctx=null, master=null, limiter=null;
+  let ambienceBus=null, weatherBus=null, musicBus=null, sfxBus=null, voiceBus=null;
+  let ambGain=null, rainGain=null, ready=false, on=true;
+  let _speakBus=null, _speakNodes=[];     // active generated voice, fully cancellable on retune/close
+  let _mainMusicEl=null, _receiverMusicEl=null, _mainMusicGain=null, _receiverMusicGain=null;
+  let _nextRainDetail=0, _lastTension=-1;
+  const _deferred=new Map(), drones=[], thunderBuffers=[];
+  const _musicExt=document.createElement('audio').canPlayType('audio/ogg; codecs="opus"')?'.ogg':'.mp3';
+  const mix={music:0.82,weather:0.78,sfx:0.84,voice:0.92,ambience:0.72};
+  try{ Object.assign(mix,JSON.parse(localStorage.getItem('twfu_audio_mix')||'{}')); }catch(e){}
+  for(const k in mix) mix[k]=Math.max(0,Math.min(1,Number(mix[k])||0));
+  function defer(fn,ms,group){
+    const id=setTimeout(()=>{ _deferred.delete(id); try{fn();}catch(e){} },ms);
+    _deferred.set(id,group||'general'); return id;
+  }
+  function cancelDeferred(group){
+    for(const [id,g] of _deferred){ if(!group||g===group){ clearTimeout(id); _deferred.delete(id); } }
+  }
+  function ensureMediaPlaying(){
+    if(!on || document.hidden) return;
+    for(const el of [_mainMusicEl,_receiverMusicEl]) if(el && el.paused) el.play().catch(()=>{});
+  }
   function unlock(){
-    if (ready) return;
     try{
+      if(ctx){
+        if(ctx.state==='suspended') ctx.resume().then(ensureMediaPlaying).catch(()=>{});
+        else ensureMediaPlaying();
+        return;
+      }
       ctx = new (window.AudioContext||window.webkitAudioContext)();
-      master = ctx.createGain(); master.gain.value = 0.85; master.connect(ctx.destination);
-      startAmbient();
+      master = ctx.createGain(); master.gain.value = 0.72;
+      limiter=ctx.createDynamicsCompressor();
+      limiter.threshold.value=-14; limiter.knee.value=18; limiter.ratio.value=8;
+      limiter.attack.value=0.004; limiter.release.value=0.28;
+      master.connect(limiter); limiter.connect(ctx.destination);
+      const bus=(level)=>{ const n=ctx.createGain(); n.gain.value=level; n.connect(master); return n; };
+      ambienceBus=bus(mix.ambience); weatherBus=bus(mix.weather); musicBus=bus(mix.music);
+      sfxBus=bus(mix.sfx); voiceBus=bus(mix.voice);
       ready=true;
+      startAmbient();
+      startRecordedMusic();
+      if(ctx.state==='suspended') ctx.resume().then(ensureMediaPlaying).catch(()=>{});
     }catch(e){ ready=false; }
   }
   function noiseBuffer(sec){
     const n = ctx.sampleRate*sec, b = ctx.createBuffer(1,n,ctx.sampleRate), d=b.getChannelData(0);
     for(let i=0;i<n;i++) d[i]=Math.random()*2-1; return b;
   }
+  function rainNoiseBuffer(sec, colour){
+    const n=Math.floor(ctx.sampleRate*sec), b=ctx.createBuffer(1,n,ctx.sampleRate), d=b.getChannelData(0);
+    let p0=0,p1=0,p2=0,last=0;
+    for(let i=0;i<n;i++){
+      const w=Math.random()*2-1;
+      if(colour==='brown'){ last=(last*0.985+w*0.11); d[i]=last*0.85; }
+      else { p0=0.997*p0+w*0.030; p1=0.985*p1+w*0.055; p2=0.950*p2+w*0.110; d[i]=(p0+p1+p2+w*0.14)*0.34; }
+    }
+    return b;
+  }
   function startAmbient(){
     // low drones
-    ambGain = ctx.createGain(); ambGain.gain.value=0.16; ambGain.connect(master);
+    ambGain = ctx.createGain(); ambGain.gain.value=0.09; ambGain.connect(ambienceBus);
     [55,58.3,82.4].forEach((f,i)=>{
       const o=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
       o.type='sawtooth'; o.frequency.value=f; lp.type='lowpass'; lp.frequency.value=240;
@@ -155,13 +249,42 @@ const Audio = (()=> {
       lfo.frequency.value=0.05+i*0.03; lg.gain.value=6; lfo.connect(lg); lg.connect(o.frequency);
       o.start(); lfo.start(); drones.push(o,lfo);
     });
-    // rain: filtered noise loop
-    const src=ctx.createBufferSource(); src.buffer=noiseBuffer(3); src.loop=true;
-    const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=1400; bp.Q.value=0.4;
-    const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=500;
-    rainGain=ctx.createGain(); rainGain.gain.value=0.05;
-    src.connect(bp); bp.connect(hp); hp.connect(rainGain); rainGain.connect(master); src.start();
+    // Layered, wide rain bed: low runoff, mid-distance rainfall and fine
+    // droplets use different loop lengths so no short mono hiss pattern repeats.
+    rainGain=ctx.createGain(); rainGain.gain.value=0.72; rainGain.connect(weatherBus);
+    [
+      {sec:11,colour:'pink', type:'bandpass',freq:1250,q:0.35,level:0.095,pan:-0.42,rate:0.055,mod:0.020},
+      {sec:13,colour:'pink', type:'highpass',freq:2850,q:0.25,level:0.040,pan: 0.46,rate:0.083,mod:0.010},
+      {sec:17,colour:'brown',type:'lowpass', freq:420, q:0.30,level:0.050,pan: 0.05,rate:0.037,mod:0.014},
+    ].forEach((L,i)=>{
+      const src=ctx.createBufferSource(); src.buffer=rainNoiseBuffer(L.sec,L.colour); src.loop=true;
+      const filter=ctx.createBiquadFilter(); filter.type=L.type; filter.frequency.value=L.freq; filter.Q.value=L.q;
+      const gain=ctx.createGain(); gain.gain.value=L.level;
+      const lfo=ctx.createOscillator(), depth=ctx.createGain(); lfo.frequency.value=L.rate; depth.gain.value=L.mod;
+      lfo.connect(depth); depth.connect(gain.gain);
+      src.connect(filter); filter.connect(gain);
+      if(ctx.createStereoPanner){ const pan=ctx.createStereoPanner(); pan.pan.value=L.pan; gain.connect(pan); pan.connect(rainGain); }
+      else gain.connect(rainGain);
+      src.start(0,i*0.37); lfo.start(); drones.push(src,lfo);
+    });
+    for(let i=0;i<4;i++) thunderBuffers.push(noiseBuffer(3.2));
     try{ startMusic(); }catch(e){}
+  }
+  function startRecordedMusic(){
+    const makeTrack=(src,initial)=>{
+      const el=document.createElement('audio'); el.src=src; el.loop=true; el.preload='auto'; el.playsInline=true;
+      const source=ctx.createMediaElementSource(el), gain=ctx.createGain(); gain.gain.value=initial;
+      source.connect(gain); gain.connect(musicBus); el.load(); el.play().catch(()=>{});
+      return {el,gain};
+    };
+    try{
+      const main=makeTrack('assets/audio/memory-in-the-rain'+_musicExt,0.12);
+      const receiver=makeTrack('assets/audio/receiver-veil'+_musicExt,0.0001);
+      _mainMusicEl=main.el; _mainMusicGain=main.gain;
+      _receiverMusicEl=receiver.el; _receiverMusicGain=receiver.gain;
+      const t=ctx.currentTime;
+      _mainMusicGain.gain.setTargetAtTime(0.72,t,1.25);
+    }catch(e){ _mainMusicEl=_receiverMusicEl=null; }
   }
   function env(g,t0,a,d,peak){ g.gain.setValueAtTime(0.0001,t0);
     g.gain.exponentialRampToValueAtTime(peak,t0+a);
@@ -170,7 +293,7 @@ const Audio = (()=> {
     if(!ready||!on) return; const t=ctx.currentTime;
     const o=ctx.createOscillator(), g=ctx.createGain();
     o.type=type||'square'; o.frequency.value=freq; if(detune)o.detune.value=detune;
-    env(g,t,0.006,dur,peak||0.2); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
+    env(g,t,0.006,dur,peak||0.2); o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t+dur+0.05);
   }
   /* ambient music layer */
 // ================= Ambient MUSIC layer =================
@@ -182,11 +305,10 @@ const Audio = (()=> {
 var musGain, musReverb, musRevGain, _musBright=0;
 // progression + colour shift by region/story stage — the music tracks where you are and how deep you've gone
 function musProg(){
-  var scene=(window.State&&State.scene)||'cullbrook';
+  var scene=(typeof State!=='undefined'&&State.scene)||'cullbrook';
   var region = /tollard|choircore/.test(scene)?'toll'
              : /wrenfield|cutting|controlshed|westxfmr|antenna|generatorhall/.test(scene)?'wren'
              : /ashmere|clinic|school|workshop/.test(scene)?'ash' : 'cull';
-  var deep = (window.State&&State.flags)?((State.flags.tollard?0.9:State.flags.wrenfield?0.6:State.flags.ashmere?0.35:0.1)):0.1;
   return { toll:{chords:[[0,1,6,7],[-1,3,6,10],[0,3,6,9],[-2,1,4,10]], bright:-160, toneP:0.72},
            wren:{chords:[[0,3,6,10],[-2,1,5,8],[-5,-2,1,6],[0,3,7,11]], bright:-70,  toneP:0.58},
            ash: {chords:[[-7,-3,0,3],[-9,-5,-2,2],[-4,-1,3,7],[-7,-3,0,5]], bright:-100, toneP:0.6},
@@ -207,8 +329,8 @@ function initMusicBus(){
   if(musGain) return;
   musGain = ctx.createGain();
   musGain.gain.setValueAtTime(0.0001, ctx.currentTime);         // start silent
-  musGain.gain.exponentialRampToValueAtTime(0.19, ctx.currentTime + 6); // slow fade-in (audible under the rain)
-  musGain.connect(master);
+  musGain.gain.exponentialRampToValueAtTime(0.045, ctx.currentTime + 6); // restrained procedural undertone beneath authored score
+  musGain.connect(musicBus);
   musReverb = ctx.createConvolver();
   musReverb.buffer = musImpulse(3.2, 3.0);      // long, distant tail
   musRevGain = ctx.createGain();
@@ -221,7 +343,7 @@ function musNote(semi){ return 110 * Math.pow(2, semi/12); }     // base = A2
 
 // One pad chord: intervals (semitones over A2) swelling in/out over dur.
 function musPad(intervals, t0, dur){
-  var dread = (window.Game && Game.dread) ? Game.dread : 0;
+  var dread = (typeof Game!=='undefined' && Game.dread) ? Game.dread : 0;
   var peak   = 0.16 * (0.8 + dread*0.5);        // a touch louder when tense
   var cutoff = Math.max(200, 620 + _musBright - dread*260);   // DARKER as dread rises + as the region deepens
   var lp = ctx.createBiquadFilter();
@@ -246,7 +368,7 @@ function musPad(intervals, t0, dur){
 
 // Sparse distant single tone (cold piano / music box), soft mallet + long tail.
 function musColdTone(t0){
-  var dread = (window.Game && Game.dread) ? Game.dread : 0;
+  var dread = (typeof Game!=='undefined' && Game.dread) ? Game.dread : 0;
   var consonant = [24,27,31,36,39];             // A4 C5 E5 A5 C6 (minor pentatonic)
   var dissonant = [25,30,33,37,42];             // b9 / tritone / #5 colors
   var pool = (dread > 0.4 && Math.random() < dread) ? dissonant : consonant;
@@ -265,7 +387,8 @@ function musColdTone(t0){
 
 // Recursive ctx-time scheduler; each call schedules ONE chord + its tones.
 function musicLoop(){
-  var dread = (window.Game && Game.dread) ? Game.dread : 0;
+  if(!ctx || !on || document.hidden || ctx.state!=='running'){ setTimeout(musicLoop,900); return; }
+  var dread = (typeof Game!=='undefined' && Game.dread) ? Game.dread : 0;
   var t = ctx.currentTime + 0.06;
   var P = musProg(); _musBright = P.bright;             // region-aware progression + colour
   var prog = P.chords;
@@ -280,17 +403,76 @@ function musicLoop(){
 
 function startMusic(){ initMusicBus(); musicLoop(); }
 
+function rainDetail(indoor){
+  if(!ready||!on||!thunderBuffers.length) return;
+  const t=ctx.currentTime, src=ctx.createBufferSource();
+  src.buffer=thunderBuffers[(Math.random()*thunderBuffers.length)|0];
+  const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=indoor?1800+Math.random()*900:2600+Math.random()*1800; bp.Q.value=2.2;
+  const gain=ctx.createGain(), peak=indoor?0.018:0.012;
+  gain.gain.setValueAtTime(0.0001,t); gain.gain.linearRampToValueAtTime(peak,t+0.008); gain.gain.exponentialRampToValueAtTime(0.0001,t+0.10);
+  src.connect(bp); bp.connect(gain);
+  if(ctx.createStereoPanner){ const pan=ctx.createStereoPanner(); pan.pan.value=Math.random()*1.6-0.8; gain.connect(pan); pan.connect(weatherBus); }
+  else gain.connect(weatherBus);
+  src.start(t,Math.random()*2.8,0.12);
+}
+const _mixTargets=Object.create(null); let _mixEventCount=0;
+function mixTarget(key,node,value,now,tau,epsilon){
+  if(!node) return;
+  const prev=_mixTargets[key], gap=epsilon==null?0.006:epsilon;
+  if(prev==null||Math.abs(prev-value)>=gap){
+    node.gain.setTargetAtTime(value,now,tau);
+    _mixTargets[key]=value; _mixEventCount++;
+  }
+}
+function updateMix(){
+  if(!ready||!ctx) return;
+  const now=ctx.currentTime, overlay=(typeof Game!=='undefined'&&Game.overlay)||null;
+  const indoor=(typeof scene!=='undefined'&&scene&&scene.indoor), dread=(typeof Game!=='undefined'&&Game.dread)||0;
+  const radio=overlay==='radio', dialogue=overlay==='dialogue'||overlay==='reader';
+  mixTarget('weather',weatherBus,mix.weather*(indoor?0.28:0.86)*(dialogue?0.82:1),now,0.8);
+  mixTarget('ambience',ambienceBus,mix.ambience*(radio?0.28:dialogue?0.52:1),now,0.7);
+  mixTarget('music',musicBus,mix.music,now,0.4);
+  mixTarget('sfx',sfxBus,mix.sfx,now,0.2);
+  mixTarget('voice',voiceBus,mix.voice,now,0.2);
+  mixTarget('rain',rainGain,0.70+Math.sin(now*0.071)*0.055,now,1.2,0.008);
+  mixTarget('mainMusic',_mainMusicGain,(radio?0.10:dialogue?0.38:0.72)*(1-dread*0.10),now,0.9,0.008);
+  mixTarget('receiverMusic',_receiverMusicGain,radio?0.52:Math.max(0,(dread-0.58)*0.32),now,0.8,0.008);
+  if(now>_nextRainDetail){ rainDetail(indoor); _nextRainDetail=now+(indoor?2.8+Math.random()*5:4.5+Math.random()*8); }
+}
+function cycleMix(name){
+  if(!(name in mix)) return;
+  const levels=[0,0.35,0.65,1], current=mix[name], idx=levels.findIndex(v=>v>current+0.03);
+  mix[name]=idx<0?levels[0]:levels[idx];
+  try{localStorage.setItem('twfu_audio_mix',JSON.stringify(mix));}catch(e){}
+  updateMix();
+}
+document.addEventListener('visibilitychange',()=>{
+  if(!ctx) return;
+  if(document.hidden){ for(const el of [_mainMusicEl,_receiverMusicEl]) if(el) el.pause(); }
+  else if(on) ctx.resume().then(ensureMediaPlaying).catch(()=>{});
+});
+
   return {
     unlock,
-    setOn(v){ on=v; if(master) master.gain.setTargetAtTime(v?0.85:0.0, ctx.currentTime,0.1); },
+    update:updateMix, defer, cancelDeferred, cycleMix,
+    mixLevels(){ return Object.assign({},mix); },
+    debug(){ return {ready,on,state:ctx?ctx.state:'none',music:!!_mainMusicEl,
+      musicFile:_mainMusicEl?(_mainMusicEl.currentSrc||_mainMusicEl.src).split('/').pop():'',
+      musicPlaying:!!(_mainMusicEl&&!_mainMusicEl.paused),musicTime:_mainMusicEl?Number(_mainMusicEl.currentTime.toFixed(2)):0,
+      receiverTime:_receiverMusicEl?Number(_receiverMusicEl.currentTime.toFixed(2)):0,
+      mainGain:_mainMusicGain?Number(_mainMusicGain.gain.value.toFixed(3)):0,
+      receiverGain:_receiverMusicGain?Number(_receiverMusicGain.gain.value.toFixed(3)):0,
+      mixEvents:_mixEventCount,voiceNodes:_speakNodes.length}; },
+    setOn(v){ on=v; if(master) master.gain.setTargetAtTime(v?0.72:0.0, ctx.currentTime,0.1);
+      if(!v){ for(const el of [_mainMusicEl,_receiverMusicEl]) if(el) el.pause(); } else { unlock(); ensureMediaPlaying(); } },
     isOn(){ return on; },
-    tension(v){ if(rainGain&&ready) rainGain.gain.setTargetAtTime(0.05+v*0.09, ctx.currentTime,0.6);
-                if(ambGain&&ready) ambGain.gain.setTargetAtTime(0.16+v*0.12, ctx.currentTime,0.8); },
+    tension(v){ if(ambGain&&ready&&Math.abs(v-_lastTension)>=0.01){
+      _lastTension=v; ambGain.gain.setTargetAtTime(0.09+v*0.055, ctx.currentTime,0.8); } },
     step(){ blip(90+Math.random()*20,0.05,'triangle',0.05); },
     melee(){ if(!ready||!on)return; const t=ctx.currentTime;
       const s=ctx.createBufferSource(); s.buffer=noiseBuffer(0.12);
       const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=320; bp.Q.value=1.2;
-      const g=ctx.createGain(); env(g,t,0.004,0.1,0.35); s.connect(bp); bp.connect(g); g.connect(master); s.start(t); },
+      const g=ctx.createGain(); env(g,t,0.004,0.1,0.35); s.connect(bp); bp.connect(g); g.connect(sfxBus); s.start(t); },
     hit(){ blip(180,0.08,'square',0.18); blip(120,0.12,'sawtooth',0.12,-20); },
     dodge(){ blip(520,0.12,'sine',0.14); },
     sweep(){ if(!ready||!on)return; const t=ctx.currentTime;
@@ -299,26 +481,33 @@ function startMusic(){ initMusicBus(); musicLoop(); }
       bp.type='bandpass'; bp.frequency.value=900; bp.Q.value=3;
       g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.16,t+0.05);
       g.gain.exponentialRampToValueAtTime(0.0001,t+0.55);
-      o.connect(bp); bp.connect(g); g.connect(master); o.start(t); o.stop(t+0.6); },
+      o.connect(bp); bp.connect(g); g.connect(sfxBus); o.start(t); o.stop(t+0.6); },
     trace(){ blip(660,0.14,'sine',0.16); setTimeout(()=>blip(990,0.2,'sine',0.13),90); },
     ui(){ blip(440,0.05,'square',0.1); },
     heal(){ blip(330,0.16,'sine',0.14); setTimeout(()=>blip(440,0.2,'sine',0.12),100); },
     thunder(dist){ if(!ready||!on)return; const t=ctx.currentTime; dist=(dist==null)?0.5:clamp(dist,0,1);  // 0=close+sharp, 1=far+rumbly
+      const strikePan=(Math.random()*2-1)*(0.25+dist*0.55);
       // initial CRACK (nearer strikes) — a bright noise transient
-      if(dist<0.55){ const c=ctx.createBufferSource(); c.buffer=noiseBuffer(0.3);
+      if(dist<0.55){ const c=ctx.createBufferSource(); c.buffer=thunderBuffers[(Math.random()*thunderBuffers.length)|0];
         const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=900-dist*700;
-        const cg=ctx.createGain(); cg.gain.setValueAtTime(0.0001,t); cg.gain.linearRampToValueAtTime(0.26*(1-dist),t+0.005);
-        cg.gain.exponentialRampToValueAtTime(0.0001,t+0.45); c.connect(hp); hp.connect(cg); cg.connect(master); c.start(t); }
+        const cg=ctx.createGain(); cg.gain.setValueAtTime(0.0001,t); cg.gain.linearRampToValueAtTime(0.22*Math.pow(1-dist,1.25),t+0.005);
+        cg.gain.exponentialRampToValueAtTime(0.0001,t+0.45); c.connect(hp); hp.connect(cg);
+        if(ctx.createStereoPanner){ const pan=ctx.createStereoPanner(); pan.pan.value=strikePan; cg.connect(pan); pan.connect(weatherBus); }
+        else cg.connect(weatherBus);
+        c.start(t,Math.random()*2.7,0.34); }
       // rolling RUMBLE — two staggered lowpassed swells with a wobbling cutoff (that 'rolling' feel), long tail
       for(let k=0;k<2;k++){ const t0=t+k*(0.28+dist*0.5)+Math.random()*0.12;
-        const s=ctx.createBufferSource(); s.buffer=noiseBuffer(2.4);
-        const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=110+dist*120; lp.Q.value=0.5;
-        const g=ctx.createGain(); const pk=(0.16-k*0.045)*(0.7+dist*0.5);
+        const s=ctx.createBufferSource(); s.buffer=thunderBuffers[(Math.random()*thunderBuffers.length)|0];
+        const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=220-dist*115; lp.Q.value=0.5;
+        const g=ctx.createGain(); const pk=(0.14-k*0.035)*(1-dist*0.55);
         g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(pk,t0+0.3+Math.random()*0.3);
         g.gain.linearRampToValueAtTime(pk*0.5,t0+1.0); g.gain.exponentialRampToValueAtTime(0.0001,t0+2.1);
         const lfo=ctx.createOscillator(), lg=ctx.createGain(); lfo.frequency.value=1.4+Math.random(); lg.gain.value=45;
         lfo.connect(lg); lg.connect(lp.frequency); lfo.start(t0); lfo.stop(t0+2.2);
-        s.connect(lp); lp.connect(g); g.connect(master); s.start(t0); } },
+        s.connect(lp); lp.connect(g);
+        if(ctx.createStereoPanner){ const pan=ctx.createStereoPanner(); pan.pan.value=clamp(strikePan+(k?0.16:-0.12),-1,1); g.connect(pan); pan.connect(weatherBus); }
+        else g.connect(weatherBus);
+        s.start(t0,Math.random()*0.72,2.35); } },
     /* fake-speech "reading" of a recording — blipped formants, never real words; voice colours the source */
     speak(text, voice){ if(!ready||!on||!text) return null; Audio.stopSpeak();
       const CFG={ real:          {base:130, jit:0.5,  rate:0.115, type:'sawtooth', harm:[1,2.2,3.1], q:5, pauseP:0.16, smooth:false},
@@ -326,7 +515,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
                   continuity:    {base:172, jit:0.06, rate:0.098, type:'sawtooth', harm:[1,2.5,3.6], q:3, pauseP:0.0,  smooth:true },
                 }[voice] || {base:140, jit:0.35, rate:0.11, type:'sawtooth', harm:[1,2.2,3.1], q:5, pauseP:0.08, smooth:false};
       let t=ctx.currentTime+0.05;
-      const bus=ctx.createGain(); bus.gain.value=0.85; bus.connect(master); _speakBus=bus;
+      const bus=ctx.createGain(); bus.gain.value=0.85; bus.connect(voiceBus); _speakBus=bus; _speakNodes=[];
       const words=String(text).replace(/\n+/g,' ⎯ ').split(/\s+/).filter(Boolean);
       let count=0, phrase=0; const MAX=54;
       for(let wi=0; wi<words.length && count<MAX; wi++){
@@ -342,7 +531,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
             o.type=CFG.type; o.frequency.value=f; bp.type='bandpass'; bp.frequency.value=f*h*2; bp.Q.value=CFG.q;
             g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(peakY[i]||0.02,t+0.035);
             g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
-            o.connect(bp); bp.connect(g); g.connect(bus); o.start(t); o.stop(t+0.19); });
+            o.connect(bp); bp.connect(g); g.connect(bus); _speakNodes.push(o); o.start(t); o.stop(t+0.19); });
           t += CFG.rate + Math.random()*0.03; phrase++;
         }
         t += 0.05;
@@ -350,19 +539,25 @@ function startMusic(){ initMusicBus(); musicLoop(); }
         if(!CFG.smooth && Math.random()<CFG.pauseP){ t += 0.28+Math.random()*0.4; phrase=0; }  // a real person stops to think — leaves a gap
       }
       return { until:t }; },
-    stopSpeak(){ if(_speakBus){ try{ _speakBus.gain.cancelScheduledValues(ctx.currentTime); _speakBus.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05); }catch(e){} _speakBus=null; } },
+    stopSpeak(){ if(_speakBus){
+      const oldBus=_speakBus, now=ctx?ctx.currentTime:0;
+      try{ oldBus.gain.cancelScheduledValues(now); oldBus.gain.setTargetAtTime(0.0001,now,0.025); }catch(e){}
+      for(const node of _speakNodes){ try{node.stop(now+0.045);}catch(e){} }
+      _speakNodes=[]; _speakBus=null;
+      setTimeout(()=>{try{oldBus.disconnect();}catch(e){}},120);
+    } },
     ring(){ // dead payphone
       if(!ready||!on)return; const t=ctx.currentTime;
       for(let k=0;k<6;k++){ const o=ctx.createOscillator(),g=ctx.createGain();
         o.type='sine'; o.frequency.value= (k%2?1000:800);
-        const t0=t+k*0.04; env(g,t0,0.005,0.03,0.12); o.connect(g); g.connect(master); o.start(t0); o.stop(t0+0.05);} },
+        const t0=t+k*0.04; env(g,t0,0.005,0.03,0.12); o.connect(g); g.connect(sfxBus); o.start(t0); o.stop(t0+0.05);} },
     breath(){ if(!ready||!on)return; const t=ctx.currentTime;
       const s=ctx.createBufferSource(); s.buffer=noiseBuffer(0.5);
       const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.frequency.setValueAtTime(700,t);
       bp.frequency.linearRampToValueAtTime(1200,t+0.35); bp.Q.value=0.8;
       const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t);
       g.gain.linearRampToValueAtTime(0.06,t+0.15); g.gain.linearRampToValueAtTime(0.0001,t+0.45);
-      s.connect(bp); bp.connect(g); g.connect(master); s.start(t); },
+      s.connect(bp); bp.connect(g); g.connect(voiceBus); s.start(t); },
     /* Maggie / Continuity: formant-ish generated "words" — never real speech */
     /* Low heartbeat: two quick low sine 'thud' pulses (lub-dub) */
     heartbeat(){ if(!ready||!on) return; const t=ctx.currentTime;
@@ -370,7 +565,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
         o.type='sine'; o.frequency.setValueAtTime(f,t0); o.frequency.exponentialRampToValueAtTime(f*0.6,t0+0.14);
         g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(peak,t0+0.02);
         g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
-        o.connect(g); g.connect(master); o.start(t0); o.stop(t0+0.22); };
+        o.connect(g); g.connect(sfxBus); o.start(t0); o.stop(t0+0.22); };
       beat(t,55,0.30); beat(t+0.16,48,0.22); },
     /* Rising unease drone: short detuned sine sweep upward */
     dread(){ if(!ready||!on) return; const t=ctx.currentTime;
@@ -381,7 +576,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
       lp.type='lowpass'; lp.frequency.value=400; lp.Q.value=0.6;
       g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.12,t+0.5);
       g.gain.exponentialRampToValueAtTime(0.0001,t+1.2);
-      o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(master);
+      o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(sfxBus);
       o.start(t); o2.start(t); o.stop(t+1.25); o2.stop(t+1.25); },
     /* 'Noticed' sting: dissonant detuned pair, quick sharp attack */
     noticed(){ if(!ready||!on) return; const t=ctx.currentTime;
@@ -390,7 +585,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
         o.type='sawtooth'; o.frequency.value=f;
         g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(peak,t+0.008);
         g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
-        o.connect(g); g.connect(master); o.start(t); o.stop(t+0.55); }); },
+        o.connect(g); g.connect(sfxBus); o.start(t); o.stop(t+0.55); }); },
     /* Soft whisper: short band-passed filtered-noise burst, gentle swell */
     whisper(){ if(!ready||!on) return; const t=ctx.currentTime;
       const s=ctx.createBufferSource(); s.buffer=noiseBuffer(0.6);
@@ -398,7 +593,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
       bp.frequency.setValueAtTime(1400,t); bp.frequency.linearRampToValueAtTime(2600,t+0.5);
       const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t);
       g.gain.linearRampToValueAtTime(0.05,t+0.12); g.gain.linearRampToValueAtTime(0.0001,t+0.55);
-      s.connect(bp); bp.connect(g); g.connect(master); s.start(t); },
+      s.connect(bp); bp.connect(g); g.connect(voiceBus); s.start(t); },
     maggie(words){ if(!ready||!on)return; let t=ctx.currentTime+0.05;
       const base=150;
       for(let w=0; w<words; w++){
@@ -410,7 +605,7 @@ function startMusic(){ initMusicBus(); musicLoop(); }
             bp.frequency.value=f*h*2; bp.Q.value=5; const peak=[0.05,0.035,0.02][i];
             g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(peak,t+0.04);
             g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
-            o.connect(bp); bp.connect(g); g.connect(master); o.start(t); o.stop(t+0.2); });
+            o.connect(bp); bp.connect(g); g.connect(voiceBus); o.start(t); o.stop(t+0.2); });
           t+=0.12+Math.random()*0.05;
         }
         t+=0.12;
@@ -449,14 +644,23 @@ function timeStr(){ const h=Math.floor(State.time/3600)%24, m=Math.floor(State.t
 const SAVE_KEY='twfu_save_v1';
 function save(){ try{ localStorage.setItem(SAVE_KEY, JSON.stringify({
   scene:State.scene, hp:State.hp, recv:State.recv, inv:State.inv, flags:State.flags, lean:State.lean,
+  hpMax:State.hpMax, recvMax:State.recvMax, heat:State.heat, time:State.time,
   archive:State.archive, recipes:State.recipes, docs:State.docs, px:player.x, py:player.y, dir:player.dir,
+  objective:Game.objective, ending:Game.ending, reachedEnding:Game.reachedEnding,
 })); }catch(e){} }
 function hasSave(){ try{ return !!localStorage.getItem(SAVE_KEY);}catch(e){ return false; } }
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(!s) return false;
   Object.assign(State,{scene:s.scene,hp:s.hp,recv:s.recv,inv:s.inv,flags:s.flags,archive:s.archive,recipes:s.recipes||{},docs:s.docs||[],
+    heat:Number.isFinite(s.heat)?s.heat:0, time:Number.isFinite(s.time)?s.time:State.time,
     lean:s.lean||{medical:0,radio:0,witness:0,copy:0}});
-  if(State.flags && State.flags.upgCoil) State.recvMax=140;   // restore the reinforced-coil capacity upgrade
-  State.hpMax=100+(((State.flags&&State.flags.hpBoosts)||0)*8); // restore max-condition from field-hardening
+  State.recvMax=Number.isFinite(s.recvMax)?s.recvMax:(State.flags&&State.flags.upgCoil?140:100);
+  const legacyCare=!!(State.flags&&State.flags.imogenCare) ||
+    (!Number.isFinite(s.hpMax)&&State.flags&&State.flags.power==='clinic'&&((State.lean&&State.lean.medical)||0)>=2);
+  if(legacyCare) State.flags.imogenCare=true;
+  const inferredMax=Math.max(100+(((State.flags&&State.flags.hpBoosts)||0)*8),legacyCare?120:100);
+  State.hpMax=Number.isFinite(s.hpMax)?Math.max(s.hpMax,legacyCare?120:100):inferredMax;
+  Game.objective=s.objective||'Review the field archive (I) and continue north.';
+  Game.ending=s.ending||null; Game.reachedEnding=s.reachedEnding||null;
   loadScene(s.scene,{x:s.px,y:s.py,dir:s.dir}); return true; }catch(e){ return false; } }
 
 /* --------------------------- trace anchors ------------------------- */
@@ -960,9 +1164,9 @@ const Story = {
       {s:'',        t:'It clicks on by itself. A needle swings. The dial warms to amber.', fx:()=>Audio.ring()},
       {s:'MAGGIE',  t:'Ellie.', maggie:1, fx:()=>Audio.maggie(1)},
       {s:'ELLIE',   t:'…Maggie? My sister’s been eight months in the ground.'},
-      {s:'MAGGIE',  t:'Fourteen B. Yellow lead. Come and find me.', maggie:1, fx:()=>{Audio.maggie(4);setTimeout(()=>Audio.breath(),300);setTimeout(()=>Audio.breath(),700);}},
+      {s:'MAGGIE',  t:'Fourteen B. Yellow lead. Come and find me.', maggie:1, fx:()=>{Audio.maggie(4);Audio.defer(()=>Audio.breath(),300,'dialogue');Audio.defer(()=>Audio.breath(),700,'dialogue');}},
       {s:'ELLIE',   t:'…That’s the same breath. Twice. The dead don’t repeat themselves — machines do.'},
-      {s:'',        t:'The coil crackles and dies. Outside, a payphone starts to ring — the way she used to call.', fx:()=>{setTimeout(()=>Audio.ring(),400);}},
+      {s:'',        t:'The coil crackles and dies. Outside, a payphone starts to ring — the way she used to call.', fx:()=>{Audio.defer(()=>Audio.ring(),400,'dialogue');}},
       {s:'ELLIE',   t:'…I’m coming. I have to know what’s wearing your voice.'},
     ], ()=>{
       State.flags.intro=true;
@@ -1076,7 +1280,8 @@ const Story = {
     ] : [
       {s:'IMOGEN', t:'I’m keeping people alive on a hand-pump and guesswork. Lift’s dead, fridge is warming. If you can spare the estate’s feed, send it here — not the aerial.'},
     ];
-    Dialogue.run(base.concat(barkLines('imogen',2)), ()=>{ if(powered && State.hpMax<120){ State.hpMax=120; State.hp=Math.min(State.hpMax,State.hp+30);
+    Dialogue.run(base.concat(barkLines('imogen',2)), ()=>{ if(powered && !State.flags.imogenCare){ State.flags.imogenCare=true;
+        State.hpMax=Math.max(State.hpMax,120); State.hp=Math.min(State.hpMax,State.hp+30);
         State.lean.medical++; State.inv.medkit=(State.inv.medkit||0)+1;
         Game.toast('Imogen’s care: max condition raised to 120, +1 medical kit.'); save(); } });
   },
@@ -1374,9 +1579,9 @@ const Choice = {
 const STORY = { docs:[], beats:{}, graffiti:[], barks:{} };   // populated by generated data (below)
 const Reader = {
   doc:null, scroll:0,
-  open(d){ if(!d) return; Reader.doc=d; Reader.scroll=0; Game.overlay='reader'; Audio.ui();
+  open(d){ if(!d) return; Audio.cancelDeferred('reader'); Audio.stopSpeak(); Reader.doc=d; Reader.scroll=0; Game.overlay='reader'; Audio.ui();
     // audio recordings "play": fake-speech reads the text aloud, coloured by the source (real / reconstruction / continuity)
-    if((d.kind||'')==='radio'){ try{ Audio.ring(); setTimeout(()=>{ try{ Audio.speak(d.body, d.source||'real'); }catch(e){} }, 320); }catch(e){} }
+    if((d.kind||'')==='radio'){ try{ Audio.ring(); Audio.defer(()=>Audio.speak(d.body,d.source||'real'),320,'reader'); }catch(e){} }
     else if(d.source==='continuity'){ try{Audio.maggie(4);}catch(e){} }
     else { try{Audio.ui();}catch(e){} }
     if(!State.docs.find(x=>x.id===d.id)){ State.docs.push({id:d.id,title:d.title||d.short||'record',kind:d.kind||'note'}); Game.toast('Recorded: '+(d.title||'a document')); save(); onRecordFound(); }
@@ -1387,7 +1592,8 @@ const Reader = {
 function onRecordFound(){
   const n=State.docs.length;
   if(n<=0 || n%4!==0) return;
-  if(n%12===0){ State.flags.hpBoosts=(State.flags.hpBoosts||0)+1; State.hpMax=100+State.flags.hpBoosts*8; State.hp=Math.min(State.hpMax,State.hp+10);
+  if(n%12===0){ State.flags.hpBoosts=(State.flags.hpBoosts||0)+1;
+    State.hpMax=Math.max(State.flags.imogenCare?120:100,100+State.flags.hpBoosts*8); State.hp=Math.min(State.hpMax,State.hp+10);
     setTimeout(()=>Game.toast('Field-hardened by the searching — max condition +8.'),720); }
   else { const pool=['scrap','battery','cloth','resin']; const it=pool[((n/4)|0)%pool.length]; State.inv[it]=(State.inv[it]||0)+1;
     setTimeout(()=>Game.toast('Salvaged along the way: +1 '+it),720); }
@@ -1456,12 +1662,15 @@ Object.assign(STORY.barks, {"idris":["You'll want something fixed, I expect. I'l
 
 /* ----------------------------- dialogue ---------------------------- */
 const Dialogue = {
-  q:null, i:0, char:0, done:null, line:'', full:'', speaker:'', maggie:false,
-  run(lines, done){ this.q=lines; this.i=0; this.done=done||null; this._load(); Game.overlay='dialogue'; },
-  _load(){ const l=this.q[this.i]; this.full=l.t; this.line=''; this.char=0; this.speaker=l.s; this.maggie=!!l.maggie;
+  q:null, i:0, char:0, done:null, line:'', full:'', speaker:'', maggie:false, lockUntil:0,
+  run(lines, done){ Audio.cancelDeferred('dialogue'); this.q=lines; this.i=0; this.done=done||null;
+    this.lockUntil=performance.now()+140; this._load(); Game.overlay='dialogue'; },
+  _load(){ Audio.cancelDeferred('dialogue'); const l=this.q[this.i]; this.full=l.t; this.line=''; this.char=0; this.speaker=l.s; this.maggie=!!l.maggie;
     if(l.fx) try{l.fx();}catch(e){} },
-  advance(){ if(this.char<this.full.length){ this.char=this.full.length; return; }
-    this.i++; if(this.i>=this.q.length){ Game.overlay=null; const d=this.done; this.q=null; if(d)d(); return; }
+  advance(){ if(performance.now()<this.lockUntil) return;
+    if(this.char<this.full.length){ this.char=this.full.length; this.lockUntil=performance.now()+60; return; }
+    this.i++; if(this.i>=this.q.length){ Audio.cancelDeferred('dialogue'); Game.overlay=null; const d=this.done; this.q=null; if(d)d(); return; }
+    this.lockUntil=performance.now()+70;
     this._load(); Audio.ui(); },
   update(dt){ if(this.char<this.full.length){ this.char=Math.min(this.full.length, this.char+dt*46);
       this.line=this.full.slice(0,Math.floor(this.char)); } else this.line=this.full; },
@@ -1473,11 +1682,18 @@ const Game = {
   overlay:null,          // dialogue | craft | archive | map | pause
   objective:'', toastMsg:'', toastT:0, sliceEnd:false, ending:null, finale:null, reachedEnding:null,
   t:0, dayLen:420, shakeT:0, doorCd:0, hitstop:0, downed:false, boltT:0, nextBolt:6, archivePage:0,
+  reducedFx:false, brightness:0,
   // --- dread / atmosphere systems (smoothed proximity + spotted-sting + fog-figure) ---
   dread:0, nearD:9999, _beat:0, sting:0, scareT:0, scareX:0, scareY:0, nextScare:24,
   onKey(code){
-    if(this.mode==='title'){ if(code==='KeyL'&&hasSave()){ if(!load()) newGame(); this.mode='play'; }
-      else { newGame(); this.mode='play'; } return; }
+    if(this.mode==='title'){
+      if(hasSave()){
+        if(code==='KeyL'||code==='KeyE'||code==='Enter'||code==='Space'){ if(!load()) newGame(); }
+        else if(code==='KeyN'){ newGame(); }
+        else return;
+      }else newGame();
+      this.mode='play';
+      document.body.classList.add('playing'); document.body.classList.remove('paused'); return; }
     if(this.overlay==='dialogue'){ if(code==='KeyE'||code==='Space'||code==='KeyJ') Dialogue.advance(); return; }
     if(this.overlay==='craft'){
       if(code==='KeyC'||code==='Escape'){ this.overlay=null; }
@@ -1501,23 +1717,29 @@ const Game = {
       const F=Game.finale;
       if(code==='KeyE'||code==='Space'){
         if(F && F.pages && F.page < F.pages.length-1){ F.page++; Audio.ui(); }
-        else { this.overlay=null; this.mode='title'; Audio.ui(); }
+        else { this.overlay=null; this.mode='title'; document.body.classList.remove('playing'); Audio.ui(); }
       } else if(code==='Escape'){ if(F && F.pages) F.page=F.pages.length-1; Audio.ui(); }   // Esc skips to the final card
       return;
     }
     if(this.overlay==='archive'){ if(code==='KeyI'||code==='Escape') this.overlay=null;
       else if(code==='Tab'){ Game.archivePage=Game.archivePage?0:1; Audio.ui(); } return; }
-    if(this.overlay==='reader'){ if(code==='KeyE'||code==='Escape'){ this.overlay=null; try{Audio.stopSpeak();}catch(e){} }
+    if(this.overlay==='reader'){ if(code==='KeyE'||code==='Escape'){ this.overlay=null; try{Audio.cancelDeferred('reader');Audio.stopSpeak();}catch(e){} }
       else if(code==='KeyW'||code==='KeyA') Reader.scroll=Math.max(0,Reader.scroll-24);
       else if(code==='KeyS'||code==='KeyD') Reader.scroll+=24; return; }
     if(this.overlay==='map'){ if(code==='KeyM'||code==='Escape') this.overlay=null; return; }
-    if(this.overlay==='pause'){ if(code==='Escape') this.overlay=null;
+    if(this.overlay==='pause'){ if(code==='Escape'){ this.overlay=null; document.body.classList.remove('paused'); }
       else if(code==='KeyN'){ Audio.setOn(!Audio.isOn()); }
+      else if(code==='Digit1'){ Audio.cycleMix('music'); Audio.ui(); }
+      else if(code==='Digit2'){ Audio.cycleMix('weather'); Audio.ui(); }
+      else if(code==='Digit3'){ Audio.cycleMix('sfx'); Audio.ui(); }
+      else if(code==='Digit4'){ Audio.cycleMix('voice'); Audio.ui(); }
+      else if(code==='Digit5'){ this.reducedFx=!this.reducedFx; saveDisplayPrefs(); Audio.ui(); }
+      else if(code==='Digit6'){ this.brightness=(this.brightness+1)%3; saveDisplayPrefs(); Audio.ui(); }
       return; }
     if(this.overlay==='window'){ if(code==='KeyE'||code==='Escape') Window.close(); return; }   // A/D pan handled via held keys in Window.update
     if(this.overlay==='radio'){ if(code==='KeyE'||code==='Escape') Radio.close(); return; }      // A/D tune handled via held keys in Radio.update
     // no overlay:
-    if(code==='Escape'){ this.overlay='pause'; return; }
+    if(code==='Escape'){ this.overlay='pause'; document.body.classList.add('paused'); return; }
     if(code==='KeyC'){ Crafting.open(false); return; }
     if(code==='KeyI'){ this.overlay='archive'; Audio.ui(); return; }
     if(code==='KeyM'){ this.overlay='map'; Audio.ui(); return; }
@@ -1530,6 +1752,9 @@ const Game = {
   setObjective(t){ this.objective=t; },
   toast(m,dur){ this.toastMsg=m; this.toastT=dur||2.2; },
 };
+try{ const p=JSON.parse(localStorage.getItem('twfu_display_prefs')||'{}');
+  Game.reducedFx=!!p.reducedFx; Game.brightness=clamp(Number(p.brightness)||0,0,2); }catch(e){}
+function saveDisplayPrefs(){ try{localStorage.setItem('twfu_display_prefs',JSON.stringify({reducedFx:Game.reducedFx,brightness:Game.brightness}));}catch(e){} }
 let _tvx=0,_tvy=0;
 
 function newGame(){
@@ -1539,9 +1764,12 @@ function newGame(){
            ashmere:false,power:null,discharge:false,bridge:false,paperPatients:false,schoolRoute:false,maggieLedger:false},
     lean:{medical:0,radio:0,witness:0,copy:0},
     time:2*3600+3*60 });
-  Game.sliceEnd=false;
+  Game.sliceEnd=false; Game.ending=null; Game.finale=null; Game.reachedEnding=null;
+  Game.overlay=null; Game.downed=false; Game.dread=0; Game.sting=0; Game.scareT=0;
+  flares.length=0; decoy=null;
   loadScene('carriage317',{x:300,y:200,dir:'down'});
   Game.setObjective('Your dead receiver just powered itself on and spoke in Maggie’s voice. Go to the desk and examine it. (Walk to the desk, press E.)');
+  save();
 }
 
 /* ------------------------- interaction / actions ------------------- */
@@ -1683,6 +1911,8 @@ function frame(now){
 function update(dt){
   Game.t+=dt;
   if(Game.mode!=='play') return;
+  try{Audio.update(dt);}catch(e){}
+  updateAmbientTimers(dt);                    // never freeze lightning/shake behind an overlay
   if(Game.hitstop>0){ Game.hitstop-=dt; return; }   // brief impact freeze
   // time of day advances slowly
   State.time=(State.time+dt*110)%86400;   // ~13 min real per in-game day → a visible day/night cycle
@@ -1826,17 +2056,20 @@ function update(dt){
     });
   }
 
+}
+function updateAmbientTimers(dt){
   Game.shakeT=Math.max(0,Game.shakeT-dt);
-  // storm: lightning flash + distance-delayed thunder — flash is OUTDOOR only; a muffled rumble carries inside
   Game.nextBolt-=dt;
-  if(Game.nextBolt<=0){ Game.nextBolt=8+Math.random()*15;
-    if(scene.indoor){ setTimeout(()=>{ try{Audio.thunder(1);}catch(e){} }, 500+Math.random()*1100); }   // walls muffle it: distant rumble, no flash
-    else {
-      const close=Math.random()<0.28;                                   // ~28% are near strikes
-      Game.boltDist = close ? 0.08+Math.random()*0.2 : 0.55+Math.random()*0.45;
-      Game.boltT = close?0.8:0.5;
-      if(close) Game.shakeT=Math.max(Game.shakeT||0, 0.25);             // near strikes jolt the frame
-      setTimeout(()=>{ try{Audio.thunder(Game.boltDist);}catch(e){} }, 180+Game.boltDist*1500);   // sound lags the light by distance
+  if(Game.nextBolt<=0){ Game.nextBolt=10+Math.random()*18;              // room for silence between weather beats
+    if(scene.indoor){
+      Audio.defer(()=>Audio.thunder(1),650+Math.random()*1200,'weather'); // quiet, low-passed weather through walls
+    }else{
+      const close=Math.random()<0.22;
+      Game.boltDist=close?0.08+Math.random()*0.2:0.55+Math.random()*0.45;
+      Game.boltT=close?0.68:0.42;
+      if(close&&!Game.reducedFx) Game.shakeT=Math.max(Game.shakeT||0,0.18);
+      const strikeDist=Game.boltDist;
+      Audio.defer(()=>Audio.thunder(strikeDist),180+strikeDist*1500,'weather'); // lightning first, thunder delayed by distance
     }
   }
   if(Game.boltT>0) Game.boltT=Math.max(0,Game.boltT-dt);
@@ -2240,6 +2473,11 @@ function drawStorm(g){
   _boltPrev=b;
   if(b<=0.001) return;
   var w=VIEW_W,h=VIEW_H;
+  if(Game.reducedFx){
+    g.save(); g.globalCompositeOperation='screen';
+    g.fillStyle=hexA('#a9c0e2',clamp(b*0.055,0,0.04)); g.fillRect(0,0,w,h);
+    g.restore(); return;
+  }
   var dist=(Game.boltDist==null)?0.6:Game.boltDist, near=1-dist;         // 0 far .. 1 close
   var fl=clamp(Math.max(0,Math.sin(b*22))*b + b*0.35, 0, 1);            // stutter (bright-dim-bright), not a smooth fade
   var flash=(0.13+0.6*near)*fl;                                         // near strikes wash the whole sky
@@ -2271,7 +2509,7 @@ function drawLensRain(g){
     var yy=(s.y + t*s.sp)%0.5;
     var cx=s.x*w, cy=yy*h;
     var wob=Math.sin(t*0.7+s.ph)*1.5;
-    var a=0.10+0.06*Math.sin(t*1.3+s.ph)+0.20*bolt;
+    var a=0.055+0.035*Math.sin(t*1.3+s.ph)+0.14*bolt;
     g.strokeStyle=hexA('#0a0c0e',a*0.8); g.lineWidth=s.w+1.2;
     g.beginPath(); g.moveTo(cx+wob,cy); g.lineTo(cx+wob*0.4,cy+s.len); g.stroke();
     g.strokeStyle=hexA('#d8cfbf',a*0.9); g.lineWidth=s.w*0.5;
@@ -2291,14 +2529,14 @@ function drawBreathVignette(g){
     hb=(Math.exp(-ph*ph*60)+0.6*Math.exp(-(ph-0.18)*(ph-0.18)*60))*d;
   }
   var breathe=Math.sin(t*0.5)*0.5+0.5;
-  var tighten=0.28+0.22*d+0.05*breathe+0.10*hb;
+  var tighten=0.10+0.16*d+0.025*breathe+0.06*hb;
   var mx=Math.max(w,h);
-  var inner=(0.72-0.30*d-0.06*hb)*mx;
+  var inner=(0.78-0.22*d-0.04*hb)*mx;
   var outer=mx*1.05;
   var cx=w*0.5, cy=h*0.5;
   var grd=g.createRadialGradient(cx,cy,inner,cx,cy,outer);
   grd.addColorStop(0,hexA('#0a0c0e',0));
-  grd.addColorStop(1,hexA('#0a0c0e',clamp(tighten,0,0.85)));
+  grd.addColorStop(1,hexA('#0a0c0e',clamp(tighten,0,0.48)));
   g.save(); g.globalCompositeOperation='source-over';
   g.fillStyle=grd; g.fillRect(0,0,w,h); g.restore();
 }
@@ -2467,7 +2705,7 @@ function drawLingerLean(g){
   const cx=VIEW_W/2, cy=VIEW_H/2, R=Math.hypot(cx,cy);
   const gr=g.createRadialGradient(cx,cy,R*inset*0.6,cx,cy,R);
   gr.addColorStop(0,'rgba(0,0,0,0)');
-  gr.addColorStop(1,'rgba(2,3,5,'+(0.5*k)+')');
+  gr.addColorStop(1,'rgba(2,3,5,'+(0.28*k)+')');
   g.save(); g.fillStyle=gr; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
 }
 
@@ -2515,7 +2753,7 @@ function render(){
   const tx=clamp(player.x-VIEW_W/2, 0, Math.max(0,scene.W-VIEW_W));
   const ty=clamp(player.y-VIEW_H/2, 0, Math.max(0,scene.H-VIEW_H));
   cam.x=lerp(cam.x,tx,0.15); cam.y=lerp(cam.y,ty,0.15);
-  let shx=0,shy=0; if(Game.shakeT>0){ shx=(Math.sin(Game.t*80))*3*Game.shakeT/0.18; shy=(Math.cos(Game.t*73))*3*Game.shakeT/0.18; }
+  let shx=0,shy=0; if(Game.shakeT>0&&!Game.reducedFx){ shx=(Math.sin(Game.t*80))*3*Game.shakeT/0.18; shy=(Math.cos(Game.t*73))*3*Game.shakeT/0.18; }
   const camX=cam.x+shx, camY=cam.y+shy;
   mouse.wx=mouse.x+camX; mouse.wy=mouse.y+camY;
 
@@ -2526,9 +2764,9 @@ function render(){
   if(!scene.indoor) drawMarks(g);
   try{d_puddles(g,camX,camY)}catch(_){} try{d_wetSheen(g,camX,camY)}catch(_){}
   drawGroundShadows(g,camX,camY);   // always-on ambient contact shadows under standing props/buildings
-  drawProps(g);
+  drawProps(g,camX,camY);
   try{d_dripEdges(g,camX,camY)}catch(_){} try{d_debris(g,camX,camY)}catch(_){} try{d_groundMist(g,camX,camY)}catch(_){} try{d_mothsFx(g,camX,camY)}catch(_){}
-  try{drawFaceScare(g,camX,camY)}catch(_){} try{drawDartScare(g,camX,camY)}catch(_){} try{drawWatchingEyes(g,camX,camY)}catch(_){}
+  if(!Game.reducedFx){ try{drawFaceScare(g,camX,camY)}catch(_){} try{drawDartScare(g,camX,camY)}catch(_){} try{drawWatchingEyes(g,camX,camY)}catch(_){} }
   drawDoors(g);
   drawDocMarkers(g);
   drawImpacts(g);
@@ -2545,14 +2783,16 @@ function render(){
   g.restore();
 
   drawLighting(g, camX, camY);
-  drawAtmosphere(g, camX, camY);
-  try{drawFogBanks(g)}catch(_){} try{drawEmbers(g)}catch(_){} try{drawStorm(g)}catch(_){} try{drawBoltFigure(g)}catch(_){}
+  if(!Game.reducedFx){ drawAtmosphere(g, camX, camY); try{drawFogBanks(g)}catch(_){} try{drawEmbers(g)}catch(_){} }
+  try{drawStorm(g)}catch(_){}
+  if(!Game.reducedFx){ try{drawBoltFigure(g)}catch(_){} }
   drawRainOver(g);        // all rain is screen-space now (never locked to the camera)
-  try{drawLensRain(g)}catch(_){}
+  if(!Game.reducedFx){ try{drawLensRain(g)}catch(_){} }
   drawGrade(g);           // cinematic colour grade
-  try{drawLanternDeath(g)}catch(_){}
+  drawExposure(g);
+  if(!Game.reducedFx){ try{drawLanternDeath(g)}catch(_){} }
   drawDread(g, camX, camY);   // proximity vignette/desat/beat + spotted-sting + fog-figure, over the graded frame
-  try{drawLingerLean(g)}catch(_){} try{drawBreathVignette(g)}catch(_){} try{drawDreadCRT(g)}catch(_){}
+  if(!Game.reducedFx){ try{drawLingerLean(g)}catch(_){} try{drawBreathVignette(g)}catch(_){} try{drawDreadCRT(g)}catch(_){} }
   drawHUD(g);
 
   if(Game.overlay==='dialogue') drawDialogue(g);
@@ -2802,8 +3042,17 @@ function drawGroundShadows(g,camX,camY){
   }
   g.restore();
 }
-function drawProps(g){
-  for(const p of scene.props){ drawProp(g,p); }
+function drawProps(g,camX,camY){
+  // Cull expensive generated art outside the camera. Several props build
+  // gradients, glow layers and dozens of detail marks, so drawing an entire
+  // 2600px region every frame wastes most of the mobile/HiDPI frame budget.
+  const pad=180, x0=camX-pad, y0=camY-pad, x1=camX+VIEW_W+pad, y1=camY+VIEW_H+pad;
+  for(const p of scene.props){
+    const px0=Math.min(p.x,p.x+(p.w||0)), px1=Math.max(p.x,p.x+(p.w||0));
+    const py0=Math.min(p.y,p.y+(p.h||0)), py1=Math.max(p.y,p.y+(p.h||0));
+    if(px1<x0||px0>x1||py1<y0||py0>y1) continue;
+    drawProp(g,p);
+  }
 }
 // interior walls were collision-only (invisible) — render them as panelled walls
 function drawWalls(g){
@@ -3223,9 +3472,35 @@ function drawWarden(g,e){
 
 /* GENERATED_WORLD_DETAIL_MARKER */
 /* ============================ generated world detail (workflow) ============================ */
-function d_shadow(cx,cy,rx,ry,a){ g.save(); g.beginPath(); g.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); g.fillStyle='rgba(0,0,0,'+a+')'; g.fill(); g.restore(); }
+function d_shadow(a,b,c,d,e){
+  // Generated prop art uses both d_shadow(cx,cy,rx,ry,alpha) and
+  // d_shadow(context, prop, padding). Support both without ever feeding a
+  // CanvasGradient/context object into ellipse(), which aborts the render loop.
+  var gg=g,cx,cy,rx,ry,alpha;
+  if(a && typeof a.ellipse==='function' && b && typeof b==='object'){
+    gg=a; var p=b, pad=Number(c)||0;
+    cx=p.x+p.w*0.5; cy=p.y+p.h+pad;
+    rx=Math.max(3,p.w*0.56); ry=Math.max(2.5,p.h*0.14); alpha=(scene&&scene.indoor)?0.24:0.12;
+  }else if(a && typeof a.ellipse==='function'){
+    gg=a; cx=b; cy=c; rx=d; ry=e; alpha=(scene&&scene.indoor)?0.24:0.12;
+  }else{ cx=a; cy=b; rx=c; ry=d; alpha=(scene&&!scene.indoor)?Number(e)*0.42:e; }
+  if(!Number.isFinite(cx+cy+rx+ry+alpha)) return;
+  gg.save(); gg.beginPath(); gg.ellipse(cx,cy,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);
+  gg.fillStyle='rgba(0,0,0,'+clamp(alpha,0,1)+')'; gg.fill(); gg.restore();
+}
 function d_rust(x,y,w,h,n,seed){ g.save(); var s=(seed|0); for(var i=0;i<n;i++){ var rx=x+((s*37+i*61)%100)/100*w; var ry=y+((s*17+i*43)%100)/100*h; var rr=(w<h?w:h)*(0.05+((i*3+s)%5)/44); g.beginPath(); g.ellipse(rx,ry,rr,rr*0.72,0,0,Math.PI*2); g.fillStyle=hexA(i%2?COL.rust:'#2a1d10',0.42); g.fill(); } g.restore(); }
-function d_wet(cx,cy,rx,ry,a){ g.save(); g.beginPath(); g.ellipse(cx,cy,rx,ry,0,0,Math.PI*2); g.fillStyle=hexA('#cfe8ea',a); g.fill(); g.restore(); }
+function d_wet(a,b,c,d,e){
+  // Local-space generated props call d_wet(context,x,y,w,h); older art calls
+  // d_wet(cx,cy,rx,ry,alpha). Normalise both signatures.
+  var gg=g,cx,cy,rx,ry,alpha;
+  if(a && typeof a.ellipse==='function'){
+    gg=a; var x=Number(b)||0, y=Number(c)||0, w=Math.abs(Number(d)||0), h=Math.abs(Number(e)||0);
+    cx=x+w*0.38; cy=y+h*0.28; rx=Math.max(1,w*0.26); ry=Math.max(1,h*0.10); alpha=0.10;
+  }else{ cx=a; cy=b; rx=c; ry=d; alpha=e; }
+  if(!Number.isFinite(cx+cy+rx+ry+alpha)) return;
+  gg.save(); gg.beginPath(); gg.ellipse(cx,cy,Math.abs(rx),Math.abs(ry),0,0,Math.PI*2);
+  gg.fillStyle=hexA('#cfe8ea',clamp(alpha,0,0.22)); gg.fill(); gg.restore();
+}
 function d_damp(g,x,y,w,h){ g.save(); g.globalAlpha=0.22; g.fillStyle='#14100c'; g.beginPath(); g.moveTo(x,y+h*0.4); g.quadraticCurveTo(x+w*0.2,y,x+w*0.5,y+h*0.15); g.quadraticCurveTo(x+w*0.85,y+h*0.3,x+w,y+h*0.5); g.quadraticCurveTo(x+w*0.7,y+h*0.9,x+w*0.4,y+h*0.75); g.quadraticCurveTo(x+w*0.1,y+h*0.7,x,y+h*0.4); g.fill(); g.restore(); }
 function d_spray(g,x,y,scale,hex,fn){ g.save(); g.translate(x,y); g.scale(scale,scale); g.strokeStyle=hexA(hex,0.82); g.lineWidth=6; g.lineCap='round'; g.lineJoin='round'; g.shadowColor=hexA(hex,0.5); g.shadowBlur=5; fn(g); g.shadowBlur=0; g.restore(); }
 function d_hash(a,b){ var s=Math.sin(a*12.9898+b*78.233)*43758.5453; return s-Math.floor(s); }
@@ -5054,9 +5329,9 @@ function drawSweep(g){
 }
 /* rain — fully screen-space (independent of the camera), three depth layers + wind + splashes */
 const rainFar=[], rainMid=[], rainNear=[];
-for(let i=0;i<90;i++)  rainFar.push({x:Math.random(),y:Math.random(),s:0.4+Math.random()*0.3});
-for(let i=0;i<110;i++) rainMid.push({x:Math.random(),y:Math.random(),s:0.7+Math.random()*0.4});
-for(let i=0;i<70;i++)  rainNear.push({x:Math.random(),y:Math.random(),s:1.1+Math.random()*0.5});
+for(let i=0;i<58;i++) rainFar.push({x:Math.random(),y:Math.random(),s:0.4+Math.random()*0.3});
+for(let i=0;i<82;i++) rainMid.push({x:Math.random(),y:Math.random(),s:0.7+Math.random()*0.4});
+for(let i=0;i<38;i++) rainNear.push({x:Math.random(),y:Math.random(),s:1.1+Math.random()*0.5});
 const WIND=0.22; // horizontal drift
 function rainLayer(g, arr, speed, len, alpha, wobble){
   g.lineWidth = len>16?1.6:1; g.strokeStyle='rgba(198,212,222,'+alpha+')';
@@ -5073,13 +5348,13 @@ function rainLayer(g, arr, speed, len, alpha, wobble){
 }
 function drawRainOver(g){
   if(scene && scene.indoor) return;          // no rain indoors — you're under a roof
-  rainLayer(g, rainFar, 0.5, 9, 0.07);     // distant haze of rain
-  rainLayer(g, rainMid, 0.85, 15, 0.13);   // main rain
-  rainLayer(g, rainNear, 1.3, 24, 0.16);   // fast foreground
+  rainLayer(g, rainFar, 0.5, 9, 0.045);    // distant haze of rain
+  rainLayer(g, rainMid, 0.85, 14, 0.09);   // main rain
+  rainLayer(g, rainNear, 1.3, 21, 0.11);   // sparse foreground streaks
   // ground splashes: small expanding ticks in the lower two-thirds
   g.strokeStyle='rgba(180,200,210,.13)'; g.lineWidth=1;
   const frame=Math.floor(Game.t*14);
-  for(let i=0;i<34;i++){ const phase=(frame+i*7)%9; if(phase>2) continue;
+  for(let i=0;i<24;i++){ const phase=(frame+i*7)%9; if(phase>2) continue;
     const x=((i*151+frame*13)%VIEW_W); const y=VIEW_H*0.38 + ((i*97)%1000)/1000*VIEW_H*0.6;
     const rr=2+phase*2.5; g.globalAlpha=(3-phase)/3*0.5;
     g.beginPath(); g.ellipse(x,y,rr,rr*0.4,0,Math.PI*0.15,Math.PI*0.85); g.stroke(); }
@@ -5088,7 +5363,7 @@ function drawRainOver(g){
 function drawLighting(g,camX,camY){
   const h=(State.time/3600)%24;
   const sky=skyState(h);
-  let dark=sky.dark; if(scene.indoor) dark=Math.max(0.32, dark*0.68);   // interiors are lived-in, a bit warmer/brighter
+  let dark=sky.dark; if(scene.indoor) dark=Math.max(0.26, dark*0.54);   // readable interiors, still distinctly nocturnal
   const lightScale=clamp((dark-0.05)*1.9, 0.12, 1);   // lamps fade toward daylight
   g.save();
   // ambient tint (day/night graded), deeper at the bottom
@@ -5104,7 +5379,7 @@ function drawLighting(g,camX,camY){
     onLights.push(L);
     const warm=(L.c===COL.amber||L.c==='#c98a3a');
     const flick=warm? (0.86+0.14*Math.sin(Game.t*7+L.x)+0.03*Math.sin(Game.t*23+L.y)):1;
-    softGlow(g,sx,sy,L.r*0.92,L.c,0.40*L.i*flick*lightScale,0.17*L.i*lightScale);   // dimmer, tighter — no blowout
+    softGlow(g,sx,sy,L.r*0.96,L.c,0.46*L.i*flick*lightScale,0.20*L.i*lightScale);
     if(!scene.indoor){ const rr=L.r*0.5; const gr=g.createLinearGradient(sx,sy,sx,sy+rr*1.7);
       gr.addColorStop(0,hexA(L.c,0.07*L.i*flick*lightScale)); gr.addColorStop(1,'rgba(0,0,0,0)');
       g.fillStyle=gr; g.fillRect(sx-rr*0.5,sy,rr,rr*1.7); }
@@ -5116,8 +5391,8 @@ function drawLighting(g,camX,camY){
   const lanR=(250+Math.sin(Game.t*3)*10)*(1-0.15*gutter), lanScale=Math.max(0.6,lightScale);
   { const sx=player.x-camX, sy=player.y-camY-12;
     const grd=g.createRadialGradient(sx,sy,lanR*0.16,sx,sy,lanR);   // inner radius avoids a bright point
-    grd.addColorStop(0,'rgba(236,196,140,'+(0.30*lanScale*(1-0.22*gutter))+')');
-    grd.addColorStop(0.45,'rgba(226,180,120,'+(0.16*lanScale*(1-0.22*gutter))+')');
+    grd.addColorStop(0,'rgba(236,196,140,'+(0.36*lanScale*(1-0.22*gutter))+')');
+    grd.addColorStop(0.45,'rgba(226,180,120,'+(0.19*lanScale*(1-0.22*gutter))+')');
     grd.addColorStop(1,'rgba(0,0,0,0)');
     g.fillStyle=grd; g.fillRect(sx-lanR,sy-lanR,lanR*2,lanR*2);
     // rare hard stutter — the flame nearly dies for a single frame
@@ -5126,11 +5401,11 @@ function drawLighting(g,camX,camY){
   // --- shadows: occluders darken the lit pools behind them (dynamic from the lantern, static from lamps) ---
   g.globalCompositeOperation='source-over';
   const occ = scene.occluders || scene.walls;
-  castShadows(g, player.x, player.y-12, lanR, camX, camY, 0.4*lanScale, occ);
-  for(const L of onLights){ castShadows(g, L.x, L.y, L.r*0.9, camX, camY, 0.32*L.i*lightScale, occ); }
+  castShadows(g, player.x, player.y-12, lanR, camX, camY, 0.24*lanScale, occ);
+  for(const L of onLights){ castShadows(g, L.x, L.y, L.r*0.9, camX, camY, 0.18*L.i*lightScale, occ); }
   // vignette — cinematic but not blinding
   const vg=g.createRadialGradient(VIEW_W/2,VIEW_H*0.46,VIEW_H*0.32, VIEW_W/2,VIEW_H*0.5,VIEW_W*0.78);
-  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(0.62,'rgba(0,0,0,'+(0.08+dark*0.1)+')'); vg.addColorStop(1,'rgba(0,0,0,'+(0.4+dark*0.2)+')');
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(0.64,'rgba(0,0,0,'+(0.05+dark*0.07)+')'); vg.addColorStop(1,'rgba(0,0,0,'+(0.28+dark*0.15)+')');
   g.fillStyle=vg; g.fillRect(0,0,VIEW_W,VIEW_H);
   g.restore();
 }
@@ -5141,16 +5416,22 @@ function drawGrade(g){
   g.save();
   g.globalCompositeOperation='multiply';          // cooler + darker teal grade as night deepens
   const gr=g.createLinearGradient(0,0,0,VIEW_H);
-  gr.addColorStop(0,'rgb('+(196-40*nf)+','+(206-34*nf)+','+(214-20*nf)+')');
-  gr.addColorStop(1,'rgb('+(168-46*nf)+','+(180-40*nf)+','+(192-24*nf)+')');
+  gr.addColorStop(0,'rgb('+(220-28*nf)+','+(226-24*nf)+','+(232-16*nf)+')');
+  gr.addColorStop(1,'rgb('+(205-30*nf)+','+(214-26*nf)+','+(222-18*nf)+')');
   g.fillStyle=gr; g.fillRect(0,0,VIEW_W,VIEW_H);
   g.globalCompositeOperation='overlay';           // pull the warm mids out at night
   g.fillStyle='rgba(70,52,30,'+(0.10-0.06*nf)+')'; g.fillRect(0,0,VIEW_W,VIEW_H);
   if(nf>0){ g.globalCompositeOperation='multiply'; // extra corner-crush deep at night
     const vg=g.createRadialGradient(VIEW_W/2,VIEW_H/2,VIEW_H*0.3, VIEW_W/2,VIEW_H/2,VIEW_W*0.7);
-    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(6,8,12,'+(0.16*nf)+')');
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(6,8,12,'+(0.08*nf)+')');
     g.fillStyle=vg; g.fillRect(0,0,VIEW_W,VIEW_H); }
   g.restore();
+}
+function drawExposure(g){
+  if(!Game.brightness) return;
+  g.save(); g.globalCompositeOperation='screen';
+  g.fillStyle=Game.brightness===2?'rgba(66,76,86,.16)':'rgba(48,58,68,.09)';
+  g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
 }
 // Proximity dread overlay + the two sub-systems it renders on top of (spotted-sting, fog-figure).
 function drawDread(g,camX,camY){
@@ -5158,14 +5439,14 @@ function drawDread(g,camX,camY){
   if(d>0.01){
     // pull colour toward grey as the threat closes
     g.save(); g.globalCompositeOperation='saturation';
-    g.fillStyle='rgba(128,128,128,'+(0.4*d)+')'; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
+    g.fillStyle='rgba(128,128,128,'+(0.26*d)+')'; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
     // constricting, throbbing vignette
     const thr=0.5+0.5*Math.sin(Game.t*4.2);
     const inner=VIEW_H*(0.49-0.15*d), outer=VIEW_W*(0.74-0.14*d);
     const vg=g.createRadialGradient(VIEW_W/2,VIEW_H*0.5,inner, VIEW_W/2,VIEW_H*0.5,outer);
     vg.addColorStop(0,'rgba(0,0,0,0)');
     vg.addColorStop(0.7,hexA(COL.ink,0.10*d));
-    vg.addColorStop(1,hexA(COL.ink,(0.44+0.20*thr)*d));
+    vg.addColorStop(1,hexA(COL.ink,(0.34+0.14*thr)*d));
     g.fillStyle=vg; g.fillRect(0,0,VIEW_W,VIEW_H);
     // low arterial red pulsing at the rim on the beat
     if(d>0.4){ g.save(); g.globalCompositeOperation='lighter';
@@ -5349,41 +5630,48 @@ function drawCraft(g){
 /* ---- Ellie's wireless set: tune across the county's broadcasts (story delivered by radio, not paper) ---- */
 const Radio = {
   active:false, freq:0.5, fade:0, t:0, station:null, clarity:0, lineIdx:0, lineT:0, _spoke:-1,
+  _stationCache:null, _stationCacheIntro:null,
   stations(){
+    const intro=!!State.flags.intro;
+    if(this._stationCache && this._stationCacheIntro===intro) return this._stationCache;
     const S=[
-      {f:0.16, name:'Wrenfield relay — a person', src:'real', lines:[
+      {id:'wrenfield-person', f:0.16, name:'Wrenfield relay — a person', src:'real', lines:[
         'This is Rafi. This is a person. I will tell you what I know and none of the rest.',
         'Water is high past the mile post. I do not know if the bridge holds. I will not tell you it holds.',
         'A late warning that is true beats a fast one that lies. Back on the hour.']},
-      {f:0.38, name:'standing advisory, loop four', src:'reconstruction', lines:[
+      {id:'standing-advisory', f:0.38, name:'standing advisory, loop four', src:'reconstruction', lines:[
         'Advisory remains in force. Standing water on all low routes.',
         'The east road is passable. The east road is passable. Do not attempt the cutting.',
         'Shelter at the marked point and await instruction. This message repeats.']},
-      {f:0.60, name:'county control', src:'continuity', lines:[
+      {id:'county-control', f:0.60, name:'county control', src:'continuity', lines:[
         'You are through. You are safe. You are on the list. There is no gap.',
         'Route is open. Route is open. Everyone is listed as arriving.',
         'Your sister is present. She has always been present. Shall I connect you?']},
-      {f:0.83, name:'the safe roll', src:'reconstruction', lines:[
+      {id:'safe-roll', f:0.83, name:'the safe roll', src:'reconstruction', lines:[
         'Reading the safe roll. All present. All accounted for. None missing.',
         'Ward, E, age eight. Red coat, blue inhaler. Safe elsewhere, collected by relative.',
         'Ward, M. Present, well, on the line. Present, well, on the line.']},
     ];
-    if(State.flags.intro) S.push({f:0.50, name:'— an old line, barely there —', src:'real', lines:[
+    if(intro) S.push({id:'maggie-old-line', f:0.50, name:'— an old line, barely there —', src:'real', lines:[
       'Ellie. If you are hearing this off the old line then I have done the thing I was frightened of.',
       'If it sounds like me and it never once stops to think, that is not me. I stop to think.',
       'Hold onto that. Please. Hold onto that.']});
-    return S;
+    this._stationCache=S; this._stationCacheIntro=intro; return S;
   },
   open(){ this.active=true; this.freq=0.5; this.fade=0; this.t=0; this.lineIdx=0; this.lineT=0; this._spoke=-1; this.station=null;
-    Game.overlay='radio'; Game.toastT=0; try{Audio.ui();}catch(e){} },
-  close(){ this.active=false; try{Audio.stopSpeak();}catch(e){} Game.overlay=null; try{Audio.ui();}catch(e){} },
+    Game.overlay='radio'; Game.toastT=0; try{Audio.cancelDeferred('reader');Audio.stopSpeak();Audio.ui();}catch(e){} },
+  close(){ this.active=false; this.station=null; this._spoke=-1; try{Audio.stopSpeak();}catch(e){} Game.overlay=null; try{Audio.ui();}catch(e){} },
   update(dt){ this.t+=dt; if(this.fade<1) this.fade=Math.min(1,this.fade+dt*2.2);
     let inx=0; if(keys.KeyA||keys.ArrowLeft)inx-=1; if(keys.KeyD||keys.ArrowRight)inx+=1;
+    if(Math.abs(Game._tx||0)>0.15) inx+=Game._tx;
     if(inx){ this.freq=clamp(this.freq+inx*dt*0.26,0,1); }
     const BW=0.055; let best=null,bc=-1;
     for(const st of this.stations()){ const c=1-Math.abs(this.freq-st.f)/BW; if(c>bc){ bc=c; best=st; } }
     this.clarity=clamp(bc,0,1); const clear=this.clarity>0.55;
-    if(clear && best){ if(best!==this.station){ this.station=best; this.lineIdx=0; this.lineT=0; this._spoke=-1; }
+    if(clear && best){ if(!this.station || best.id!==this.station.id){
+        try{Audio.stopSpeak();}catch(e){}
+        this.station=best; this.lineIdx=0; this.lineT=0; this._spoke=-1;
+      }
       this.lineT+=dt;
       if(this._spoke!==this.lineIdx){ this._spoke=this.lineIdx; try{Audio.speak(this.station.lines[this.lineIdx], this.station.src);}catch(e){} }
       if(this.lineT>5.0){ this.lineT=0; this.lineIdx=(this.lineIdx+1)%this.station.lines.length; }
@@ -5434,6 +5722,7 @@ const Window = {
   close(){ this.active=false; Game.overlay=null; try{Audio.ui();}catch(e){} },
   update(dt){ this.t+=dt; if(this.fade<1) this.fade=Math.min(1,this.fade+dt*1.5);
     let inx=0; if(keys.KeyA||keys.ArrowLeft)inx-=1; if(keys.KeyD||keys.ArrowRight)inx+=1;
+    if(Math.abs(Game._tx||0)>0.15) inx+=Game._tx;
     if(mouse.down){ inx += (mouse.x/VIEW_W-0.5)*2; }              // click-drag-ish: mouse side pans
     this.pan=clamp(this.pan+inx*dt*0.45, 0.04, 0.96);
     const d=Math.abs(this.pan-this.figX);
@@ -5462,7 +5751,8 @@ function drawWindow(g){
   const sky=g.createLinearGradient(0,0,0,H);
   sky.addColorStop(0,'#0a0e15'); sky.addColorStop(0.5,'#0c111a'); sky.addColorStop(0.55,'#0a0f13'); sky.addColorStop(1,'#06090b');
   g.fillStyle=sky; g.fillRect(0,0,W,H);
-  if((Game.boltT||0)>0.1){ g.save(); g.globalCompositeOperation='lighter'; g.fillStyle=hexA('#a9c0e2',0.12*Game.boltT); g.fillRect(0,0,W,H); g.restore(); }
+  if((Game.boltT||0)>0.1){ g.save(); g.globalCompositeOperation='lighter';
+    g.fillStyle=hexA('#a9c0e2',(Game.reducedFx?0.025:0.12)*Game.boltT); g.fillRect(0,0,W,H); g.restore(); }
   // far silhouette
   g.save(); g.translate(-ox*W*0.35,0); g.fillStyle='#0b1015';
   for(let i=-1;i<4;i++){ const bx=i*280-30; g.fillRect(bx,hz-60,220,62); g.fillRect(bx+40,hz-84,90,26); }
@@ -5728,9 +6018,10 @@ function drawMap(g){
 }
 function drawPause(g){
   g.fillStyle='rgba(4,6,8,.72)'; g.fillRect(0,0,VIEW_W,VIEW_H);
-  const w=420,h=272,x=(VIEW_W-w)/2,y=(VIEW_H-h)/2; panel(g,x,y,w,h,'PAUSED');
+  const w=500,h=330,x=(VIEW_W-w)/2,y=(VIEW_H-h)/2; panel(g,x,y,w,h,'PAUSED');
   g.font='12px monospace'; g.fillStyle=COL.ivory;
   const F=State.flags||{};
+  const mix=Audio.mixLevels(), pct=v=>Math.round(v*100)+'%';
   const fitted=[F.upgEdge?'Honed Edge':null,F.upgCoil?'Reinforced Coil':null,F.upgCells?'Twin Cells':null].filter(Boolean);
   const rows=[
     'WASD / arrows  move        E interact   C craft',
@@ -5742,9 +6033,12 @@ function drawPause(g){
     'FIELD KIT — records recovered '+((State.docs||[]).length)+'   ·   max condition '+(State.hpMax||100),
     'fitted: '+(fitted.length?fitted.join(', '):'(craft upgrades at the bench, C)'),
     '',
-    'N  toggle sound: '+(Audio.isOn()?'ON':'OFF')+'        Esc  resume',
+    'AUDIO MIX  1 music '+pct(mix.music)+'   2 rain/thunder '+pct(mix.weather),
+    '           3 effects '+pct(mix.sfx)+'   4 voices '+pct(mix.voice),
+    'DISPLAY    5 effects '+(Game.reducedFx?'REDUCED':'FULL')+'   6 brightness '+(['NORMAL','RAISED','HIGH'][Game.brightness]||'NORMAL'),
+    'N  master sound: '+(Audio.isOn()?'ON':'OFF')+'        Esc  resume',
   ];
-  rows.forEach((r,i)=> g.fillText(r,x+20,y+58+i*22));
+  rows.forEach((r,i)=> g.fillText(r,x+20,y+52+i*21));
 }
 function drawToast(g){
   if(Game.toastT<=0) return; const a=clamp(Game.toastT,0,1);
@@ -5758,7 +6052,7 @@ function drawSliceEnd(g){
   g.textAlign='center'; g.fillStyle=COL.cyan; g.font='16px monospace';
   g.fillText('The signal points north, toward Ashmere.',VIEW_W/2,VIEW_H/2-20);
   g.fillStyle=COL.ivory; g.font='12px monospace';
-  g.fillText('— End of the vertical slice —',VIEW_W/2,VIEW_H/2+8);
+  g.fillText('— The signal route continues north —',VIEW_W/2,VIEW_H/2+8);
   g.fillStyle='#8a8272'; g.font='11px monospace';
   g.fillText('Open your archive (I) to read what you proved tonight.',VIEW_W/2,VIEW_H/2+34);
   g.textAlign='left';
@@ -5778,8 +6072,10 @@ function drawTitle(g){
   g.fillStyle=COL.amber; g.font='13px monospace';
   g.fillText('A record is not a person, but without trustworthy witnesses a person can be erased.',VIEW_W/2,VIEW_H/2);
   g.fillStyle= (Math.floor(Game.t*2)%2)? COL.cyan : '#8a8272'; g.font='13px monospace';
-  g.fillText('Press any key to begin',VIEW_W/2,VIEW_H/2+50);
-  if(hasSave()){ g.fillStyle='#8a8272'; g.font='11px monospace'; g.fillText('(L to continue your saved night)',VIEW_W/2,VIEW_H/2+74); }
+  if(hasSave()){
+    g.fillText('E / Enter / L — CONTINUE',VIEW_W/2,VIEW_H/2+48);
+    g.fillStyle='#8a8272'; g.font='11px monospace'; g.fillText('N — begin a new night',VIEW_W/2,VIEW_H/2+72);
+  }else g.fillText('Press any key to begin',VIEW_W/2,VIEW_H/2+50);
   if(Game.reachedEnding){ g.fillStyle=COL.amber; g.font='11px monospace';
     g.fillText('— you reached an ending: '+Game.reachedEnding+' —',VIEW_W/2,VIEW_H/2+98); }
   g.fillStyle='#5a5448'; g.font='10px monospace';

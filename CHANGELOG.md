@@ -4,6 +4,31 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] — 2026-07-24
+
+### Added
+- Two original, sample-free ambient pieces: **Memory in the Rain** and **Receiver Veil**. They crossfade by scene and receiver state while the procedural score remains a subtle tension layer.
+- Separate music, weather, effects and voice buses with persistent levels, master mute, a safety limiter, reduced-effects mode and raised-brightness options.
+- Complete mobile controls for combat, receiver, crafting, gadgets, map, archive and pause.
+
+### Changed
+- Rebuilt rain as a wide, layered storm bed with slow movement, indoor attenuation and restrained close detail.
+- Rebalanced thunder by distance, stereo position and interior occlusion; reduced the visual rain density so world detail remains legible.
+- Lifted crushed shadow values, softened the vignette and directional shadows, improved practical-light falloff, and culled off-screen props.
+- Saves now retain time of day, current objective, health/receiver upgrades, heat and ending state.
+
+### Fixed
+- Receiver tuning no longer creates a fresh station and restarts voice synthesis every frame, which caused severe audio and performance failure.
+- Closing the receiver or a record now cancels its queued voice effects instead of allowing late audio to fire.
+- Keyboard repeat can no longer race through conversations or retrigger interaction audio.
+- Outdoor shadow and wet-surface helpers now accept all generated-prop call signatures without halting the render loop.
+- Storm, camera shake and lightning timers keep advancing while an overlay is open.
+- Audio resumes correctly after browser suspension and releases stopped speech nodes.
+- Touch controls remain hidden on desktop and the opening hint clears once play begins.
+- Reduced-effects mode replaces strobing forked lightning with a faint sheet flash and disables camera shake.
+- Touch players can start a new campaign, turn archive pages, navigate choices/crafting, pan the window and tune the receiver.
+- Legacy saves preserve Imogen's max-condition care upgrade; later field-hardening no longer lowers it.
+
 ## [1.10.0] — 2026-07-24
 
 ### Added

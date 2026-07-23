@@ -23,14 +23,14 @@ You are **Ellie Ward**, a field repairer following the trail of your sister Magg
 
 ## Features
 
-- **Four regions, nineteen-plus interiors** across a complete campaign — Cullbrook Services, Ashmere Estate, Wrenfield Broadcast Fields, and Tollard Exchange.
+- **Four regions and ten distinct interiors/facilities** across a complete campaign — Cullbrook Services, Ashmere Estate, Wrenfield Broadcast Fields, and Tollard Exchange.
 - **A trace-receiver investigation system** — locate cached audio and telemetry, isolate a voice, and weigh it against physical evidence. Every trace starts *Unverified*.
 - **Choices with consequences** — route scarce power, pick an alliance, and decide what the network *becomes* (Restore / Mesh / Sever). Your path resolves into one of twelve routes, each with a **multi-beat epilogue** that reckons with the network's fate, your ally's fate, and whether the copy ever conceded it wasn't your sister.
 - **Over a hundred discoverable records** — notes, letters, forms, dispatch logs, radio recordings and hidden caches, plus environmental beats and survivor graffiti; everything you find is logged.
 - **Small-scale survival combat** — the receiver is a weapon: sweep to expose, discharge to strip shields. Six enemy families, each an uncanny *reconstruction* the network rebuilt wrong, up to the face-drum of the Choir Warden.
 - **Proximity dread** — as a reconstruction closes in, colour drains, the vignette tightens, a heartbeat quickens, and your lantern gutters near the wrongness.
 - **A living, storm-soaked world** — rain-fed puddles and ripples, drifting fog banks, ground mist, embers, wind-blown litter, sheet lightning and forked bolts, moths in the lamplight, and quiet scares glimpsed at the edge of sight.
-- **Crafting, a day/night cycle, dynamic 2-D lighting with contact + cast shadows, and a fully procedural audio engine** — evolving ambient music beneath the rain and thunder, and no recorded voice, which is also the fiction.
+- **Crafting, a day/night cycle, dynamic 2-D lighting, original music, and layered weather audio** — two authored ambient pieces crossfade with procedural tension, spatial rain and distance-aware thunder. Recorded dialogue remains wordless by design.
 
 ## Controls
 
@@ -43,29 +43,29 @@ You are **Ellie Ward**, a field repairer following the trail of your sister Magg
 | Receiver discharge | `R` *(once unlocked)* |
 | Dodge | `Space` |
 | Craft / Heal | `C` / `F` |
+| Flare / Decoy | `G` / `B` |
 | Map / Archive | `M` / `I` |
 | Pause | `Esc` |
 
-Touch controls appear automatically on mobile.
+Full touch controls appear automatically on mobile, including combat, receiver, utility, map and pause actions.
 
 ## Running it locally
 
-The game is a single self-contained `index.html` — no build step and no dependencies.
+The game is a static HTML5 Canvas project — no build step, package install, framework or server-side dependency.
 
 ```bash
-# clone, then either open index.html directly…
-# …or serve it (recommended, so the browser unlocks audio and local saves cleanly):
+# clone, then serve the project so audio assets and local saves work consistently:
 python -m http.server 8000
 # then visit http://localhost:8000
 ```
 
 ## Built with
 
-Plain **HTML5 Canvas**, **Web Audio**, and vanilla JavaScript — a single file, zero dependencies, no framework, no build tooling. Progress saves to `localStorage`.
+Plain **HTML5 Canvas**, **Web Audio**, HTML audio, and vanilla JavaScript — zero third-party dependencies, no framework, and no build tooling. Progress and preferences save to `localStorage`.
 
 ## Accessibility & notes
 
-Separate display/audio/accessibility options, directional-sound captions, source labels for different recording types, reduced-effects and broad-compass modes. Important information is never conveyed by colour alone. Saves persist in your browser; clearing site data or using private browsing removes local progress.
+The pause menu provides independent music, weather, effects and voice levels; master mute; reduced-effects mode; and two raised-brightness levels. Mix and display preferences persist independently of campaign progress. Recording types use both labels and colour, and every keyboard action has a touch equivalent. Saves persist in your browser; clearing site data or using private browsing removes local progress.
 
 ## License
 
