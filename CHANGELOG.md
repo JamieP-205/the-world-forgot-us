@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] — 2026-07-23
+
+### Added
+- **Roughly doubled the discoverable content** — 65 new documents, letters, forms, dispatch logs, radio recordings and physical discoveries scattered across every region, deepening the mystery and the people caught in it (Idris, Imogen, Leena, Owen, Gwen, Rafi, Tom, Mara, Katie). Plus 14 new environmental beats and 12 survivor graffiti.
+- **A multi-beat finale.** The single ending screen is now a paged epilogue that reacts to your exact path: what becomes of the network (Restore / Mesh / Sever), of the ally you sided with, whether the copy conceded it isn't Maggie or insisted to the last, and Ellie's own reckoning — before the final card.
+- **A weight beat at the Choir Core**, just before the operation, that names the specific path you carried north — so the choice lands.
+
+### Fixed
+- Removed a stale message that wrongly claimed the finale "isn't built in this slice."
+- Clamped document, beat and graffiti coordinates into each scene's walkable interior — several records (legacy and new) had been authored at off-map coordinates and were unreachable.
+
 ## [1.3.0] — 2026-07-23
 
 ### Added

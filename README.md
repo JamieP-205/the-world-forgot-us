@@ -25,8 +25,8 @@ You are **Ellie Ward**, a field repairer following the trail of your sister Magg
 
 - **Four regions, nineteen-plus interiors** across a complete campaign — Cullbrook Services, Ashmere Estate, Wrenfield Broadcast Fields, and Tollard Exchange.
 - **A trace-receiver investigation system** — locate cached audio and telemetry, isolate a voice, and weigh it against physical evidence. Every trace starts *Unverified*.
-- **Documents & records** — dozens of readable notes, letters, transmissions and eerie environmental beats hidden across the world; everything you find is logged.
-- **Choices with consequences** — route scarce power, pick an alliance, and decide what the network *becomes* (Restore / Mesh / Sever). Your path resolves into one of twelve endings.
+- **Choices with consequences** — route scarce power, pick an alliance, and decide what the network *becomes* (Restore / Mesh / Sever). Your path resolves into one of twelve routes, each with a **multi-beat epilogue** that reckons with the network's fate, your ally's fate, and whether the copy ever conceded it wasn't your sister.
+- **Over a hundred discoverable records** — notes, letters, forms, dispatch logs, radio recordings and hidden caches, plus environmental beats and survivor graffiti; everything you find is logged.
 - **Small-scale survival combat** — the receiver is a weapon: sweep to expose, discharge to strip shields. Six enemy families, each an uncanny *reconstruction* the network rebuilt wrong, up to the face-drum of the Choir Warden.
 - **Proximity dread** — as a reconstruction closes in, colour drains, the vignette tightens, a heartbeat quickens, and your lantern gutters near the wrongness.
 - **A living, storm-soaked world** — rain-fed puddles and ripples, drifting fog banks, ground mist, embers, wind-blown litter, sheet lightning and forked bolts, moths in the lamplight, and quiet scares glimpsed at the edge of sight.
