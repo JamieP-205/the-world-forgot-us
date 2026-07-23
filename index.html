@@ -455,6 +455,7 @@ function hasSave(){ try{ return !!localStorage.getItem(SAVE_KEY);}catch(e){ retu
 function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(!s) return false;
   Object.assign(State,{scene:s.scene,hp:s.hp,recv:s.recv,inv:s.inv,flags:s.flags,archive:s.archive,recipes:s.recipes||{},docs:s.docs||[],
     lean:s.lean||{medical:0,radio:0,witness:0,copy:0}});
+  if(State.flags && State.flags.upgCoil) State.recvMax=140;   // restore the reinforced-coil capacity upgrade
   loadScene(s.scene,{x:s.px,y:s.py,dir:s.dir}); return true; }catch(e){ return false; } }
 
 /* --------------------------- trace anchors ------------------------- */
@@ -1331,12 +1332,23 @@ const RECIPES = [
   { id:'isolator', name:'Analogue Isolator', need:{scrap:1,cloth:1}, ctx:'Signal bench',
     desc:'Reduces Continuity’s ability to observe nearby receiver work — at the cost of proximity information. More privacy, less warning.',
     make:()=>{ State.inv.isolator=(State.inv.isolator||0)+1; Audio.ui(); } },
+  // --- permanent upgrades (craft once) ---
+  { id:'edge', name:'Honed Edge', need:{scrap:2}, ctx:'Signal bench', once:true,
+    desc:'Grind and re-temper the bar. Every melee strike lands harder (+10 damage). Permanent.',
+    make:()=>{ State.flags.upgEdge=true; Audio.trace(); } },
+  { id:'coilcap', name:'Reinforced Coil', need:{battery:1,scrap:1}, ctx:'Signal bench', once:true,
+    desc:'A bigger reservoir — +40 receiver power for more sweeps and discharges. Permanent.',
+    make:()=>{ State.flags.upgCoil=true; State.recvMax=140; State.recv=Math.min(140,State.recv+40); Audio.trace(); } },
+  { id:'cells', name:'Twin Dodge Cells', need:{battery:1,cloth:1}, ctx:'Field kit', once:true,
+    desc:'Faster recovery and a longer no-hit window on your dodge — read attacks and punish them. Permanent.',
+    make:()=>{ State.flags.upgCells=true; Audio.trace(); } },
 ];
 const Crafting = {
   open(highlightCoil){ Game.overlay='craft'; Crafting.sel=0; if(highlightCoil){ const i=RECIPES.findIndex(r=>r.id==='coil'); if(i>=0)Crafting.sel=i; } Audio.ui(); },
   sel:0,
   can(r){ for(const k in r.need){ if((State.inv[k]||0) < r.need[k]) return false; } return true; },
   craft(){ const r=RECIPES[Crafting.sel]; if(r.id==='coil'&&State.flags.coil){Game.toast('Already built.');return;}
+    if(r.once && (State.recipes[r.id]||0)>0){ Game.toast(r.name+' already fitted.'); return; }
     if(!Crafting.can(r)){ Game.toast('Missing materials.'); return; }
     for(const k in r.need){ State.inv[k]-=r.need[k]; }
     State.recipes[r.id]=(State.recipes[r.id]||0)+1; r.make(); Game.toast('Crafted: '+r.name); save();
@@ -1567,11 +1579,12 @@ function doAttack(){
   for(const e of scene.enemies){ if(e.dead) continue;
     const eb={x:e.x-e.w/2,y:e.y-e.h/2,w:e.w,h:e.h};
     if(aabb(hb,eb)){
-      let dmg=34;
+      let dmg=34 + (State.flags.upgEdge?10:0);                 // Honed Edge upgrade
       if(e.kind==='wraith' && e.exposed<=0) dmg=2;            // shielded while concealed
       if((e.kind==='husk'||e.kind==='warden') && (e.shieldDown||0)<=0) dmg = e.kind==='warden'?5:4; // signal shield blocks ordinary attacks
       if(player.counter>0 && dmg>10) dmg=Math.round(dmg*2.1);  // counter-riposte after a perfect dodge
       e.hp-=dmg; e.flash=0.15; landed=true;
+      if(dmg>12) e.stun=Math.max(e.stun||0, e.kind==='warden'?0:e.kind==='husk'?0.14:0.34);  // solid hits stagger/interrupt (bosses resist)
       const spk = dmg>10 ? 'rgba(235,220,180,' : 'rgba(120,200,210,';
       spawnFx(e.x+d[0]*10, e.y-e.h/2+d[1]*6, dmg>10?6:2, {col:spk, spd:100, life:0.25, size:1.6, kind:'spark', ang:Math.atan2(d[1],d[0])});
       const kb = e.kind==='leech'?0 : e.kind==='warden'?5 : e.kind==='husk'?9 : 16; // knockback makes hits read + breaks overlap
@@ -1596,13 +1609,14 @@ function doDodge(){
   let perfect=false;
   for(const e of scene.enemies){ if(e.dead) continue; const dd=Math.hypot(e.x-player.x,e.y-player.y);
     if(dd<82 && ((e.tele||0)>0.12 || (e.lungeT||0)>0 || (e.charge||0)>0.9 || dd<(e.w+player.w)/2+16)){ perfect=true; break; } }
-  player.dodgeT=0.18; player.iframe= perfect?0.42:0.26; Audio.dodge();
+  const cells=!!State.flags.upgCells;                          // Twin Dodge Cells upgrade
+  player.dodgeT=0.18; player.iframe=(perfect?0.42:0.26)+(cells?0.07:0); Audio.dodge();
   const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[player.dir];
   player.vx=d[0]*560; player.vy=d[1]*560;
-  if(perfect){ player.counter=1.5; player.dodgeCd=0.32; Game.hitstop=0.09; Game.shakeT=Math.max(Game.shakeT||0,0.10);
+  if(perfect){ player.counter=1.5; player.dodgeCd=cells?0.24:0.32; Game.hitstop=0.09; Game.shakeT=Math.max(Game.shakeT||0,0.10);
     spawnFx(player.x, player.y-10, 12, {col:'rgba(150,220,235,', spd:130, life:0.4, size:2, kind:'spark'});
     try{Audio.trace();}catch(e){} Game.toast('Perfect dodge — strike (J) to counter'); }
-  else player.dodgeCd=0.7;
+  else player.dodgeCd=cells?0.55:0.7;
 }
 function doSweep(){
   if(sweep) return;
@@ -1818,7 +1832,12 @@ function updateEnemies(dt){
       spawnFx(e.x+(Math.random()*e.w-e.w/2), e.y-e.h*Math.random()-2, 1, {col:'rgba(120,200,214,', spd:5, life:0.5, size:1.3, kind:'static', grav:-10});
 
     if(e.kind==='hollow'){
-      if(e.stun<=0 && d<520){ const s=e.speed*dt; e.x+=dx/d*s; e.y+=dy/d*s; }
+      if(e.stun<=0){
+        if((e.lungeT||0)>0){ e.lungeT-=dt; }                          // recovering after a wail — stands open (punish it)
+        else if(d<128){ e.tele=(e.tele||0)+dt;                        // stops close and winds up a loop-wail
+          if(e.tele>1.05){ e.tele=0; e.lungeT=0.55; impacts.push({x:e.x,y:e.y,r:78,warn:0.6,det:false}); try{Audio.breath();}catch(_){} } }
+        else if(d<520){ e.tele=Math.max(0,(e.tele||0)-dt*2); const s=e.speed*dt; e.x+=dx/d*s; e.y+=dy/d*s; }
+      }
     } else if(e.kind==='wraith'){
       // circles, then lunges; mostly invisible unless exposed
       if(e.stun<=0){

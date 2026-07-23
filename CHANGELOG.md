@@ -4,6 +4,15 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.7.0] — 2026-07-23
+
+### Added
+- **Permanent upgrades** you craft at the bench or field kit: **Honed Edge** (+10 melee), **Reinforced Coil** (+40 receiver power for more sweeps and discharges), and **Twin Dodge Cells** (faster dodge recovery and a longer no-hit window). They persist across saves.
+
+### Changed
+- **The Hollow now attacks.** Instead of only walking into you it closes, stops, and winds up a telegraphed loop-wail — a shockwave you can step out of, leaving it open to punish.
+- **Solid melee hits stagger** non-boss enemies, interrupting their attacks and rewarding aggression (bosses resist).
+
 ## [1.6.0] — 2026-07-23
 
 ### Added
