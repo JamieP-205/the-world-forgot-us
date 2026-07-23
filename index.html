@@ -30,7 +30,7 @@
 </head>
 <body>
 <div id="wrap"><canvas id="c"></canvas></div>
-<div id="hint">WASD move · E interact · J strike · Q sweep · R discharge · Space dodge · C craft · F heal · M map · I archive · Esc pause</div>
+<div id="hint">WASD move · E interact · J strike · Q sweep · R discharge · Space dodge (time it → counter) · G flare · B decoy · C craft · F heal · M map · I archive · Esc pause</div>
 
 <div id="stick" class="touch"><div id="nub"></div></div>
 <div id="pads" class="touch">
@@ -841,7 +841,7 @@ function loadScene(id, spawn){
   else { player.x=scene.W/2; player.y=scene.H/2; }
   player.vx=player.vy=0;
   unstick();                          // never leave the player embedded in a wall
-  sweep=null; discharge=null; impacts.length=0; efx.length=0; Game.doorCd=0.9;
+  sweep=null; discharge=null; impacts.length=0; efx.length=0; flares.length=0; decoy=null; Game.doorCd=0.9;
   spawnEnemiesFor(id);
   Game.toast(scene.name, 2.6);
   if(id==='ashmere' && !State.flags.ashArrived){ State.flags.ashArrived=true; Story.ashmereArrive(); }
@@ -1484,6 +1484,8 @@ const Game = {
     if(code==='KeyM'){ this.overlay='map'; Audio.ui(); return; }
     if(code==='KeyE'){ tryInteract(); return; }
     if(code==='KeyF'){ tryHeal(); return; }
+    if(code==='KeyG'){ useFlare(); return; }
+    if(code==='KeyB'){ useDecoy(); return; }
   },
   touchMove(x,y){ this._tx=x; this._ty=y; },
   setObjective(t){ this.objective=t; },
@@ -1517,6 +1519,40 @@ function tryHeal(){
   else if((State.inv.ration||0)>0){ State.inv.ration--; State.hp=Math.min(State.hpMax,State.hp+34); Audio.heal(); Game.toast('Ration used (+34).'); save(); }
   else Game.toast('No supplies to heal with.');
 }
+/* ---- deployable gadgets: the craftables you actually use in a fight ---- */
+let flares=[], decoy=null;
+function useFlare(){
+  if((State.inv.flare||0)<=0){ Game.toast('No hand flare. Craft one at a field kit (C).'); return; }
+  State.inv.flare--; flares.push({x:player.x, y:player.y-6, t:0});
+  Game.shakeT=Math.max(Game.shakeT||0,0.12); try{Audio.sweep();}catch(e){} try{Audio.trace();}catch(e){}
+  // burst: the light drives threats back, exposes hidden wraiths, jams a wind-up
+  for(const e of scene.enemies){ if(e.dead) continue; const m=Math.hypot(e.x-player.x,e.y-player.y)||1;
+    if(m<155){ if(e.kind==='wraith') e.exposed=Math.max(e.exposed||0,3.5);
+      e.stun=Math.max(e.stun||0, e.kind==='hollow'?1.4:2.4);
+      e.x+=(e.x-player.x)/m*44; e.y+=(e.y-player.y)/m*44;
+      if(e.kind==='mimic'){ e.tele=0; e.lungeT=0; } if(e.kind==='leech') e.charge=0; } }
+  Game.toast('Flare lit — it drives them back.'); save();
+}
+function useDecoy(){
+  if((State.inv.decoy||0)<=0){ Game.toast('No signal decoy. Craft one at a signal bench (C).'); return; }
+  State.inv.decoy--; decoy={x:player.x, y:player.y, t:0}; State.heat=Math.min(100,State.heat+15);
+  try{Audio.trace();}catch(e){} Game.toast('Signal decoy deployed — it draws them to it.'); save();
+}
+function updateGadgets(dt){
+  for(let i=flares.length-1;i>=0;i--){ const f=flares[i]; f.t+=dt; if(f.t>4.2){ flares.splice(i,1); continue; }
+    if(Math.random()<dt*30) spawnFx(f.x+(Math.random()*10-5), f.y-2, 1, {col:'rgba(240,190,120,', spd:30, life:0.5, size:1.6, kind:'spark', grav:-40}); }
+  if(decoy){ decoy.t+=dt; if(decoy.t>6.5) decoy=null;
+    else if(Math.random()<dt*8) spawnFx(decoy.x+(Math.random()*8-4), decoy.y-4, 1, {col:'rgba(120,200,214,', spd:14, life:0.5, size:1.4, kind:'static', grav:-14}); }
+}
+function drawGadgets(g){
+  for(const f of flares){ const life=1-f.t/4.2, fl=0.7+0.3*Math.sin(Game.t*30);
+    softGlow(g, f.x, f.y, 60+14*Math.sin(Game.t*22), COL.amber, (0.5*life)*fl, 0.28*life);
+    g.fillStyle=hexA('#fff7e0', 0.9*fl*life); g.beginPath(); g.arc(f.x, f.y, 3, 0, 7); g.fill(); }
+  if(decoy){ const p=0.5+0.5*Math.sin(Game.t*8);
+    softGlow(g, decoy.x, decoy.y-4, 22+6*p, COL.cyan, 0.22, 0.12);
+    g.strokeStyle=hexA(COL.cyan,0.5+0.4*p); g.lineWidth=1.4; g.beginPath(); g.arc(decoy.x,decoy.y-4,7+p*3,0,7); g.stroke();
+    g.fillStyle=shade(COL.steel,0.7); g.fillRect(decoy.x-3,decoy.y-4,6,10); }
+}
 function doAttack(){
   if(player.atkCd>0) return;
   player.atkT=0.12; player.atkCd=0.4; Audio.melee();
@@ -1534,6 +1570,7 @@ function doAttack(){
       let dmg=34;
       if(e.kind==='wraith' && e.exposed<=0) dmg=2;            // shielded while concealed
       if((e.kind==='husk'||e.kind==='warden') && (e.shieldDown||0)<=0) dmg = e.kind==='warden'?5:4; // signal shield blocks ordinary attacks
+      if(player.counter>0 && dmg>10) dmg=Math.round(dmg*2.1);  // counter-riposte after a perfect dodge
       e.hp-=dmg; e.flash=0.15; landed=true;
       const spk = dmg>10 ? 'rgba(235,220,180,' : 'rgba(120,200,210,';
       spawnFx(e.x+d[0]*10, e.y-e.h/2+d[1]*6, dmg>10?6:2, {col:spk, spd:100, life:0.25, size:1.6, kind:'spark', ang:Math.atan2(d[1],d[0])});
@@ -1542,7 +1579,9 @@ function doAttack(){
       if(e.hp<=0) killEnemy(e);
     }
   }
-  if(landed){ Audio.hit(); Game.hitstop=0.045; }   // brief freeze on a connecting hit
+  if(landed && player.counter>0){ player.counter=0; Game.hitstop=0.08; Game.shakeT=Math.max(Game.shakeT||0,0.18);   // riposte connects
+    spawnFx(player.x+d[0]*20, player.y+d[1]*12, 10, {col:'rgba(120,200,214,', spd:150, life:0.35, size:2.2, kind:'spark', ang:Math.atan2(d[1],d[0])}); }
+  else if(landed){ Audio.hit(); Game.hitstop=0.045; }   // brief freeze on a connecting hit
 }
 function killEnemy(e){ e.dead=true; e.deathT=0.7;
   const sig = e.kind!=='hollow';
@@ -1552,11 +1591,18 @@ function killEnemy(e){ e.dead=true; e.deathT=0.7;
   onEnemyDown(e);
 }
 function doDodge(){
-  if(player.dodgeCd>0||player.moving===false&&(player.vx===0&&player.vy===0)) {}
   if(player.dodgeCd>0) return;
-  player.dodgeCd=0.7; player.dodgeT=0.18; player.iframe=0.26; Audio.dodge();
+  // perfect dodge: an enemy is close AND actively threatening (winding up, lunging, charging, or on top of you)
+  let perfect=false;
+  for(const e of scene.enemies){ if(e.dead) continue; const dd=Math.hypot(e.x-player.x,e.y-player.y);
+    if(dd<82 && ((e.tele||0)>0.12 || (e.lungeT||0)>0 || (e.charge||0)>0.9 || dd<(e.w+player.w)/2+16)){ perfect=true; break; } }
+  player.dodgeT=0.18; player.iframe= perfect?0.42:0.26; Audio.dodge();
   const d={up:[0,-1],down:[0,1],left:[-1,0],right:[1,0]}[player.dir];
   player.vx=d[0]*560; player.vy=d[1]*560;
+  if(perfect){ player.counter=1.5; player.dodgeCd=0.32; Game.hitstop=0.09; Game.shakeT=Math.max(Game.shakeT||0,0.10);
+    spawnFx(player.x, player.y-10, 12, {col:'rgba(150,220,235,', spd:130, life:0.4, size:2, kind:'spark'});
+    try{Audio.trace();}catch(e){} Game.toast('Perfect dodge — strike (J) to counter'); }
+  else player.dodgeCd=0.7;
 }
 function doSweep(){
   if(sweep) return;
@@ -1647,6 +1693,7 @@ function update(dt){
   player.atkT=Math.max(0,player.atkT-dt); player.atkCd=Math.max(0,player.atkCd-dt);
   player.dodgeT=Math.max(0,player.dodgeT-dt); player.dodgeCd=Math.max(0,player.dodgeCd-dt);
   player.iframe=Math.max(0,player.iframe-dt); player.hitFlash=Math.max(0,player.hitFlash-dt);
+  player.counter=Math.max(0,(player.counter||0)-dt); updateGadgets(dt);
 
   // receiver power regen + heat decay
   State.recv=Math.min(State.recvMax, State.recv+dt* (State.flags.coil?9:4));
@@ -1762,7 +1809,10 @@ function updateEnemies(dt){
     e.exposed=Math.max(0,(e.exposed||0)-dt);
     e.stun=Math.max(0,(e.stun||0)-dt);
     e.contactCd=Math.max(0,e.contactCd-dt);
-    const dx=player.x-e.x, dy=player.y-e.y, d=Math.hypot(dx,dy)||1;
+    // target the signal decoy if one is deployed (a Hollow is a person — not fooled by it)
+    let tgx=player.x, tgy=player.y;
+    if(decoy && e.kind!=='hollow'){ const dcd=Math.hypot(decoy.x-e.x,decoy.y-e.y); if(dcd<520){ tgx=decoy.x; tgy=decoy.y; } }
+    const dx=tgx-e.x, dy=tgy-e.y, d=Math.hypot(dx,dy)||1;
     e.dir = Math.abs(dx)>Math.abs(dy) ? (dx<0?'left':'right') : (dy<0?'up':'down');
     if(e.kind!=='hollow' && Math.random()<dt*2.5)   // faint signal static around the network enemies
       spawnFx(e.x+(Math.random()*e.w-e.w/2), e.y-e.h*Math.random()-2, 1, {col:'rgba(120,200,214,', spd:5, life:0.5, size:1.3, kind:'static', grav:-10});
@@ -1789,7 +1839,7 @@ function updateEnemies(dt){
     } else if(e.kind==='leech'){
       // stationary emitter: charges, then drops a delayed AoE where you stand — sweep to jam, move to dodge
       if(e.stun<=0 && d<560){ e.charge=(e.charge||0)+dt;
-        if(e.charge>1.5){ e.charge=0; impacts.push({x:player.x,y:player.y,r:66,warn:0.75,det:false}); }
+        if(e.charge>1.5){ e.charge=0; impacts.push({x:tgx,y:tgy,r:66,warn:0.75,det:false}); }   // decoy diverts the shot
       } else { e.charge=Math.max(0,(e.charge||0)-dt); }
     } else if(e.kind==='husk' || e.kind==='warden'){
       // shielded network worker / boss: pursuit + telegraphed radial pulses that escalate by phase
@@ -1808,8 +1858,11 @@ function updateEnemies(dt){
         }
       }
     }
-    // contact damage
-    if(e.contactCd<=0 && d< (e.w+player.w)/2+6){
+    // active flares ward threats back (light aversion) and keep wraiths visible
+    for(const f of flares){ const fm=Math.hypot(e.x-f.x,e.y-f.y); if(fm<118){ const mm=fm||1; e.x+=(e.x-f.x)/mm*dt*72; e.y+=(e.y-f.y)/mm*dt*72; if(e.kind==='wraith') e.exposed=Math.max(e.exposed||0,0.4); } }
+    // contact damage — always measured to the player, even while it's chasing a decoy
+    const pd=Math.hypot(player.x-e.x, player.y-e.y);
+    if(e.contactCd<=0 && pd < (e.w+player.w)/2+6){
       if(player.iframe<=0){ State.hp-=e.dmg; player.hitFlash=0.2; player.iframe=0.3; Game.shakeT=0.18; Audio.hit(); }
       e.contactCd=0.8;
     }
@@ -2435,6 +2488,7 @@ function render(){
   drawInteractGlow(g);
   drawNPCs(g);
   drawEnemies(g);
+  try{ drawGadgets(g); }catch(e){}
   drawFx(g);
   drawPlayer(g);
   try{ d_ellieExtras(g, player.x, player.y, ({up:-1.57,down:1.57,left:3.14,right:0})[player.dir]||0); }catch(e){}
@@ -5138,10 +5192,15 @@ function drawHUD(g){
     g.fillStyle=COL.amber; g.fillText('OBJECTIVE',26,VIEW_H-bh);
     g.fillStyle=COL.ivory; lines.forEach((l,i)=> g.fillText(l,26,VIEW_H-bh+16+i*15));
   }
-  // quick inventory
+  // quick inventory + deployable gadgets
   g.textAlign='right'; g.font='10px monospace'; g.fillStyle='#a89f8c';
-  const inv='bat '+State.inv.battery+'  scrap '+State.inv.scrap+'  med '+(State.inv.medkit||0)+'  ration '+(State.inv.ration||0);
+  let inv='bat '+State.inv.battery+'  scrap '+State.inv.scrap+'  med '+(State.inv.medkit||0)+'  ration '+(State.inv.ration||0);
+  if(State.inv.flare) inv+='   ⚑flare '+State.inv.flare+' (G)';
+  if(State.inv.decoy) inv+='   ◈decoy '+State.inv.decoy+' (B)';
   g.fillText(inv,VIEW_W-18,VIEW_H-16);
+  // counter-ready prompt after a perfect dodge
+  if(player.counter>0){ g.textAlign='center'; g.fillStyle=(Math.floor(Game.t*8)%2)?COL.cyan:'#bfe0ff'; g.font='bold 12px monospace';
+    g.fillText('▹ COUNTER — strike (J)', VIEW_W/2, VIEW_H-70); }
   g.textAlign='left';
 }
 function drawCompass(g){
@@ -5532,16 +5591,16 @@ function drawMap(g){
 }
 function drawPause(g){
   g.fillStyle='rgba(4,6,8,.72)'; g.fillRect(0,0,VIEW_W,VIEW_H);
-  const w=380,h=220,x=(VIEW_W-w)/2,y=(VIEW_H-h)/2; panel(g,x,y,w,h,'PAUSED');
+  const w=420,h=250,x=(VIEW_W-w)/2,y=(VIEW_H-h)/2; panel(g,x,y,w,h,'PAUSED');
   g.font='12px monospace'; g.fillStyle=COL.ivory;
   const rows=[
-    'WASD / arrows  move',
-    'E interact   J strike   Q receiver sweep',
-    'Space dodge   F heal   C craft',
-    'R receiver discharge'+(State.flags.discharge?'':'  (locked)')+'   M map   I archive',
+    'WASD / arrows  move        E interact   C craft',
+    'J strike     Q receiver sweep     R discharge'+(State.flags.discharge?'':' (locked)'),
+    'Space dodge — time it vs a wind-up for a COUNTER (J for 2× hit)',
+    'G  throw flare (drives threats back)     B  drop signal decoy',
+    'F heal      M map      I archive',
     '',
-    'N  toggle sound: '+(Audio.isOn()?'ON':'OFF'),
-    'Esc  resume',
+    'N  toggle sound: '+(Audio.isOn()?'ON':'OFF')+'        Esc  resume',
   ];
   rows.forEach((r,i)=> g.fillText(r,x+20,y+58+i*22));
 }

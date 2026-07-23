@@ -4,6 +4,15 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] — 2026-07-23
+
+### Added
+- **Deployable gadgets.** The gadgets you craft now actually do something. Throw a **Hand Flare** (G) to light the ground, drive threats back, expose hidden Static Wraiths and jam a wind-up; drop a **Signal Decoy** (B) that pulls the network's creatures away to it (a Hollow is a person, and less easily fooled).
+- **Perfect dodge → counter.** Time a dodge against an enemy's wind-up, lunge, charge or a point-blank rush and you slip it clean and open a brief counter window — your next strike hits for more than double.
+
+### Changed
+- HUD now shows your flares and decoys, and a COUNTER prompt when a perfect dodge lands. Pause screen and control hints updated.
+
 ## [1.5.0] — 2026-07-23
 
 ### Added
