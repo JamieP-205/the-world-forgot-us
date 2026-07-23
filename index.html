@@ -129,6 +129,7 @@ function enableTouch(){ if(touchSeen) return; touchSeen=true; document.body.clas
    which is also the game's fiction. Unlocks on first valid input. */
 const Audio = (()=> {
   let ctx=null, master=null, ambGain=null, rainGain=null, ready=false, on=true;
+  let _speakBus=null;                    // active fake-speech bus (so a recording can be cut off)
   const drones=[];
   function unlock(){
     if (ready) return;
@@ -178,7 +179,19 @@ const Audio = (()=> {
 // Self-scheduling via ctx-time + recursive setTimeout (no interval drift:
 // every chord is re-anchored to ctx.currentTime, chords crossfade-overlap).
 
-var musGain, musReverb, musRevGain;
+var musGain, musReverb, musRevGain, _musBright=0;
+// progression + colour shift by region/story stage — the music tracks where you are and how deep you've gone
+function musProg(){
+  var scene=(window.State&&State.scene)||'cullbrook';
+  var region = /tollard|choircore/.test(scene)?'toll'
+             : /wrenfield|cutting|controlshed|westxfmr|antenna|generatorhall/.test(scene)?'wren'
+             : /ashmere|clinic|school|workshop/.test(scene)?'ash' : 'cull';
+  var deep = (window.State&&State.flags)?((State.flags.tollard?0.9:State.flags.wrenfield?0.6:State.flags.ashmere?0.35:0.1)):0.1;
+  return { toll:{chords:[[0,1,6,7],[-1,3,6,10],[0,3,6,9],[-2,1,4,10]], bright:-160, toneP:0.72},
+           wren:{chords:[[0,3,6,10],[-2,1,5,8],[-5,-2,1,6],[0,3,7,11]], bright:-70,  toneP:0.58},
+           ash: {chords:[[-7,-3,0,3],[-9,-5,-2,2],[-4,-1,3,7],[-7,-3,0,5]], bright:-100, toneP:0.6},
+           cull:{chords:[[0,3,7,10],[-4,0,3,7],[-7,-3,0,5],[-5,-1,2,7]], bright:0, toneP:0.5} }[region];
+}
 
 function musImpulse(seconds, decay){            // cheap decaying-noise reverb IR
   var rate = ctx.sampleRate, len = Math.max(1, (seconds*rate)|0);
@@ -194,7 +207,7 @@ function initMusicBus(){
   if(musGain) return;
   musGain = ctx.createGain();
   musGain.gain.setValueAtTime(0.0001, ctx.currentTime);         // start silent
-  musGain.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 8); // slow fade-in
+  musGain.gain.exponentialRampToValueAtTime(0.19, ctx.currentTime + 6); // slow fade-in (audible under the rain)
   musGain.connect(master);
   musReverb = ctx.createConvolver();
   musReverb.buffer = musImpulse(3.2, 3.0);      // long, distant tail
@@ -210,7 +223,7 @@ function musNote(semi){ return 110 * Math.pow(2, semi/12); }     // base = A2
 function musPad(intervals, t0, dur){
   var dread = (window.Game && Game.dread) ? Game.dread : 0;
   var peak   = 0.16 * (0.8 + dread*0.5);        // a touch louder when tense
-  var cutoff = 620 - dread*260;                 // DARKER as dread rises
+  var cutoff = Math.max(200, 620 + _musBright - dread*260);   // DARKER as dread rises + as the region deepens
   var lp = ctx.createBiquadFilter();
   lp.type='lowpass'; lp.frequency.setValueAtTime(cutoff, t0); lp.Q.value=0.7;
   var g = ctx.createGain();
@@ -254,16 +267,12 @@ function musColdTone(t0){
 function musicLoop(){
   var dread = (window.Game && Game.dread) ? Game.dread : 0;
   var t = ctx.currentTime + 0.06;
-  var prog = musicLoop._prog || (musicLoop._prog = [
-    [0,3,7,10],   // Am7   (A C E G)
-    [-4,0,3,7],   // Fmaj7 (F A C E)
-    [-7,-3,0,5],  // Dm    (D F A)
-    [-5,-1,2,7]   // Em    (E G B)
-  ]);
+  var P = musProg(); _musBright = P.bright;             // region-aware progression + colour
+  var prog = P.chords;
   var idx = musicLoop._idx = ((musicLoop._idx==null?-1:musicLoop._idx)+1) % prog.length;
   var dur = 11 - dread*3 + Math.random()*3;      // ~8..14s, more restless w/ dread
   musPad(prog[idx], t, dur);
-  var n = (Math.random() < 0.5 + dread*0.4) ? 1 : 0;   // 0-2 sparse tones
+  var n = (Math.random() < P.toneP*0.5 + dread*0.4) ? 1 : 0;   // 0-2 sparse tones
   if(dread > 0.5 && Math.random() < dread) n += 1;
   for(var k=0;k<n;k++) musColdTone(t + 1.5 + Math.random()*(dur-2));
   setTimeout(musicLoop, dur*0.85*1000);           // next chord overlaps -> crossfade
@@ -294,13 +303,54 @@ function startMusic(){ initMusicBus(); musicLoop(); }
     trace(){ blip(660,0.14,'sine',0.16); setTimeout(()=>blip(990,0.2,'sine',0.13),90); },
     ui(){ blip(440,0.05,'square',0.1); },
     heal(){ blip(330,0.16,'sine',0.14); setTimeout(()=>blip(440,0.2,'sine',0.12),100); },
-    thunder(){ if(!ready||!on)return; const t=ctx.currentTime;
-      const s=ctx.createBufferSource(); s.buffer=noiseBuffer(1.8);
-      const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=160; lp.Q.value=0.4;
-      const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t);
-      g.gain.linearRampToValueAtTime(0.13,t+0.25); g.gain.linearRampToValueAtTime(0.05,t+0.7);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+1.7);
-      s.connect(lp); lp.connect(g); g.connect(master); s.start(t); },
+    thunder(dist){ if(!ready||!on)return; const t=ctx.currentTime; dist=(dist==null)?0.5:clamp(dist,0,1);  // 0=close+sharp, 1=far+rumbly
+      // initial CRACK (nearer strikes) — a bright noise transient
+      if(dist<0.55){ const c=ctx.createBufferSource(); c.buffer=noiseBuffer(0.3);
+        const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=900-dist*700;
+        const cg=ctx.createGain(); cg.gain.setValueAtTime(0.0001,t); cg.gain.linearRampToValueAtTime(0.26*(1-dist),t+0.005);
+        cg.gain.exponentialRampToValueAtTime(0.0001,t+0.45); c.connect(hp); hp.connect(cg); cg.connect(master); c.start(t); }
+      // rolling RUMBLE — two staggered lowpassed swells with a wobbling cutoff (that 'rolling' feel), long tail
+      for(let k=0;k<2;k++){ const t0=t+k*(0.28+dist*0.5)+Math.random()*0.12;
+        const s=ctx.createBufferSource(); s.buffer=noiseBuffer(2.4);
+        const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=110+dist*120; lp.Q.value=0.5;
+        const g=ctx.createGain(); const pk=(0.16-k*0.045)*(0.7+dist*0.5);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(pk,t0+0.3+Math.random()*0.3);
+        g.gain.linearRampToValueAtTime(pk*0.5,t0+1.0); g.gain.exponentialRampToValueAtTime(0.0001,t0+2.1);
+        const lfo=ctx.createOscillator(), lg=ctx.createGain(); lfo.frequency.value=1.4+Math.random(); lg.gain.value=45;
+        lfo.connect(lg); lg.connect(lp.frequency); lfo.start(t0); lfo.stop(t0+2.2);
+        s.connect(lp); lp.connect(g); g.connect(master); s.start(t0); } },
+    /* fake-speech "reading" of a recording — blipped formants, never real words; voice colours the source */
+    speak(text, voice){ if(!ready||!on||!text) return null; Audio.stopSpeak();
+      const CFG={ real:          {base:130, jit:0.5,  rate:0.115, type:'sawtooth', harm:[1,2.2,3.1], q:5, pauseP:0.16, smooth:false},
+                  reconstruction:{base:150, jit:0.14, rate:0.10,  type:'square',   harm:[1,2.0,3.0], q:8, pauseP:0.02, smooth:false},
+                  continuity:    {base:172, jit:0.06, rate:0.098, type:'sawtooth', harm:[1,2.5,3.6], q:3, pauseP:0.0,  smooth:true },
+                }[voice] || {base:140, jit:0.35, rate:0.11, type:'sawtooth', harm:[1,2.2,3.1], q:5, pauseP:0.08, smooth:false};
+      let t=ctx.currentTime+0.05;
+      const bus=ctx.createGain(); bus.gain.value=0.85; bus.connect(master); _speakBus=bus;
+      const words=String(text).replace(/\n+/g,' ⎯ ').split(/\s+/).filter(Boolean);
+      let count=0, phrase=0; const MAX=54;
+      for(let wi=0; wi<words.length && count<MAX; wi++){
+        const word=words[wi];
+        if(word==='⎯'){ t+=0.30; phrase=0; continue; }
+        const letters=word.replace(/[^a-z]/gi,'').length;
+        const syl=Math.max(1, Math.min(4, Math.round(letters/2.6)));
+        for(let s=0;s<syl && count<MAX;s++,count++){
+          const contour=Math.sin((phrase%9)/9*Math.PI)*0.18;                 // rise-fall intonation
+          let f=CFG.base*(1+contour); if(!CFG.smooth) f*= (1+(Math.random()-0.5)*CFG.jit*0.4);
+          const peakY=[0.06,0.04,0.025];
+          CFG.harm.forEach((h,i)=>{ const o=ctx.createOscillator(),g=ctx.createGain(),bp=ctx.createBiquadFilter();
+            o.type=CFG.type; o.frequency.value=f; bp.type='bandpass'; bp.frequency.value=f*h*2; bp.Q.value=CFG.q;
+            g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(peakY[i]||0.02,t+0.035);
+            g.gain.exponentialRampToValueAtTime(0.0001,t+0.14);
+            o.connect(bp); bp.connect(g); g.connect(bus); o.start(t); o.stop(t+0.19); });
+          t += CFG.rate + Math.random()*0.03; phrase++;
+        }
+        t += 0.05;
+        if(/[.,;:—-]$/.test(word)) t += 0.16;                            // punctuation pause
+        if(!CFG.smooth && Math.random()<CFG.pauseP){ t += 0.28+Math.random()*0.4; phrase=0; }  // a real person stops to think — leaves a gap
+      }
+      return { until:t }; },
+    stopSpeak(){ if(_speakBus){ try{ _speakBus.gain.cancelScheduledValues(ctx.currentTime); _speakBus.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.05); }catch(e){} _speakBus=null; } },
     ring(){ // dead payphone
       if(!ready||!on)return; const t=ctx.currentTime;
       for(let k=0;k<6;k++){ const o=ctx.createOscillator(),g=ctx.createGain();
@@ -457,8 +507,11 @@ function makeCarriage(){
     {t:'crate',x:40,y:210,w:60,h:44},
     {t:'crate',x:110,y:220,w:44,h:34},
     {t:'desk',x:560,y:60,w:150,h:56},   // receiver desk
+    {t:'basewindow',x:286,y:4,w:76,h:18},   // a window in the carriage wall — you can look out
   ];
   const inter=[
+    { id:'window', x:324, y:44, r:48, label:()=>'Look out at the rain',
+      act:()=> Window.open() },
     { id:'receiver', x:635, y:96, r:44, label:()=> State.flags.intro?'Trace receiver (dead)':'Examine the receiver',
       act:()=> Story.receiverEvent() },
     { id:'bed', x:88, y:96, r:44, label:()=>'Rest until morning',
@@ -1302,7 +1355,10 @@ const STORY = { docs:[], beats:{}, graffiti:[], barks:{} };   // populated by ge
 const Reader = {
   doc:null, scroll:0,
   open(d){ if(!d) return; Reader.doc=d; Reader.scroll=0; Game.overlay='reader'; Audio.ui();
-    if(d.source==='continuity'){ try{Audio.maggie(4);}catch(e){} } else { try{Audio.ring();}catch(e){} }
+    // audio recordings "play": fake-speech reads the text aloud, coloured by the source (real / reconstruction / continuity)
+    if((d.kind||'')==='radio'){ try{ Audio.ring(); setTimeout(()=>{ try{ Audio.speak(d.body, d.source||'real'); }catch(e){} }, 320); }catch(e){} }
+    else if(d.source==='continuity'){ try{Audio.maggie(4);}catch(e){} }
+    else { try{Audio.ui();}catch(e){} }
     if(!State.docs.find(x=>x.id===d.id)){ State.docs.push({id:d.id,title:d.title||d.short||'record',kind:d.kind||'note'}); Game.toast('Recorded: '+(d.title||'a document')); save(); }
     if(d.rewardItem && !State.flags['rw_'+d.id]){ State.flags['rw_'+d.id]=true; State.inv[d.rewardItem]=(State.inv[d.rewardItem]||0)+1; setTimeout(()=>Game.toast('Found: 1 '+d.rewardItem),400); }
   },
@@ -1413,13 +1469,14 @@ const Game = {
     }
     if(this.overlay==='archive'){ if(code==='KeyI'||code==='Escape') this.overlay=null;
       else if(code==='Tab'){ Game.archivePage=Game.archivePage?0:1; Audio.ui(); } return; }
-    if(this.overlay==='reader'){ if(code==='KeyE'||code==='Escape') this.overlay=null;
+    if(this.overlay==='reader'){ if(code==='KeyE'||code==='Escape'){ this.overlay=null; try{Audio.stopSpeak();}catch(e){} }
       else if(code==='KeyW'||code==='KeyA') Reader.scroll=Math.max(0,Reader.scroll-24);
       else if(code==='KeyS'||code==='KeyD') Reader.scroll+=24; return; }
     if(this.overlay==='map'){ if(code==='KeyM'||code==='Escape') this.overlay=null; return; }
     if(this.overlay==='pause'){ if(code==='Escape') this.overlay=null;
       else if(code==='KeyN'){ Audio.setOn(!Audio.isOn()); }
       return; }
+    if(this.overlay==='window'){ if(code==='KeyE'||code==='Escape') Window.close(); return; }   // A/D pan handled via held keys in Window.update
     // no overlay:
     if(code==='Escape'){ this.overlay='pause'; return; }
     if(code==='KeyC'){ Crafting.open(false); return; }
@@ -1545,6 +1602,7 @@ function update(dt){
 
   const paused = Game.overlay && Game.overlay!=='dialogue';
   if(Game.overlay==='dialogue'){ Dialogue.update(dt); return; }
+  if(Game.overlay==='window'){ try{Window.update(dt);}catch(e){} return; }
   if(paused) return;
 
   // toast timer
@@ -1680,10 +1738,18 @@ function update(dt){
   }
 
   Game.shakeT=Math.max(0,Game.shakeT-dt);
-  // distant lightning: brief flash + delayed thunder
+  // storm: lightning flash + distance-delayed thunder — flash is OUTDOOR only; a muffled rumble carries inside
   Game.nextBolt-=dt;
-  if(Game.nextBolt<=0){ Game.boltT=0.55; Game.nextBolt=9+Math.random()*16;
-    setTimeout(()=>{ try{Audio.thunder();}catch(e){} }, 300+Math.random()*500); }
+  if(Game.nextBolt<=0){ Game.nextBolt=8+Math.random()*15;
+    if(scene.indoor){ setTimeout(()=>{ try{Audio.thunder(1);}catch(e){} }, 500+Math.random()*1100); }   // walls muffle it: distant rumble, no flash
+    else {
+      const close=Math.random()<0.28;                                   // ~28% are near strikes
+      Game.boltDist = close ? 0.08+Math.random()*0.2 : 0.55+Math.random()*0.45;
+      Game.boltT = close?0.8:0.5;
+      if(close) Game.shakeT=Math.max(Game.shakeT||0, 0.25);             // near strikes jolt the frame
+      setTimeout(()=>{ try{Audio.thunder(Game.boltDist);}catch(e){} }, 180+Game.boltDist*1500);   // sound lags the light by distance
+    }
+  }
   if(Game.boltT>0) Game.boltT=Math.max(0,Game.boltT-dt);
 }
 function approach(v,target,step){ if(v<target) return Math.min(target,v+step); if(v>target) return Math.max(target,v-step); return v; }
@@ -2073,25 +2139,30 @@ function drawStorm(g){
   if(b>_boltPrev+0.001) _genBolt();
   _boltPrev=b;
   if(b<=0.001) return;
-  var w=VIEW_W,h=VIEW_H,f=clamp(b,0,1);
+  var w=VIEW_W,h=VIEW_H;
+  var dist=(Game.boltDist==null)?0.6:Game.boltDist, near=1-dist;         // 0 far .. 1 close
+  var fl=clamp(Math.max(0,Math.sin(b*22))*b + b*0.35, 0, 1);            // stutter (bright-dim-bright), not a smooth fade
+  var flash=(0.13+0.6*near)*fl;                                         // near strikes wash the whole sky
   g.save();
   g.globalCompositeOperation='lighter';
-  var flash=0.10*f;
   var sg=g.createLinearGradient(0,0,0,h);
-  sg.addColorStop(0,hexA('#cfe4ff',flash));
-  sg.addColorStop(0.5,hexA('#9fb6d8',flash*0.4));
-  sg.addColorStop(1,hexA('#9fb6d8',0));
+  sg.addColorStop(0,hexA('#e2eeff',flash));
+  sg.addColorStop(0.55,hexA('#a9c0e2',flash*0.5));
+  sg.addColorStop(1,hexA('#8fa6c8',flash*0.12));
   g.fillStyle=sg; g.fillRect(0,0,w,h);
-  if(_boltPath && f>0.15){
+  if(_boltPath && fl>0.12){
+    var ba=(0.4+0.6*near)*fl;
     g.lineJoin='round'; g.lineCap='round';
-    g.strokeStyle=hexA('#bfe0ff',0.5*f); g.lineWidth=6; _strokeBolt(g,w,h);
-    g.strokeStyle=hexA('#ffffff',0.9*f); g.lineWidth=2; _strokeBolt(g,w,h);
+    g.strokeStyle=hexA('#8fb6ff',0.22*ba); g.lineWidth=12+near*10; _strokeBolt(g,w,h);   // soft outer glow
+    g.strokeStyle=hexA('#bfe0ff',0.55*ba); g.lineWidth=5+near*3;    _strokeBolt(g,w,h);   // inner
+    g.strokeStyle=hexA('#ffffff',0.95*ba); g.lineWidth=1.6+near*1.8; _strokeBolt(g,w,h);  // hot core
   }
   g.restore();
 }
 
 // Rain-on-Lens Streaks
 function drawLensRain(g){
+  if(scene && scene.indoor) return;          // lens rain is an outdoor effect
   _initLens();
   var w=VIEW_W,h=VIEW_H,t=Game.t,bolt=Game.boltT||0;
   g.save(); g.globalCompositeOperation='source-over';
@@ -2391,6 +2462,7 @@ function render(){
   if(Game.overlay==='archive') drawArchive(g);
   if(Game.overlay==='reader') drawReader(g);
   if(Game.overlay==='map') drawMap(g);
+  if(Game.overlay==='window') drawWindow(g);
   if(Game.overlay==='pause') drawPause(g);
   drawToast(g);
   if(Game.sliceEnd && !Game.overlay) drawSliceEnd(g);
@@ -2648,6 +2720,16 @@ function drawProp(g,p){
   const shadow=(x,y,w,h)=>{ g.fillStyle='rgba(0,0,0,.35)'; g.fillRect(x+6,y+h-4,w,10); };
   g.textAlign='left'; g.textBaseline='alphabetic';
   switch(p.t){
+    case 'basewindow': {   // a window set into the carriage wall — cold rainy night beyond the glass
+      g.fillStyle='#241a12'; g.fillRect(p.x-3,p.y-2,p.w+6,p.h+8);                       // timber frame
+      const gl=g.createLinearGradient(p.x,p.y,p.x,p.y+p.h); gl.addColorStop(0,'#0e1620'); gl.addColorStop(1,'#0a1016');
+      g.fillStyle=gl; g.fillRect(p.x,p.y,p.w,p.h);                                       // cold glass
+      g.fillStyle='rgba(120,150,180,.05)'; g.fillRect(p.x,p.y,p.w,p.h*0.4);              // faint sky glow
+      g.strokeStyle='rgba(200,220,240,.06)'; g.lineWidth=1;                              // rain streaks on the pane
+      for(let i=0;i<5;i++){ const rx=p.x+6+i*((p.w-12)/5)+Math.sin(Game.t*0.6+i)*1.5; g.beginPath(); g.moveTo(rx,p.y+2); g.lineTo(rx-2,p.y+p.h-2); g.stroke(); }
+      g.strokeStyle='#241a12'; g.lineWidth=2; g.beginPath(); g.moveTo(p.x+p.w/2,p.y); g.lineTo(p.x+p.w/2,p.y+p.h); g.stroke();   // mullion
+      g.strokeStyle='rgba(0,0,0,.4)'; g.lineWidth=1; g.strokeRect(p.x,p.y,p.w,p.h);
+      break; }
     case 'carriageExt': {
       g.fillStyle='rgba(0,0,0,.42)'; g.beginPath(); g.ellipse(p.x+p.w/2,p.y+p.h+3,p.w*0.5,11,0,0,7); g.fill();
       vgrad(g,p.x,p.y,p.w,p.h,'#45584b','#26332b'); roundRect(g,p.x,p.y,p.w,p.h,6); g.fill();
@@ -4879,8 +4961,7 @@ function rainLayer(g, arr, speed, len, alpha, wobble){
   g.stroke();
 }
 function drawRainOver(g){
-  if(scene && scene.indoor){                // only a faint drip past the windows indoors
-    rainLayer(g, rainNear, 1.2, 18, 0.04); return; }
+  if(scene && scene.indoor) return;          // no rain indoors — you're under a roof
   rainLayer(g, rainFar, 0.5, 9, 0.07);     // distant haze of rain
   rainLayer(g, rainMid, 0.85, 15, 0.13);   // main rain
   rainLayer(g, rainNear, 1.3, 24, 0.16);   // fast foreground
@@ -5023,11 +5104,7 @@ function drawAtmosphere(g,camX,camY){
     const py=((m.y*VIEW_H - Game.t*14*m.s + m.ph*40)%VIEW_H + VIEW_H)%VIEW_H;
     g.fillStyle='rgba(200,190,168,'+(0.05+m.s*0.06)+')'; g.beginPath(); g.arc(px,py,0.6+m.s*1.1,0,7); g.fill(); }
   g.restore();
-  // distant lightning flash — a quick double-flicker that lifts the whole scene
-  if(Game.boltT>0){ const a=0.55-Game.boltT;
-    const inten = a<0.04?a/0.04 : a<0.1?1 : a<0.16?0.18 : a<0.22?0.75 : Math.max(0,0.75-(a-0.22)/0.33);
-    if(inten>0){ g.save(); g.globalCompositeOperation='lighter'; g.fillStyle='rgba(126,146,186,'+(0.42*inten)+')';
-      g.fillRect(0,0,VIEW_W,VIEW_H); g.restore(); } }
+  // (lightning flash + bolt are now owned by drawStorm — outdoor only, proximity-scaled)
   // film grain (analogue), cycling tiles
   const gt=Tex.grain[Math.floor(Game.t*12)%Tex.grain.length];
   if(gt){ const gp=g.createPattern(gt,'repeat'); if(gp){ g.save(); g.globalAlpha=0.05; g.fillStyle=gp;
@@ -5152,6 +5229,75 @@ function drawCraft(g){
   wrap(g,sel.desc,w-40).forEach((l,i)=> g.fillText(l,x+20,y+h-66+i*15));
   g.fillStyle='#7d7566'; g.font='10px monospace'; g.textAlign='right';
   g.fillText('W/S select · E craft · C/Esc close', x+w-16, y+h-14); g.textAlign='left';
+}
+/* ---- first-person "look out the window" — a quiet, unsettling vantage in the home base ---- */
+const Window = {
+  active:false, pan:0.5, fade:0, t:0, seen:0, phase:0, figX:0.6,
+  open(){ this.active=true; this.pan=0.5; this.fade=0; this.t=0; this.seen=0; this.phase=0;
+    this.figX=0.40+Math.random()*0.32; Game.overlay='window'; Game.toastT=0; try{Audio.ring();}catch(e){} },
+  close(){ this.active=false; Game.overlay=null; try{Audio.ui();}catch(e){} },
+  update(dt){ this.t+=dt; if(this.fade<1) this.fade=Math.min(1,this.fade+dt*1.5);
+    let inx=0; if(keys.KeyA||keys.ArrowLeft)inx-=1; if(keys.KeyD||keys.ArrowRight)inx+=1;
+    if(mouse.down){ inx += (mouse.x/VIEW_W-0.5)*2; }              // click-drag-ish: mouse side pans
+    this.pan=clamp(this.pan+inx*dt*0.45, 0.04, 0.96);
+    const d=Math.abs(this.pan-this.figX);
+    if(d<0.085) this.seen+=dt; else this.seen=Math.max(0,this.seen-dt*0.4);   // it comes closer the longer you watch it
+    if(this.seen>2.0 && this.phase<1){ this.phase=1; try{Audio.whisper();}catch(e){} }
+    if(this.seen>4.2 && this.phase<2){ this.phase=2; try{Audio.noticed();}catch(e){} Game.shakeT=0.22; }
+  }
+};
+function drawWindowFrame(g){
+  const W=VIEW_W,H=VIEW_H,t=Window.t;
+  // rain running down the glass (screen-space streaks + droplets)
+  g.save(); g.strokeStyle='rgba(190,210,230,.07)'; g.lineWidth=1.4;
+  for(let i=0;i<28;i++){ const x=(i*151+i*i*7)%W, yoff=((t*(30+(i%5)*22)+i*90)%(H+220))-110;
+    g.beginPath(); g.moveTo(x,yoff); g.lineTo(x-3,yoff+42+(i%4)*20); g.stroke(); }
+  for(let i=0;i<44;i++){ const x=(i*89+30)%W, y=(i*197+Math.sin(i)*40+H)%H; g.fillStyle='rgba(200,220,240,.05)'; g.beginPath(); g.arc(x,y,1+(i%3),0,7); g.fill(); }
+  g.restore();
+  // the window frame (near foreground)
+  const b=Math.round(H*0.10);
+  g.fillStyle='#1c140d'; g.fillRect(0,0,W,b); g.fillRect(0,H-b,W,b); g.fillRect(0,0,b,H); g.fillRect(W-b,0,b,H);
+  g.fillRect(W/2-6,0,12,H); g.fillRect(0,H/2-6,W,12);                       // cross mullions
+  g.strokeStyle='rgba(0,0,0,.5)'; g.lineWidth=3; g.strokeRect(b,b,W-2*b,H-2*b);
+  g.strokeStyle='rgba(120,100,70,.14)'; g.lineWidth=1; g.strokeRect(b+2,b+2,W-2*b-4,H-2*b-4);
+}
+function drawWindow(g){
+  const W=VIEW_W,H=VIEW_H,t=Window.t,pan=Window.pan,hz=H*0.55,ox=pan-0.5;
+  const sky=g.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,'#0a0e15'); sky.addColorStop(0.5,'#0c111a'); sky.addColorStop(0.55,'#0a0f13'); sky.addColorStop(1,'#06090b');
+  g.fillStyle=sky; g.fillRect(0,0,W,H);
+  if((Game.boltT||0)>0.1){ g.save(); g.globalCompositeOperation='lighter'; g.fillStyle=hexA('#a9c0e2',0.12*Game.boltT); g.fillRect(0,0,W,H); g.restore(); }
+  // far silhouette
+  g.save(); g.translate(-ox*W*0.35,0); g.fillStyle='#0b1015';
+  for(let i=-1;i<4;i++){ const bx=i*280-30; g.fillRect(bx,hz-60,220,62); g.fillRect(bx+40,hz-84,90,26); }
+  g.restore();
+  // mid: flooded forecourt + lamp + payphone + the figure
+  g.save(); g.translate(-ox*W*0.85,0);
+  const gr=g.createLinearGradient(0,hz,0,H); gr.addColorStop(0,'#0d131a'); gr.addColorStop(1,'#080d10'); g.fillStyle=gr; g.fillRect(-W,hz,W*3,H-hz);
+  g.strokeStyle='#151b20'; g.lineWidth=5; g.beginPath(); g.moveTo(W*0.2,hz-110); g.lineTo(W*0.2,hz+4); g.stroke();
+  g.fillStyle='#10161b'; g.fillRect(W*0.2-14,hz-120,28,12);
+  const phx=W*0.82; g.fillStyle='#3a1613'; g.fillRect(phx,hz-64,34,66); g.fillStyle='#0c0f12'; g.fillRect(phx+5,hz-56,24,34);
+  if(Window.phase>=1) softGlow(g, phx+17, hz-36, 24+8*Math.sin(t*3), COL.amber, 0.12+0.06*Math.sin(t*5), 0.06);
+  g.strokeStyle='rgba(120,150,180,.045)'; g.lineWidth=1;
+  for(let i=0;i<8;i++){ const wy=hz+14+i*((H-hz)/8); g.beginPath(); g.moveTo(-W,wy); g.lineTo(W*2,wy); g.stroke(); }
+  // --- the figure: stands facing you, and comes closer the longer you look at it ---
+  const approach=clamp(Window.seen/4.5,0,1);
+  const figWX=W/2 + (Window.figX-0.5)*W*0.85;
+  const fh=46+approach*236, fw=fh*0.34, fby=hz+6+approach*(H-hz)*0.42;
+  g.save();
+  g.fillStyle='rgba(6,9,12,'+(0.68+0.3*approach)+')';
+  roundRect(g, figWX-fw/2, fby-fh, fw, fh, fw*0.4); g.fill();
+  g.beginPath(); g.arc(figWX, fby-fh, fw*0.42, 0, 7); g.fill();
+  if(approach>0.32 || Window.phase>=1){ const hy=fby-fh, hr=fw*0.42;
+    g.fillStyle='#04060a'; g.beginPath(); g.ellipse(figWX,hy,hr*0.72,hr*0.86,0,0,7); g.fill();   // hollow face
+    const ea=0.3+0.5*approach; g.fillStyle=hexA(COL.red,ea);
+    g.beginPath(); g.arc(figWX-hr*0.32,hy-hr*0.08,1.3+approach*1.6,0,7); g.arc(figWX+hr*0.32,hy-hr*0.08,1.3+approach*1.6,0,7); g.fill(); }
+  g.restore();
+  g.restore();
+  drawWindowFrame(g);
+  if(Window.fade<1){ g.fillStyle='rgba(0,0,0,'+(1-Window.fade).toFixed(3)+')'; g.fillRect(0,0,W,H); }
+  g.fillStyle=(Math.floor(t*2)%2)?'#9a8f78':'#7d7566'; g.font='11px monospace'; g.textAlign='center';
+  g.fillText('A / D  or  ← →  — look about        E / Esc — step back inside', W/2, H-22); g.textAlign='left';
 }
 function drawChoice(g){
   g.fillStyle='rgba(4,6,8,.6)'; g.fillRect(0,0,VIEW_W,VIEW_H);
@@ -5370,7 +5516,16 @@ function drawMap(g){
     label(735,40, State.flags.mast?'↑ Ashmere (open)':'↑ Ashmere (locked)', State.flags.mast?'#6a7a55':'#8fb0bf');
   }
   const onMap = (group==='ash'&&State.scene==='ashmere') || (group==='wren'&&State.scene==='wrenfield') || (group==='cull'&&State.scene==='cullbrook');
-  if(onMap){ const[px,py]=plot(player.x,player.y); g.fillStyle=COL.ivory; g.beginPath(); g.arc(px,py,4,0,7); g.fill();
+  if(onMap){
+    // records you've recovered are marked where you found them (cyan=recording, amber=discovery, cream=paper)
+    let nfound=0;
+    for(const d of STORY.docs){ if(d.scene!==State.scene) continue; if(!State.docs.find(z=>z.id===d.id)) continue;
+      const[dpx,dpy]=plot(clamp(d.x||0,0,WW), clamp(d.y||0,0,HH));
+      const col = d.kind==='radio'?COL.cyan : d.kind==='discovery'?COL.amber : '#c8b98a';
+      g.fillStyle=hexA(col,0.85); g.beginPath(); g.arc(dpx,dpy,2,0,7); g.fill();
+      g.strokeStyle=hexA(col,0.35); g.lineWidth=1; g.beginPath(); g.arc(dpx,dpy,4,0,7); g.stroke(); nfound++; }
+    if(nfound){ g.fillStyle='#8a8272'; g.font='9px monospace'; g.textAlign='left'; g.fillText(nfound+' record'+(nfound>1?'s':'')+' recovered here', mx+8, my+mh-8); }
+    const[px,py]=plot(player.x,player.y); g.fillStyle=COL.ivory; g.beginPath(); g.arc(px,py,4,0,7); g.fill();
     g.strokeStyle=COL.ivory; g.beginPath(); g.arc(px,py,7,0,7); g.stroke(); }
   else { g.fillStyle='#8a8272'; g.font='10px monospace'; g.fillText('(You are inside '+scene.name+')',mx+8,my+mh-8); }
   g.fillStyle='#7d7566'; g.font='10px monospace'; g.textAlign='right'; g.fillText('M / Esc close',x+w-16,y+h-14); g.textAlign='left';

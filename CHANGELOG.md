@@ -4,6 +4,21 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] — 2026-07-23
+
+### Added
+- **Audio recordings now "play."** A procedural fake-speech engine reads each recording aloud in blipped, wordless formants, coloured by its source — a real human voice that stops to think and leaves gaps, a looped reconstruction, or Continuity's too-smooth completion that never pauses.
+- **A first-person window** in the home base. Step up to it and the view transitions to a rain-streaked pane over the flooded forecourt — and the longer you watch the figure standing out there, the closer it comes.
+- **Found records are marked on the field map** where you recovered them, colour-coded by type.
+
+### Changed
+- **Ambient music** is louder (audible under the rain) and shifts its harmony and colour by region and how deep into the story you are — searching at Cullbrook, darker and dissonant toward Tollard.
+- **Thunder** is a proper crack-and-rolling-rumble, delayed from the flash by distance; near strikes jolt the frame.
+- **Lightning** is a bright, glowing, branching bolt with a stuttering flash that lights the whole scene.
+
+### Fixed
+- Rain, lightning and the storm flash no longer appear indoors (a muffled rumble still carries through the walls).
+
 ## [1.4.0] — 2026-07-23
 
 ### Added
