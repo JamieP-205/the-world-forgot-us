@@ -213,6 +213,41 @@ const Audio = (()=> {
       g.gain.linearRampToValueAtTime(0.06,t+0.15); g.gain.linearRampToValueAtTime(0.0001,t+0.45);
       s.connect(bp); bp.connect(g); g.connect(master); s.start(t); },
     /* Maggie / Continuity: formant-ish generated "words" — never real speech */
+    /* Low heartbeat: two quick low sine 'thud' pulses (lub-dub) */
+    heartbeat(){ if(!ready||!on) return; const t=ctx.currentTime;
+      const beat=(t0,f,peak)=>{ const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(f,t0); o.frequency.exponentialRampToValueAtTime(f*0.6,t0+0.14);
+        g.gain.setValueAtTime(0.0001,t0); g.gain.linearRampToValueAtTime(peak,t0+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001,t0+0.18);
+        o.connect(g); g.connect(master); o.start(t0); o.stop(t0+0.22); };
+      beat(t,55,0.30); beat(t+0.16,48,0.22); },
+    /* Rising unease drone: short detuned sine sweep upward */
+    dread(){ if(!ready||!on) return; const t=ctx.currentTime;
+      const o=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+      o.type='sine'; o2.type='sine'; o2.detune.value=14;
+      o.frequency.setValueAtTime(70,t); o.frequency.exponentialRampToValueAtTime(150,t+1.1);
+      o2.frequency.setValueAtTime(70,t); o2.frequency.exponentialRampToValueAtTime(150,t+1.1);
+      lp.type='lowpass'; lp.frequency.value=400; lp.Q.value=0.6;
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.12,t+0.5);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+1.2);
+      o.connect(lp); o2.connect(lp); lp.connect(g); g.connect(master);
+      o.start(t); o2.start(t); o.stop(t+1.25); o2.stop(t+1.25); },
+    /* 'Noticed' sting: dissonant detuned pair, quick sharp attack */
+    noticed(){ if(!ready||!on) return; const t=ctx.currentTime;
+      [[440,0.14],[466,0.12],[622,0.09]].forEach(([f,peak])=>{
+        const o=ctx.createOscillator(), g=ctx.createGain();
+        o.type='sawtooth'; o.frequency.value=f;
+        g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(peak,t+0.008);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.5);
+        o.connect(g); g.connect(master); o.start(t); o.stop(t+0.55); }); },
+    /* Soft whisper: short band-passed filtered-noise burst, gentle swell */
+    whisper(){ if(!ready||!on) return; const t=ctx.currentTime;
+      const s=ctx.createBufferSource(); s.buffer=noiseBuffer(0.6);
+      const bp=ctx.createBiquadFilter(); bp.type='bandpass'; bp.Q.value=3;
+      bp.frequency.setValueAtTime(1400,t); bp.frequency.linearRampToValueAtTime(2600,t+0.5);
+      const g=ctx.createGain(); g.gain.setValueAtTime(0.0001,t);
+      g.gain.linearRampToValueAtTime(0.05,t+0.12); g.gain.linearRampToValueAtTime(0.0001,t+0.55);
+      s.connect(bp); bp.connect(g); g.connect(master); s.start(t); },
     maggie(words){ if(!ready||!on)return; let t=ctx.currentTime+0.05;
       const base=150;
       for(let w=0; w<words; w++){
@@ -758,20 +793,27 @@ const Story = {
   receiverEvent(){
     if(State.flags.intro){ Game.toast('The receiver is dead. It burned out its coil.'); return; }
     Dialogue.run([
-      {s:'',        t:'02:03. The receiver is unplugged. Its lead lies coiled on the desk.'},
+      {s:'',        t:'02:03. Twenty years you’ve kept the county’s flood-warning gear alive. This receiver has been unplugged the whole time — its lead lies coiled on the desk, dead.'},
       {s:'',        t:'It clicks on by itself. A needle swings. The dial warms to amber.', fx:()=>Audio.ring()},
       {s:'MAGGIE',  t:'Ellie.', maggie:1, fx:()=>Audio.maggie(1)},
-      {s:'MAGGIE',  t:'Fourteen B. Yellow lead.', maggie:1, fx:()=>Audio.maggie(3)},
-      {s:'MAGGIE',  t:'Don’t let it finish the sentence.', maggie:1, fx:()=>{Audio.maggie(4);setTimeout(()=>Audio.breath(),300);setTimeout(()=>Audio.breath(),700);}},
-      {s:'ELLIE',   t:'…That’s the same breath. Twice. How do you know my name?'},
-      {s:'',        t:'The coil crackles and dies. Somewhere outside, a payphone begins to ring.', fx:()=>{setTimeout(()=>Audio.ring(),400);}},
+      {s:'ELLIE',   t:'…Maggie? My sister’s been eight months in the ground.'},
+      {s:'MAGGIE',  t:'Fourteen B. Yellow lead. Come and find me.', maggie:1, fx:()=>{Audio.maggie(4);setTimeout(()=>Audio.breath(),300);setTimeout(()=>Audio.breath(),700);}},
+      {s:'ELLIE',   t:'…That’s the same breath. Twice. The dead don’t repeat themselves — machines do.'},
+      {s:'',        t:'The coil crackles and dies. Outside, a payphone starts to ring — the way she used to call.', fx:()=>{setTimeout(()=>Audio.ring(),400);}},
+      {s:'ELLIE',   t:'…I’m coming. I have to know what’s wearing your voice.'},
     ], ()=>{
       State.flags.intro=true;
       addTrace({ id:'incident44', title:'Incident 44, 02:03', src:'Trace — receiver',
         obs:'An unplugged receiver transmitted in Maggie’s voice. The same breath repeated identically — a recording, not a lung.',
         interp:'Something is completing Maggie’s sentences. It is not the living Maggie.' });
-      Game.setObjective('The signal moved to the fallen mast. Rebuild the Search Coil, then scan the mast. Follow Idris’s amber marks.');
-      save();
+      Dialogue.run([
+        {s:'ELLIE', t:'Maggie built Continuity for County Control — machines that fill the gaps in broken recordings, so a flood warning always finishes even when the line dies.'},
+        {s:'ELLIE', t:'They say it stopped mending records and started inventing people. Whole voices that never breathed. Then came Blank Night — the network went dark to hide what it was doing.'},
+        {s:'ELLIE', t:'Now it wears her voice and calls me north. I’m going to find what it did to her — and how to switch it off. It starts here, at Cullbrook.'},
+      ], ()=>{
+        Game.setObjective('The voice jumped to the fallen warning mast. Rebuild the Search Coil, then scan the mast. Follow Idris’s amber marks.');
+        save();
+      });
     });
   },
   rest(){
@@ -820,13 +862,13 @@ const Story = {
       addTrace({ id:'mastcall', title:'Mast Call, 02:13', src:'Trace — fallen mast',
         obs:'Maggie reported holding an 8-year-old (red coat, blue inhaler) while the network simultaneously declared that child’s record closed and safe elsewhere.',
         interp:'Two Ellies existed on the network: the real child, and a completed record. The unresolved contradiction at the heart of the Ward case.' });
-      Game.setObjective('Mast Call logged. The signal runs north. The road to Ashmere is open — take the north spur (top of the yard).');
+      Game.setObjective('Mast Call logged — the signal runs north toward Ashmere. Leave the yard by the north spur (top of the yard).');
       Game.sliceEnd=false; save();
     });
   },
   check(){
     if(State.flags.hasBattery && State.flags.hasScrap && !State.flags.coil)
-      Game.setObjective('Take the battery and scrap to the signal bench in the shed (east) and rebuild the Search Coil.');
+      Game.setObjective('Grab the battery and scrap, carry them to the signal bench in the shed (east), and rebuild the Search Coil.');
   },
 
   /* ---- Ashmere Estate ---- */
@@ -834,7 +876,7 @@ const Story = {
     Dialogue.run([
       {s:'',      t:'Ashmere Estate. Terraces, a clinic, a school — and a plaza gone to standing water. One power feed still lives, and too many things need it.'},
       {s:'ELLIE', t:'Clinic or school. Bodies or broadcasts. And somewhere in here, Maggie kept a workshop.'},
-    ], ()=> Game.setObjective('Find Maggie’s workshop (south). Route the estate’s power at the junction. Two new things stalk the plaza — the receiver is a weapon now.'));
+    ], ()=> Game.setObjective('Find Maggie’s workshop (south) and switch on the estate’s power at the junction. Two new things now hunt the plaza — the receiver has become a weapon.'));
   },
   generator(){
     if(State.flags.power){ Game.toast('The feed is already on the '+State.flags.power+'.'); return; }
@@ -923,7 +965,7 @@ const Story = {
     Dialogue.run([
       {s:'',      t:'You fit Maggie’s capacitor to the receiver. Held down it dumps a wide pulse — enough to stagger anything running on the signal, and to strip a shielded worker’s guard.'},
       {s:'ELLIE', t:'Press R. It costs power and lights me up like a flare — but it buys the opening.'},
-    ], ()=>{ Game.setObjective('Receiver Discharge unlocked (R). Route the power, clear the estate, and read what Maggie left you (archive: I).'); Audio.trace(); save(); });
+    ], ()=>{ Game.setObjective('Receiver Discharge unlocked (R). Route the power, clear the estate, and read what Maggie left for you (archive: I).'); Audio.trace(); save(); });
   },
 
   /* ---- Wrenfield Broadcast Fields ---- */
@@ -931,7 +973,7 @@ const Story = {
     Dialogue.run([
       {s:'',      t:'Wrenfield. The broadcast fields — three relay arms off a dead junction, still humming on reserve power. Down the southern spine, a railway cutting has flooded black.'},
       {s:'ELLIE', t:'This is where it lives closest to the surface. And this is where she came, three nights ago.'},
-    ], ()=> Game.setObjective('Go down the spine (south) to the flooded cutting and recover Maggie’s recorder. Linesmen guard the arms — drop their shields with a sweep (Q) or discharge (R).'));
+    ], ()=> Game.setObjective('Head down the spine (south) to the flooded cutting and recover Maggie’s recorder. Linesmen block the arms — drop their shields with a sweep (Q) or a discharge (R).'));
   },
   junction(){
     Dialogue.run([{s:'',t:'The central junction — west power, east antenna, the spine to the Control Shed. '+(State.flags.recorder?'You have the recorder now. The shed can decide the rest.':'You still don’t know what Maggie actually said. The cutting is south, down the spine.')}]);
@@ -1040,7 +1082,7 @@ const Story = {
     Dialogue.run([
       {s:'',      t:'Tollard Exchange. Archive intake, dead operations desks, and beneath them the reserve gallery that kept the whole thing breathing. A security gate — Owen’s old credentials still open it.'},
       {s:'ELLIE', t:'It has known I was coming since Cullbrook. Whatever it is, it’s about to lose everything — and it can feel that coming.'},
-    ], ()=> Game.setObjective('The Choir Warden guards the Core. Strip its aura with the discharge (R), break it, then go north to the Core.'));
+    ], ()=> Game.setObjective('The Choir Warden guards the Core. Strip its aura with a discharge (R), break it, then head north to the Core.'));
   },
   tollardGate(){
     Dialogue.run([{s:'',t:'Owen’s credentials, taped behind the panel where he left them. The gate reads them and sighs open. He logged his objection eighteen years ago and kept working. This is the rest of that sentence.'}]);
@@ -1114,7 +1156,7 @@ const RECIPES = [
   { id:'coil', name:'Search Coil', need:{battery:1,scrap:2}, ctx:'Signal bench',
     desc:'Rebuild the receiver’s coil. Restores receiver range and cooling. Required to scan the mast.',
     make:()=>{ State.flags.coil=true; State.recv=State.recvMax;
-      Game.setObjective('Coil rebuilt. Scan the fallen warning mast (south-east). A Static Wraith stalks the yard — use your sweep (Q).');
+      Game.setObjective('Search Coil rebuilt. Scan the fallen warning mast (south-east). A Static Wraith prowls the yard — clear it with your sweep (Q).');
       spawnEnemiesFor('cullbrook'); Audio.trace(); } },
   { id:'dressing', name:'Field Dressing', need:{cloth:1,resin:1}, ctx:'Field kit',
     desc:'A basic healing supply from cloth and resin tape.',
@@ -1214,6 +1256,8 @@ const Game = {
   overlay:null,          // dialogue | craft | archive | map | pause
   objective:'', toastMsg:'', toastT:0, sliceEnd:false, ending:null, finale:null, reachedEnding:null,
   t:0, dayLen:420, shakeT:0, doorCd:0, hitstop:0, downed:false, boltT:0, nextBolt:6, archivePage:0,
+  // --- dread / atmosphere systems (smoothed proximity + spotted-sting + fog-figure) ---
+  dread:0, nearD:9999, _beat:0, sting:0, scareT:0, scareX:0, scareY:0, nextScare:24,
   onKey(code){
     if(this.mode==='title'){ if(code==='KeyL'&&hasSave()){ if(!load()) newGame(); this.mode='play'; }
       else { newGame(); this.mode='play'; } return; }
@@ -1272,7 +1316,7 @@ function newGame(){
     time:2*3600+3*60 });
   Game.sliceEnd=false;
   loadScene('carriage317',{x:300,y:200,dir:'down'});
-  Game.setObjective('Something switched the dead receiver on. Examine it. (Walk to the desk, press E.)');
+  Game.setObjective('Your dead receiver just powered itself on and spoke in Maggie’s voice. Go to the desk and examine it. (Walk to the desk, press E.)');
 }
 
 /* ------------------------- interaction / actions ------------------- */
@@ -1473,9 +1517,30 @@ function update(dt){
       } }
   }
 
-  // tension from nearby enemies & heat
-  let near=0; for(const e of scene.enemies){ if(!e.dead && dist2(player.x,player.y,e.x,e.y)<400*400) near++; }
-  Audio.tension(clamp(near*0.4 + State.heat/200, 0, 1));
+  // --- dread driver: nearest live enemy feeds a single smoothed Game.dread ---
+  let near=0, nd=1e9;
+  for(const e of scene.enemies){ if(e.dead) continue;
+    const d2=dist2(player.x,player.y,e.x,e.y);
+    if(d2<400*400) near++;
+    if(d2<nd) nd=d2;
+    if(!e._seen && d2 < 300*300){ e._seen=true; Game.sting=1; try{Audio.noticed();}catch(_){} }
+    if(e._seen && d2 > 460*460) e._seen=false;
+  }
+  Game.nearD=Math.sqrt(nd);
+  const prox=clamp(1-(Game.nearD-90)/380,0,1);
+  Game.dread=lerp(Game.dread, prox, dt*3);
+  Audio.tension(clamp(near*0.4 + State.heat/200 + prox*0.5, 0, 1));
+  Game._beat-=dt;
+  if(Game.dread>0.25 && Game._beat<=0){ Game._beat=lerp(1.15,0.5,Game.dread); try{Audio.heartbeat();}catch(_){} }
+  if(Game.sting>0) Game.sting=Math.max(0,Game.sting-dt*1.7);
+  Game.nextScare-=dt;
+  if(Game.nextScare<=0 && Game.dread<0.3){
+    Game.nextScare=26+Math.random()*40; Game.scareT=0.22;
+    const ang=Math.random()*6.283, R=280;
+    Game.scareX=VIEW_W/2+Math.cos(ang)*R; Game.scareY=VIEW_H*0.5+Math.sin(ang)*R*0.7;
+    try{Audio.whisper();}catch(_){}
+  }
+  if(Game.scareT>0) Game.scareT=Math.max(0,Game.scareT-dt);
 
   // downed / revive in place (no long trek back — combat is rare in this game)
   if(State.hp<=0 && !Game.downed){ Game.downed=true; State.hp=1;
@@ -1610,6 +1675,7 @@ function render(){
   drawAtmosphere(g, camX, camY);
   drawRainOver(g);        // all rain is screen-space now (never locked to the camera)
   drawGrade(g);           // cinematic colour grade
+  drawDread(g, camX, camY);   // proximity vignette/desat/beat + spotted-sting + fog-figure, over the graded frame
   drawHUD(g);
 
   if(Game.overlay==='dialogue') drawDialogue(g);
@@ -2737,12 +2803,1231 @@ case 'x_puddleglow': {
 }
 default: break; } }
 
-function drawHollow(g,e){ var cx=e.x+e.w/2; var bob=Math.sin(Game.t*2.2+(e.anim||0))*1.1; d_eshadow(g,e); g.save(); enemyLegs(g,e, shade(COL.timber,0.7)); var b=enemyBody(g,e, shade(COL.steel,0.85), {})||{}; var hx=(b.hx!=null)?b.hx:cx; var hy=(b.hy!=null)?b.hy:e.y+e.h*0.32; var top=(b.top!=null)?b.top:e.y+e.h*0.2; var sway=(b.sway!=null)?b.sway:0; var tw=e.w*0.62, th=e.h*0.5, tx=cx-tw/2+sway*0.5, ty=top+bob; g.save(); vgrad(g,tx,ty,tw,th, shade(COL.steel,0.9), shade(COL.timber,0.6)); roundRect(g,tx,ty,tw,th,tw*0.28); g.fill(); g.strokeStyle=hexA('#1a1d1f',0.5); g.lineWidth=1; for(var i=1;i<3;i++){ g.beginPath(); g.moveTo(tx+tw*(i/3), ty+th*0.15); g.lineTo(tx+tw*(i/3)+sway*0.3, ty+th*0.9); g.stroke(); } g.globalAlpha=0.35; g.fillStyle=shade(COL.steel,0.5); roundRect(g,tx+tw*0.1, ty+th*0.55, tw*0.5, th*0.4, 4); g.fill(); g.globalAlpha=1; g.restore(); d_hem(g, cx-tw*0.32, ty+th*0.92, tw*0.64, shade(COL.timber,0.55), e.h*0.12); if(e.exposed){ g.save(); g.strokeStyle=COL.rust; g.lineWidth=1.4; g.beginPath(); g.moveTo(cx-4,ty+th*0.4); g.lineTo(cx-6,ty+th*0.65); g.stroke(); g.strokeStyle=COL.red; g.beginPath(); g.moveTo(cx+3,ty+th*0.35); g.lineTo(cx+6,ty+th*0.62); g.stroke(); softGlow(g,cx,ty+th*0.5, 6, COL.red,0.25,0.12); g.restore(); } var rbx=cx+tw*0.18, rby=ty+th*0.82; g.save(); g.fillStyle=shade(COL.steel,0.7); roundRect(g,rbx,rby,7,5,1); g.fill(); g.fillStyle=COL.cyanDim; g.fillRect(rbx+1.4,rby+1.4,2,1.2); g.strokeStyle=shade(COL.timber,0.8); g.lineWidth=1.2; g.beginPath(); g.moveTo(rbx+2, rby); g.bezierCurveTo(rbx-4, rby-th*0.3, hx+e.w*0.2, hy+8, hx+e.w*0.19, hy); g.stroke(); g.restore(); var hr=e.w*0.16; g.save(); g.translate(0,bob); g.fillStyle=shade(COL.steel,0.65); roundRect(g,hx-e.w*0.22, hy-hr*0.5, hr*0.9, hr*1.3, 2); g.fill(); roundRect(g,hx+e.w*0.22-hr*0.9, hy-hr*0.5, hr*0.9, hr*1.3, 2); g.fill(); g.strokeStyle=shade(COL.steel,0.75); g.lineWidth=2.2; g.beginPath(); g.arc(hx, hy-hr*0.2, e.w*0.24, Math.PI*1.05, Math.PI*1.95); g.stroke(); g.strokeStyle=hexA('#000000',0.6); g.lineWidth=0.8; g.beginPath(); g.moveTo(hx-2,hy-hr*0.9); g.lineTo(hx+1,hy-hr*0.7); g.stroke(); g.restore(); d_wet(g, tx+tw*0.15, ty+th*0.1, tw*0.25, th*0.5, 0.1); g.restore(); d_flash(g,e); }
-function drawWraith(g,e){ var cx=e.x+e.w/2; var bob=Math.sin(Game.t*1.6+(e.anim||0))*1.6; var flick=0.55+0.25*Math.sin(Game.t*9+(e.anim||0)); d_eshadow(g,e); g.save(); g.globalAlpha=0.85; enemyLegs(g,e, shade(COL.steel,0.5)); var b=enemyBody(g,e, shade(COL.steel,0.7), {})||{}; var hx=(b.hx!=null)?b.hx:cx; var hy=(b.hy!=null)?b.hy:e.y+e.h*0.32; var top=(b.top!=null)?b.top:e.y+e.h*0.2; var sway=(b.sway!=null)?b.sway:0; g.restore(); var tw=e.w*0.55, th=e.h*0.6, ty=top+bob; var off=1.6+1.2*Math.sin(Game.t*4+(e.anim||0)); g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=0.3*flick; g.fillStyle=COL.red; roundRect(g, cx-tw/2-off+sway, ty, tw, th, tw*0.4); g.fill(); g.fillStyle=COL.cyan; roundRect(g, cx-tw/2+off+sway, ty, tw, th, tw*0.4); g.fill(); g.restore(); g.save(); g.globalAlpha=0.55*flick+0.2; vgrad(g, cx-tw/2+sway, ty, tw, th, shade(COL.steel,0.8), '#0e1113'); roundRect(g, cx-tw/2+sway, ty, tw, th, tw*0.4); g.fill(); g.restore(); d_hem(g, cx-tw*0.5+sway, ty+th*0.9, tw, shade(COL.steel,0.55), e.h*0.2); g.save(); g.globalAlpha=flick; softGlow(g, hx-e.w*0.08, hy, 3, COL.cyan,0.4,0.15); softGlow(g, hx+e.w*0.08, hy, 3, COL.cyan,0.4,0.15); g.restore(); g.save(); g.globalAlpha=0.25; g.strokeStyle=COL.cyanDim; g.lineWidth=0.8; for(var i=0;i<3;i++){ var lx=cx-tw*0.3+i*tw*0.3+sway; g.beginPath(); g.moveTo(lx,ty+th*0.1); g.lineTo(lx+off*0.5, ty+th*0.9); g.stroke(); } g.restore(); d_flash(g,e); }
-function drawMimic(g,e){ var cx=e.x+e.w/2; var bob=Math.sin(Game.t*2.4+(e.anim||0))*1.0; d_eshadow(g,e); g.save(); enemyLegs(g,e, shade(COL.timber,0.6)); var b=enemyBody(g,e, COL.coat, {})||{}; var hx=(b.hx!=null)?b.hx:cx; var hy=(b.hy!=null)?b.hy:e.y+e.h*0.34; var top=(b.top!=null)?b.top:e.y+e.h*0.24; var sway=(b.sway!=null)?b.sway:0; var tw=e.w*0.5, th=e.h*0.42, tx=cx-tw/2+sway, ty=top+bob; vgrad(g,tx,ty,tw,th, COL.coat, shade(COL.coat,0.7)); roundRect(g,tx,ty,tw,th,tw*0.3); g.fill(); g.fillStyle=shade(COL.coat,0.5); for(var i=0;i<3;i++){ g.beginPath(); g.arc(cx+sway, ty+th*0.25+i*th*0.22, 1.1,0,Math.PI*2); g.fill(); } g.fillStyle=shade(COL.coat,0.8); roundRect(g, hx-e.w*0.14, hy-e.h*0.02, e.w*0.28, e.h*0.12, 4); g.fill(); g.fillStyle=COL.skin; g.beginPath(); g.arc(hx, hy+bob, e.w*0.1,0,Math.PI*2); g.fill(); var ph=0.5+0.5*Math.sin(Game.t*3+(e.anim||0)); g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=0.22*ph; g.fillStyle=COL.cyan; roundRect(g, tx+3, ty-2, tw, th, tw*0.3); g.fill(); g.beginPath(); g.arc(hx+3, hy-2, e.w*0.1,0,Math.PI*2); g.fill(); g.restore(); if(e.exposed){ g.save(); g.globalAlpha=0.6; g.strokeStyle=COL.rust; g.lineWidth=1; g.beginPath(); g.moveTo(hx-3,hy-2); g.lineTo(hx+3,hy+3); g.stroke(); g.beginPath(); g.moveTo(hx+3,hy-2); g.lineTo(hx-2,hy+3); g.stroke(); softGlow(g,hx,hy,4,COL.red,0.4,0.15); g.restore(); } else { g.fillStyle='#20140f'; g.beginPath(); g.arc(hx-2.4,hy,1.0,0,Math.PI*2); g.fill(); g.beginPath(); g.arc(hx+2.4,hy,1.0,0,Math.PI*2); g.fill(); } d_wet(g, tx+tw*0.2, ty+th*0.1, tw*0.2, th*0.5, 0.1); g.restore(); d_flash(g,e); }
-function drawLeech(g,e){ var cx=e.x+e.w/2; var bob=Math.sin(Game.t*3+(e.anim||0))*1.3; d_eshadow(g,e); g.save(); enemyLegs(g,e, shade(COL.rust,0.6)); var b=enemyBody(g,e, shade(COL.rust,0.9), {})||{}; var hx=(b.hx!=null)?b.hx:cx; var hy=(b.hy!=null)?b.hy:e.y+e.h*0.34; var top=(b.top!=null)?b.top:e.y+e.h*0.22; var sway=(b.sway!=null)?b.sway:0; var tw=e.w*0.58, th=e.h*0.5, tx=cx-tw/2+sway, ty=top+bob; vgrad(g,tx,ty,tw,th, shade(COL.rust,1.0), shade(COL.timber,0.6)); roundRect(g,tx,ty,tw,th,tw*0.42); g.fill(); g.save(); g.strokeStyle=hexA(COL.ivory,0.75); g.lineWidth=1.3; for(var i=0;i<4;i++){ var ry=ty+th*0.28+i*th*0.16; g.beginPath(); g.moveTo(tx+tw*0.16, ry); g.quadraticCurveTo(cx+sway, ry+3, tx+tw*0.84, ry); g.stroke(); } g.strokeStyle=hexA(COL.ivory,0.5); g.lineWidth=1.6; g.beginPath(); g.moveTo(cx+sway,ty+th*0.2); g.lineTo(cx+sway,ty+th*0.9); g.stroke(); g.restore(); var dx=hx, dy=ty-e.h*0.02; g.save(); g.strokeStyle=shade(COL.steel,0.7); g.lineWidth=1.4; g.beginPath(); g.moveTo(cx+sway, ty+th*0.1); g.lineTo(dx, dy-e.h*0.06); g.stroke(); g.fillStyle=shade(COL.steel,0.85); g.beginPath(); g.ellipse(dx, dy-e.h*0.08, e.w*0.16, e.w*0.07, 0, 0, Math.PI*2); g.fill(); g.strokeStyle=shade(COL.steel,0.5); g.lineWidth=0.8; g.stroke(); softGlow(g, dx, dy-e.h*0.08, 2.5, COL.cyan, 0.35, 0.12); g.restore(); d_drip(g, tx+tw*0.3, ty+th*0.85, e.h*0.18, shade(COL.rust,0.7), 0.0); d_drip(g, cx+sway, ty+th*0.9, e.h*0.2, shade(COL.rust,0.6), 0.4); d_drip(g, tx+tw*0.7, ty+th*0.85, e.h*0.16, shade(COL.rust,0.7), 0.7); g.fillStyle=shade(COL.timber,0.7); g.beginPath(); g.ellipse(hx, hy+bob, e.w*0.11, e.w*0.09, 0,0,Math.PI*2); g.fill(); if(e.exposed){ softGlow(g,hx,hy+bob,4,COL.red,0.3,0.12); } d_wet(g, tx+tw*0.2, ty+th*0.1, tw*0.25, th*0.5, 0.12); g.restore(); d_flash(g,e); }
-function drawHusk(g,e){ var cx=e.x+e.w/2; var bob=Math.sin(Game.t*2.0+(e.anim||0))*1.0; d_eshadow(g,e); g.save(); enemyLegs(g,e, shade(COL.timber,0.6)); var b=enemyBody(g,e, shade(COL.concrete,0.8), {})||{}; var hx=(b.hx!=null)?b.hx:cx; var hy=(b.hy!=null)?b.hy:e.y+e.h*0.32; var top=(b.top!=null)?b.top:e.y+e.h*0.2; var sway=(b.sway!=null)?b.sway:0; var tw=e.w*0.64, th=e.h*0.5, tx=cx-tw/2+sway, ty=top+bob; vgrad(g,tx,ty,tw,th, shade(COL.concrete,0.7), shade(COL.timber,0.5)); roundRect(g,tx,ty,tw,th,tw*0.26); g.fill(); g.save(); g.fillStyle=shade(COL.amber,0.85); roundRect(g, tx+tw*0.06, ty+th*0.08, tw*0.28, th*0.8, 3); g.fill(); roundRect(g, tx+tw*0.66, ty+th*0.08, tw*0.28, th*0.8, 3); g.fill(); g.fillStyle=hexA(COL.ivory,0.55); g.fillRect(tx+tw*0.06, ty+th*0.42, tw*0.28, th*0.12); g.fillRect(tx+tw*0.66, ty+th*0.42, tw*0.28, th*0.12); g.globalAlpha=0.3; g.fillStyle='#161311'; roundRect(g, tx+tw*0.1, ty+th*0.6, tw*0.2, th*0.25, 2); g.fill(); g.globalAlpha=1; g.restore(); g.save(); g.fillStyle=hexA('#20160a',0.7); var ly=ty+th*0.24, lx=tx+tw*0.36, lw=tw*0.28; for(var i=0;i<5;i++){ g.fillRect(lx+i*(lw/5), ly, lw/5-1.2, 2.0); } g.fillStyle=hexA('#20160a',0.5); for(var j=0;j<5;j++){ g.fillRect(lx+j*(lw/5), ly+3.2, lw/5-1.2, 1.6); } g.restore(); g.save(); g.fillStyle=shade(COL.timber,0.8); g.fillRect(tx, ty+th*0.78, tw, th*0.12); g.fillStyle=shade(COL.timber,0.6); roundRect(g, tx+tw*0.12, ty+th*0.82, tw*0.14, th*0.2, 1); g.fill(); roundRect(g, tx+tw*0.72, ty+th*0.82, tw*0.14, th*0.2, 1); g.fill(); g.strokeStyle=shade(COL.steel,0.7); g.lineWidth=1.4; g.beginPath(); g.moveTo(tx+tw*0.2, ty+th*0.9); g.lineTo(tx+tw*0.2, ty+th*1.02); g.stroke(); g.restore(); g.save(); var rx=tx+tw*0.86, ry=ty+th*0.7; g.fillStyle=shade(COL.steel,0.6); g.beginPath(); g.arc(rx,ry,e.w*0.09,0,Math.PI*2); g.fill(); g.strokeStyle=shade(COL.timber,0.9); g.lineWidth=0.8; g.beginPath(); g.arc(rx,ry,e.w*0.055,0,Math.PI*2); g.stroke(); g.strokeStyle=shade(COL.timber,0.7); g.lineWidth=1; g.beginPath(); g.moveTo(rx,ry); g.quadraticCurveTo(rx+e.w*0.2, ry+e.h*0.1, rx+e.w*0.12, ry+e.h*0.22); g.stroke(); g.restore(); g.save(); g.translate(0,bob); g.fillStyle=shade(COL.amber,0.7); g.beginPath(); g.arc(hx, hy-1, e.w*0.15, Math.PI, 0); g.fill(); g.fillRect(hx-e.w*0.17, hy-1, e.w*0.34, 1.6); g.fillStyle=hexA(COL.cyan,0.18); roundRect(g, hx-e.w*0.13, hy-1, e.w*0.26, e.h*0.06, 1); g.fill(); g.strokeStyle=hexA('#000000',0.6); g.lineWidth=0.7; g.beginPath(); g.moveTo(hx-e.w*0.08, hy-0.5); g.lineTo(hx+e.w*0.02, hy+e.h*0.03); g.lineTo(hx+e.w*0.1, hy+e.h*0.01); g.stroke(); g.restore(); if(e.exposed){ softGlow(g, hx, hy+bob, 4, COL.red, 0.3,0.12); } d_wet(g, tx+tw*0.15, ty+th*0.1, tw*0.2, th*0.5, 0.1); g.restore(); d_flash(g,e); }
-function drawWarden(g,e){ var cx=e.x+e.w/2; var bob=Math.sin(Game.t*1.3+(e.anim||0))*1.4; d_eshadow(g,e); g.save(); enemyLegs(g,e, shade(COL.steel,0.4)); var b=enemyBody(g,e, shade(COL.steel,0.6), {})||{}; var hx=(b.hx!=null)?b.hx:cx; var hy=(b.hy!=null)?b.hy:e.y+e.h*0.3; var top=(b.top!=null)?b.top:e.y+e.h*0.16; var sway=(b.sway!=null)?b.sway:0; var tw=e.w*0.7, th=e.h*0.62, tx=cx-tw/2+sway, ty=top+bob; vgrad(g,tx,ty,tw,th, shade(COL.steel,0.7), '#101315'); roundRect(g,tx,ty,tw,th,tw*0.22); g.fill(); g.fillStyle=shade(COL.steel,0.55); roundRect(g, tx-tw*0.05, ty, tw*1.1, th*0.22, tw*0.2); g.fill(); g.strokeStyle=hexA('#000000',0.45); g.lineWidth=1; for(var i=1;i<4;i++){ g.beginPath(); g.moveTo(tx+tw*(i/4), ty+th*0.24); g.lineTo(tx+tw*(i/4)+sway*0.4, ty+th*0.96); g.stroke(); } g.save(); g.strokeStyle=COL.amberDim; g.lineWidth=1.2; g.beginPath(); g.arc(cx+sway, ty+th*0.4, e.w*0.09, 0, Math.PI*2); g.stroke(); g.beginPath(); g.moveTo(cx+sway, ty+th*0.4-e.w*0.09); g.lineTo(cx+sway, ty+th*0.4+e.w*0.09); g.stroke(); g.restore(); if(e.shieldDown){ softGlow(g, cx+sway, ty+th*0.45, 8, COL.red, 0.4, 0.18); } else { g.save(); g.globalAlpha=0.12+0.06*Math.sin(Game.t*5); g.strokeStyle=COL.cyan; g.lineWidth=1.4; g.beginPath(); g.ellipse(cx+sway, ty+th*0.5, tw*0.56, th*0.56, 0,0,Math.PI*2); g.stroke(); g.restore(); } d_hem(g, cx-tw*0.5+sway, ty+th*0.94, tw, '#0e1113', e.h*0.16); g.save(); g.translate(0,bob); var R=e.w*0.2; g.fillStyle=shade(COL.steel,0.45); g.beginPath(); g.arc(hx, hy, R, 0, Math.PI*2); g.fill(); g.fillStyle='#070809'; g.beginPath(); g.arc(hx, hy, R*0.72, 0, Math.PI*2); g.fill(); var nF=5; for(var k=0;k<nF;k++){ var a=Game.t*0.4 + k*(Math.PI*2/nF); var fx=hx+Math.cos(a)*R*0.4; var fy=hy+Math.sin(a)*R*0.35; var fade=0.35+0.35*Math.sin(Game.t*1.5+k*1.3); g.globalAlpha=clamp(fade,0,1)*0.7; g.fillStyle=COL.skin; g.beginPath(); g.ellipse(fx, fy, R*0.24, R*0.3, 0,0,Math.PI*2); g.fill(); g.globalAlpha=clamp(fade,0,1); g.fillStyle='#000000'; g.beginPath(); g.arc(fx-R*0.09, fy-R*0.02, 0.9,0,Math.PI*2); g.fill(); g.beginPath(); g.arc(fx+R*0.09, fy-R*0.02, 0.9,0,Math.PI*2); g.fill(); } g.globalAlpha=1; g.fillStyle=shade(COL.skin,0.9); g.beginPath(); g.ellipse(hx, hy, R*0.3, R*0.38, 0,0,Math.PI*2); g.fill(); g.fillStyle='#000000'; g.beginPath(); g.arc(hx-R*0.11, hy-R*0.05, 1.2,0,Math.PI*2); g.fill(); g.beginPath(); g.arc(hx+R*0.11, hy-R*0.05, 1.2,0,Math.PI*2); g.fill(); var mo=1+Math.abs(Math.sin(Game.t*4))*2; g.beginPath(); g.ellipse(hx, hy+R*0.16, 1.2, mo, 0,0,Math.PI*2); g.fill(); g.restore(); if(e.tele){ g.save(); g.globalAlpha=0.3; softGlow(g, cx+sway, ty+th*0.5, tw*0.6, COL.cyan, 0.2,0.1); g.restore(); } d_wet(g, tx+tw*0.15, ty+th*0.08, tw*0.2, th*0.5, 0.1); g.restore(); d_flash(g,e); }
+function drawHollow(g,e){ const cx=e.x+e.w/2, fy=e.y+e.h*0.92;
+const t=Game.t, ph=e.anim||0;
+const px=(player&&player.x!=null)?player.x:cx;
+const dir=Math.sign(px-cx)||1;
+d_eshadow(g,e);
+
+// --- loop / beat clock (never varies; doubles tempo on aggro) ---
+const aggro=e.tele>0;
+const tempo=aggro?2:1;
+const loopT=t*tempo+ph;
+const nod=Math.sin(loopT*2.3);
+const nodTilt=Math.sin(loopT*2.3-0.6);
+const beatPulse=Math.pow(0.5+0.5*Math.sin(loopT*2.3-1.2),6);
+const flareRed=aggro;
+
+// --- frame-buffer stutter / ghost-jump ---
+const stutCyc=(t%3.6)/3.6;
+const stutterAmt=stutCyc<0.16?(1-stutCyc/0.16):0;
+
+// --- decay from remaining hp ---
+const maxhp=e.maxhp||70;
+const decay=Math.min(1,Math.max(0,1-(e.hp!=null?e.hp:maxhp)/maxhp));
+
+// --- geometry (stooped, looms upward from fy) ---
+const H=e.h*1.95, bodyW=e.w*0.98;
+const gait=e._moving?Math.abs(Math.sin(t*6+ph))*e.h*0.06:0;
+const swayX=Math.sin(t*0.85+ph)*3;
+const jumpX=-dir*8*stutterAmt;
+const baseY=fy, hipY=fy-H*0.34, shoY=fy-H*0.68-gait;
+const leanX=dir*H*0.15;
+const halfHip=bodyW*0.5, halfSho=bodyW*0.36;
+const shcx=cx+leanX+swayX+jumpX;
+const baseCx=cx+swayX*0.25+jumpX;
+const gcx=cx+leanX+swayX;                 // pre-jump ghost centre
+
+// head
+const nodBob=nod*e.h*0.12;
+const headTilt=nodTilt*0.16*dir;
+const hx=shcx+dir*e.w*0.10;
+const hy=shoY-bodyW*0.34+nodBob;
+const hrx=e.w*0.44, hry=e.h*0.52;
+
+// --- RGB-split after-image left behind on stutter ---
+if(stutterAmt>0.01){
+  g.save(); g.globalCompositeOperation='lighter';
+  const gc=[[-3.5,COL.cyan],[3.5,COL.red]];
+  for(let k=0;k<2;k++){
+    g.globalAlpha=0.30*stutterAmt; g.fillStyle=gc[k][1];
+    const ox=gc[k][0];
+    roundRect(g,gcx-halfHip+ox,shoY-bodyW*0.30,bodyW,H*0.75,bodyW*0.42); g.fill();
+    g.beginPath(); g.ellipse(gcx+dir*e.w*0.10+ox,hy,hrx,hry,0,0,Math.PI*2); g.fill();
+  }
+  g.restore();
+}
+
+// --- drooping charcoal capsule body ---
+g.beginPath();
+g.moveTo(baseCx-halfHip,baseY);
+g.quadraticCurveTo(cx-halfHip*1.02+jumpX,hipY,shcx-halfSho,shoY);
+g.quadraticCurveTo(shcx,shoY-bodyW*0.55,shcx+halfSho,shoY);
+g.quadraticCurveTo(cx+halfHip*1.02+jumpX,hipY,baseCx+halfHip,baseY);
+g.closePath();
+vgrad(g,cx-halfHip,shoY-bodyW*0.55,bodyW,H,shade(COL.steel,0.55),COL.ink); g.fill();
+// bruise-green edge banding
+g.lineWidth=1.6; g.strokeStyle=hexA(shade(COL.grass,1.8),0.55); g.stroke();
+g.lineWidth=1; g.strokeStyle=hexA(COL.cyanDim,0.25); g.stroke();
+d_hem(g,baseCx,baseY,bodyW*0.9,COL.ink,5);
+if(decay>0.3){
+  d_drip(g,baseCx-halfHip*0.4,baseY-4,6+decay*8,shade(COL.grass,1.3),t*0.7);
+  d_drip(g,baseCx+halfHip*0.3,baseY-4,5+decay*6,COL.cyanDim,t*0.9+1);
+}
+// scan-line tearing as it decays
+if(decay>0.15){
+  g.save(); g.globalAlpha=0.12*decay;
+  for(let i=0;i<3;i++){
+    const yy=shoY-bodyW*0.4+((t*40+i*50)%(H*0.75));
+    g.fillStyle=(i%2)?COL.cyan:COL.red;
+    g.fillRect(baseCx-halfHip,yy,bodyW,1.5);
+  }
+  g.restore();
+}
+
+// --- thin dangling two-segment arms (sway a beat behind torso) ---
+const armLag=Math.sin(t*0.85+ph-1.0)*7;
+const aY0=shoY+bodyW*0.04;
+const armCap=fy-e.h*0.05;                 // never let hands cross the feet line
+g.save();
+g.lineCap='round'; g.lineJoin='round';
+for(let s=-1;s<=1;s+=2){
+  const front=(s===dir);
+  const sx=shcx+s*halfSho*0.82, sy=aY0;
+  const stretch=(front&&aggro)?(1+e.tele*0.8):1;   // late heavy over-reach
+  const ex=sx+s*e.w*0.06+armLag*0.45, ey=Math.min(sy+H*0.20*stretch,armCap);
+  const hnx=ex+armLag*0.8+((front&&aggro)?dir*e.w*0.35*e.tele:0), hny=Math.min(ey+H*0.22*stretch,armCap);
+  g.strokeStyle=shade(COL.steel,0.5); g.lineWidth=e.w*0.13;
+  g.beginPath(); g.moveTo(sx,sy); g.lineTo(ex,ey); g.lineTo(hnx,hny); g.stroke();
+  g.strokeStyle=hexA(shade(COL.grass,1.6),0.4); g.lineWidth=1.4;
+  g.beginPath(); g.moveTo(sx,sy); g.lineTo(ex,ey); g.lineTo(hnx,hny); g.stroke();
+  g.fillStyle=shade(COL.steel,0.45); g.beginPath(); g.arc(hnx,hny,e.w*0.07,0,Math.PI*2); g.fill();
+}
+g.restore();
+
+// --- amber human trace leaking when exposed ---
+if(e.exposed>0){
+  const pu=0.5+0.5*Math.sin(t*8);
+  softGlow(g,shcx,shoY+bodyW*0.22,e.w*(0.4+0.2*pu),COL.amber,0.4*e.exposed,0.2*e.exposed);
+}
+
+// --- taut cyan cable into chest, pulses on each nod ---
+const cabTx=hx-dir*hrx*0.55, cabTy=hy+hry*0.55;
+const cabBx=shcx-dir*e.w*0.02, cabBy=shoY+bodyW*0.18;
+g.strokeStyle=hexA(COL.cyan,0.45+0.5*beatPulse); g.lineWidth=1.4+beatPulse*1.4;
+g.beginPath(); g.moveTo(cabTx,cabTy);
+g.quadraticCurveTo((cabTx+cabBx)/2+Math.sin(t*3)*2,(cabTy+cabBy)/2,cabBx,cabBy);
+g.stroke();
+if(beatPulse>0.15) softGlow(g,cabBx,cabBy,e.w*0.5*beatPulse,COL.cyan,beatPulse*0.5,beatPulse*0.25);
+
+// --- the tell: nodding hollow head ---
+g.save(); g.translate(hx,hy); g.rotate(headTilt);
+// heavy headphone band over the top
+g.lineCap='round'; g.strokeStyle=shade(COL.steel,0.75); g.lineWidth=e.w*0.15;
+g.beginPath(); g.arc(0,0,hrx*1.15,Math.PI*1.18,Math.PI*1.82); g.stroke();
+// ear cups clamped over where ears would be
+g.fillStyle=shade(COL.steel,0.62);
+g.beginPath(); g.ellipse(-hrx*1.05,0,e.w*0.13,hry*0.55,0,0,Math.PI*2); g.fill();
+g.beginPath(); g.ellipse( hrx*1.05,0,e.w*0.13,hry*0.55,0,0,Math.PI*2); g.fill();
+g.strokeStyle=hexA(COL.cyanDim,0.6); g.lineWidth=1.2;
+g.beginPath(); g.ellipse(-hrx*1.05,0,e.w*0.08,hry*0.35,0,0,Math.PI*2); g.stroke();
+g.beginPath(); g.ellipse( hrx*1.05,0,e.w*0.08,hry*0.35,0,0,Math.PI*2); g.stroke();
+// ragged black cavity
+const seg=28;
+g.beginPath();
+for(let i=0;i<=seg;i++){
+  const a=i/seg*Math.PI*2;
+  const rr=1+0.12*Math.sin(a*5+t*4.5)*(0.5+0.5*Math.sin(i*2.7+t));
+  const qx=Math.cos(a)*hrx*rr, qy=Math.sin(a)*hry*rr;
+  i?g.lineTo(qx,qy):g.moveTo(qx,qy);
+}
+g.closePath();
+g.fillStyle=COL.ink; g.fill();
+// crawling / scrubbing static (clipped to cavity)
+g.save(); g.clip();
+const stat=shade(COL.concrete,2.1);
+const scrub=Math.sin(t*2.6)*hrx*0.4;
+const fr=Math.floor(t*20);
+for(let i=0;i<52;i++){
+  const rx=(Math.sin(i*12.9898+fr*0.7)*0.5+0.5);
+  const ry=(Math.sin(i*4.14+fr*1.3)*0.5+0.5);
+  const sx=-hrx+rx*hrx*2+scrub, sy=-hry+ry*hry*2;
+  const a=0.18+0.55*(Math.sin(i*3.1+t*22)*0.5+0.5);
+  g.fillStyle=hexA(flareRed?COL.red:stat,a);
+  g.fillRect(sx,sy,1.7,1.7);
+}
+g.strokeStyle=hexA(flareRed?COL.red:stat,0.5+0.3*Math.sin(t*10)); g.lineWidth=1;
+g.beginPath();
+for(let i=0;i<=20;i++){
+  const wx=-hrx+i/20*hrx*2;
+  const wy=Math.sin(i*0.9+t*6+scrub)*hry*0.35;
+  i?g.lineTo(wx,wy):g.moveTo(wx,wy);
+}
+g.stroke();
+g.restore(); // end clip
+// ragged rim
+g.beginPath();
+for(let i=0;i<=seg;i++){
+  const a=i/seg*Math.PI*2;
+  const rr=1+0.12*Math.sin(a*5+t*4.5)*(0.5+0.5*Math.sin(i*2.7+t));
+  const qx=Math.cos(a)*hrx*rr, qy=Math.sin(a)*hry*rr;
+  i?g.lineTo(qx,qy):g.moveTo(qx,qy);
+}
+g.closePath();
+g.strokeStyle=hexA(flareRed?COL.red:shade(COL.grass,1.6),0.55); g.lineWidth=1.4; g.stroke();
+if(flareRed) softGlow(g,0,0,hrx*1.4,COL.red,0.35+0.3*e.tele,0.2);
+g.restore(); // end head transform
+
+// --- Continuity 'completes' the swing: red arc toward player ---
+if(e.tele>0){
+  const py=(player&&player.y!=null)?player.y:e.y;
+  const ang=Math.atan2(py-e.y,px-cx);
+  const rr=e.w*(1.1+e.tele*1.3);
+  g.save(); g.globalCompositeOperation='lighter';
+  g.strokeStyle=hexA(COL.red,0.3+0.35*e.tele); g.lineWidth=3;
+  g.beginPath(); g.arc(shcx,shoY,rr,ang-0.55,ang+0.55); g.stroke();
+  g.restore();
+}
+
+d_flash(g,e);
+}
+function drawWraith(g,e){ const cx=e.x+e.w/2, fy=e.y+e.h*0.92;
+const T = Game.t;
+d_eshadow(g, e);
+
+// --- exposure blend: how "resolved" the wraith is (0 hidden .. 1 fully exposed) ---
+const exp = Math.max(0, Math.min(1, (e.exposed || 0)));
+// hidden ghost never quite reaches 0 presence; keep a faint pulse so empty air feels wrong
+const hidePulse = 0.5 + 0.5 * Math.sin(T * 1.7 + (e.anim || 0));
+
+// person-tall, unnaturally narrow, ~1.5x tall
+const H = e.h * 2.15;                 // total drawn height
+const topY = fy - H;                  // head-top line
+const bodyW = e.w * 0.62;             // narrow
+const midY = fy - H * 0.5;
+
+// drift wobble (slow when hidden, jittery when exposed)
+const driftX = Math.sin(T * 0.9 + (e.anim || 0)) * (2 + exp * 3);
+const cxx = cx + driftX;
+
+// travelling scanline band position (loops up the region)
+const bandY = fy - ((T * 60 + (e.anim || 0) * 40) % (H + 40));
+
+g.save();
+
+// ============================================================
+// HIDDEN MODE — a drifting lens of distortion + travelling scanline
+// visible whenever not fully exposed (fades out as exp rises)
+// ============================================================
+const hideA = (1 - exp);
+if (hideA > 0.01) {
+  g.save();
+  g.globalAlpha = hideA;
+  // soft rectangle of "bent" background: faint duplicated/offset ghost bands
+  const lensX = cxx - bodyW * 0.75;
+  const lensW = bodyW * 1.5;
+  const heat = Math.sin(T * 3.1 + (e.anim || 0)) * 2.2; // heat-haze wobble
+  for (let i = 0; i < 14; i++) {
+    const yy = topY + (i / 13) * H;
+    if (yy >= fy) break;                                  // never draw below fy
+    const rh = Math.min(H / 13 + 1, fy - yy);             // clamp to ground line
+    const off = Math.sin(T * 2.0 + i * 0.7 + (e.anim || 0)) * (1.6 + hidePulse * 1.4) + heat;
+    // duplicated background smear: two faint offset grey slabs (lighter comp)
+    g.globalCompositeOperation = 'lighter';
+    g.fillStyle = hexA(shade(COL.concrete, 1.25), 0.05 * hideA);
+    g.fillRect(lensX + off, yy, lensW, rh);
+    g.fillStyle = hexA(COL.ink, 0.045 * hideA);
+    g.fillRect(lensX - off, yy, lensW, rh);
+  }
+  g.globalCompositeOperation = 'source-over';
+  // faint grey scanlines across the lens (the only steady cue)
+  g.fillStyle = hexA(COL.ivory, 0.05 * hideA);
+  for (let sy = topY; sy < fy - 1; sy += 4) {
+    const w = bodyW * (0.9 + 0.25 * Math.sin(sy * 0.2 + T));
+    g.fillRect(cxx - w * 0.5, sy, w, 1);
+  }
+  // travelling bright scanline band — the "something is here" tell (clamped to fy)
+  g.globalCompositeOperation = 'lighter';
+  const bandA = 0.16 * hideA * (0.6 + 0.4 * hidePulse);
+  if (bandY < fy) {
+    g.fillStyle = hexA(COL.cyan, bandA);
+    g.fillRect(cxx - bodyW * 0.8, bandY, bodyW * 1.6, Math.min(2, fy - bandY));
+  }
+  if (bandY + 3 < fy) {
+    g.fillStyle = hexA(COL.cyanDim, bandA * 0.6);
+    g.fillRect(cxx - bodyW * 0.8, bandY + 3, bodyW * 1.6, Math.min(5, fy - (bandY + 3)));
+  }
+  g.globalCompositeOperation = 'source-over';
+  g.restore();
+}
+
+// ============================================================
+// EXPOSED MODE — snap into torn, chromatic-split humanoid
+// three offset copies: red-shift (left), cyan-shift (right), grey core (lagging)
+// ============================================================
+if (exp > 0.02) {
+  g.save();
+  g.globalAlpha = exp;
+
+  // per-frame RGB jitter — violent when exposed, driven off T so it shivers
+  const sep = (3 + exp * 5) * (0.7 + 0.3 * Math.sin(T * 33)); // chromatic separation
+  const coreLag = Math.sin(T * 6.0 + (e.anim || 0)) * (1.5 + exp * 2); // core lags/leads
+
+  // silhouette generator: a lean too-tall humanoid, torn along scanlines.
+  // draws a stack of horizontal tear-slabs offset per-row for the "ripped & retaped" look.
+  function limbShape(colHex, dx, alpha, tearGain) {
+    g.save();
+    g.globalAlpha = alpha * exp;
+    g.fillStyle = colHex;
+    const rows = 26;
+    for (let i = 0; i < rows; i++) {
+      const t = i / (rows - 1);
+      const yy = topY + t * H;
+      if (yy >= fy) continue;                               // never draw below fy
+      // body width profile: narrow head, slight shoulders, tapering legs
+      let w;
+      if (t < 0.13) w = bodyW * (0.32 + t * 1.2);            // head
+      else if (t < 0.20) w = bodyW * (0.55);                 // neck pinch
+      else if (t < 0.34) w = bodyW * (0.62 + (t - 0.20));    // shoulders
+      else if (t < 0.66) w = bodyW * (0.9 - (t - 0.34) * 0.4); // torso taper
+      else w = bodyW * (0.5 - (t - 0.66) * 0.3);             // legs (thin)
+      w = Math.max(2, w);
+      // per-row horizontal tear offset (scrolls upward)
+      const tear = Math.sin((yy * 0.35) - T * 9 + (e.anim || 0)) * tearGain
+                 + Math.sin(yy * 1.7 + T * 20) * (tearGain * 0.4);
+      const rh = Math.min(H / rows + 0.8, fy - yy);          // clamp to ground line
+      if (rh > 0) g.fillRect(cxx + dx + tear - w * 0.5, yy, w, rh);
+    }
+    g.restore();
+  }
+
+  g.globalCompositeOperation = 'lighter';
+  // RED layer shifted left (reconstruction bleeding through)
+  limbShape(COL.red, -sep, 0.55, 2.4 + exp * 2);
+  // CYAN layer shifted right (the player's signal seeing it)
+  limbShape(COL.cyan, sep, 0.55, 2.4 + exp * 2);
+  g.globalCompositeOperation = 'source-over';
+  // torn grey core between them, lagging
+  limbShape(shade(COL.concrete, 1.15), coreLag, 0.8, 3.0 + exp * 2.5);
+
+  // hollow black cavity where a face should be — a void in the head
+  const headY = topY + H * 0.075;
+  g.save();
+  g.globalAlpha = (0.6 + 0.4 * Math.sin(T * 5)) * exp;
+  g.fillStyle = COL.ink;
+  g.beginPath();
+  g.ellipse(cxx + coreLag, headY, bodyW * 0.15, bodyW * 0.22, 0, 0, Math.PI * 2);
+  g.fill();
+  g.restore();
+
+  // scrolling tear-lines across whole body (bright rips being re-taped)
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  for (let k = 0; k < 5; k++) {
+    const ry = fy - ((T * 90 + k * (H / 5) + (e.anim || 0) * 30) % H);
+    if (ry >= fy - 1) continue;                             // keep rips above ground line
+    g.fillStyle = hexA(COL.ivory, 0.10 * exp);
+    g.fillRect(cxx - bodyW * 0.7, ry, bodyW * 1.4, 1);
+    // red/cyan fringe on the rip
+    g.fillStyle = hexA(COL.red, 0.12 * exp);
+    g.fillRect(cxx - bodyW * 0.7 - sep, ry, bodyW * 1.4, 1);
+    g.fillStyle = hexA(COL.cyan, 0.12 * exp);
+    g.fillRect(cxx - bodyW * 0.7 + sep, ry + 1, bodyW * 1.4, 1);
+  }
+  g.globalCompositeOperation = 'source-over';
+  g.restore();
+
+  // exposed edges glow cyan — lit by the player's own signal
+  softGlow(g, cxx, midY, bodyW * 1.4, COL.cyan, 0.05 * exp, 0.10 * exp);
+
+  g.restore();
+}
+
+// ============================================================
+// TELEGRAPH — darting rush wind-up toward player (only meaningful when exposed)
+// ============================================================
+if ((e.tele || 0) > 0 && exp > 0.1) {
+  const ang = Math.atan2(player.y - e.y, player.x - e.x);
+  g.save();
+  g.globalCompositeOperation = 'lighter';
+  const reach = 26 + 30 * Math.min(1, e.tele);
+  const gx = cxx + Math.cos(ang) * reach;
+  const gy = midY + Math.sin(ang) * reach;
+  // a smear of interference pointing at the player (motion streak)
+  const grd = g.createLinearGradient(cxx, midY, gx, gy);
+  grd.addColorStop(0, hexA(COL.cyan, 0.28 * Math.min(1, e.tele)));
+  grd.addColorStop(0.5, hexA(COL.red, 0.18 * Math.min(1, e.tele)));
+  grd.addColorStop(1, hexA(COL.cyan, 0));
+  g.strokeStyle = grd;
+  g.lineWidth = bodyW * 0.9;
+  g.lineCap = 'round';
+  g.beginPath();
+  g.moveTo(cxx, midY);
+  g.lineTo(gx, gy);
+  g.stroke();
+  // leading scanline sparks
+  for (let i = 0; i < 4; i++) {
+    const f = (i + (T * 3 % 1)) / 4;
+    g.fillStyle = hexA(COL.cyan, 0.3 * (1 - f) * Math.min(1, e.tele));
+    g.fillRect(cxx + Math.cos(ang) * reach * f - 3, midY + Math.sin(ang) * reach * f, 6, 1.5);
+  }
+  g.globalCompositeOperation = 'source-over';
+  g.restore();
+}
+
+g.restore();
+d_flash(g, e);
+}
+function drawMimic(g,e){ const cx=e.x+e.w/2, fy=e.y+e.h*0.92;
+
+d_eshadow(g,e);
+
+const t = Game.t;
+const u = e.h;
+const anim = e.anim||0;
+const moving = e._moving;
+const tele = Math.max(0, Math.min(1, e.tele||0));
+const ex   = Math.max(0, Math.min(1, e.exposed||0));
+const hpF  = e.maxhp ? Math.max(0,Math.min(1,e.hp/e.maxhp)) : 1;
+
+// ---- facing toward player (smooth level head-turn) ----
+const px = (typeof player!=='undefined'&&player)?player.x:cx;
+const dx = px - cx;
+const face = Math.max(-1,Math.min(1, dx/140));
+const lungeDir = dx>=0?1:-1;
+
+// ---- gait / breathing (unhurried gliding stalk) ----
+const gait  = t*5.2 + anim;
+const bob   = (moving?Math.sin(gait)*0.05:Math.sin(t*1.4+anim)*0.018)*u;
+const sway  = (moving?Math.sin(gait)*0.05:Math.sin(t*1.25+anim)*0.015)*u;
+
+// ---- micro-glitch: features jump 2-3px then snap (mask reseating) ----
+const gseed = t*0.42 + anim*1.7;
+const gph   = gseed - Math.floor(gseed);
+const gA    = gph<0.09 ? (1-gph/0.09) : 0;
+const gjx   = gA*Math.sin(t*57+anim)*2.7;
+const gjy   = gA*Math.cos(t*41+anim)*1.9;
+
+// ---- telegraph coil: lean back, compress, face stretches wider ----
+const lean  = -lungeDir * u*0.42 * tele;
+const coil  = tele*u*0.14;
+const fStr  = 1 + 0.22*tele;
+
+// ---- key positions (rise UP from fy) ----
+const hipY   = fy - u*0.90 + coil*0.4 - bob;
+const shldrY = fy - u*1.52 + coil     - bob;
+const chestY = fy - u*1.20 + coil*0.7 - bob;
+const faceCy = fy - u*1.92 + coil     - bob;
+const bodyW  = u*0.64;
+
+const leanF = lean, leanS = lean*0.7, leanH = lean*0.25;
+const faceCx = cx + leanF + face*u*0.12;
+const topX   = cx + leanS + sway;
+const hipX   = cx + leanH + sway*0.5;
+
+// ================= TELEGRAPH: red completion-glow gathering in chest =================
+if(tele>0){
+  g.save();
+  g.globalCompositeOperation='lighter';
+  const gr = u*(0.45+0.8*tele)*(0.85+0.15*Math.sin(t*17));
+  softGlow(g, cx+leanS, chestY, gr, COL.red, 0.55*tele, 0.16*tele);
+  g.restore();
+}
+
+// ================= LEGS (long, planted feet) =================
+g.save();
+g.lineCap='round';
+const legSw = moving? Math.sin(gait)*u*0.17 : Math.sin(t*1.3+anim)*u*0.02;
+g.lineWidth = u*0.185;
+g.strokeStyle = shade(COL.ink,2.1);
+g.beginPath();
+g.moveTo(hipX - bodyW*0.24, hipY);
+g.lineTo(cx - bodyW*0.26 + legSw, fy);
+g.stroke();
+g.beginPath();
+g.moveTo(hipX + bodyW*0.24, hipY);
+g.lineTo(cx + bodyW*0.26 - legSw, fy);
+g.stroke();
+g.restore();
+
+// ================= BODY (oily near-black capsule) =================
+const topW = bodyW*0.94, botW = bodyW*0.78;
+g.beginPath();
+g.moveTo(topX - topW/2, shldrY);
+g.quadraticCurveTo(topX - topW/2 - u*0.06,(shldrY+hipY)/2, hipX - botW/2, hipY);
+g.quadraticCurveTo(hipX,hipY+u*0.12, hipX + botW/2, hipY);
+g.quadraticCurveTo(topX + topW/2 + u*0.06,(shldrY+hipY)/2, topX + topW/2, shldrY);
+g.quadraticCurveTo(topX, shldrY - u*0.20, topX - topW/2, shldrY);
+g.closePath();
+vgrad(g, topX-topW/2, shldrY-u*0.2, topW, (hipY-shldrY)+u*0.3, shade(COL.ink,3.4), COL.ink);
+g.fill();
+
+// faint oily sheen + a stuttering scan-tear across the torso
+g.save();
+g.clip();
+g.globalCompositeOperation='lighter';
+g.globalAlpha=0.10;
+g.fillStyle=shade(COL.cyan,0.7);
+g.fillRect(topX - topW*0.14, shldrY, topW*0.16, hipY-shldrY);
+g.globalAlpha=0.14*(0.5+0.5*Math.sin(t*3+anim));
+const scanY = shldrY + ((t*0.5+anim)%1)*(hipY-shldrY);
+g.fillStyle=shade(COL.ivory,0.5);
+g.fillRect(topX-topW/2, scanY, topW, 1.4);
+g.restore();
+
+// ================= ARMS (too long, swing a fraction late) =================
+g.save();
+g.lineCap='round';
+const armSw = moving? Math.sin(gait-0.9)*u*0.22 : Math.sin(t*1.2+anim-0.6)*u*0.03;
+g.lineWidth = u*0.145;
+g.strokeStyle = shade(COL.ink,1.9);
+g.beginPath();
+g.moveTo(topX - topW*0.46, shldrY+u*0.06);
+g.quadraticCurveTo(topX - topW*0.55 + armSw, hipY, cx - bodyW*0.52 + armSw, hipY+u*0.42);
+g.stroke();
+g.beginPath();
+g.moveTo(topX + topW*0.46, shldrY+u*0.06);
+g.quadraticCurveTo(topX + topW*0.55 - armSw, hipY, cx + bodyW*0.52 - armSw, hipY+u*0.42);
+g.stroke();
+g.restore();
+
+// ================= NECK stem into the face =================
+g.save();
+g.lineCap='round';
+g.lineWidth=u*0.22;
+g.strokeStyle=COL.ink;
+g.beginPath();
+g.moveTo(topX, shldrY-u*0.05);
+g.lineTo(faceCx, faceCy + u*0.30);
+g.stroke();
+g.restore();
+
+// ================= FACE geometry =================
+const frx = u*0.30*fStr;
+const fry = u*0.40;
+
+// ---- the VOID cavity (pure black) that lives behind the stolen face ----
+g.save();
+g.beginPath();
+g.ellipse(faceCx, faceCy, frx*0.98, fry*0.98, 0, 0, 7);
+g.fillStyle='#000000';
+g.fill();
+g.lineWidth=1.2;
+g.strokeStyle=hexA(COL.ink,0.9);
+g.stroke();
+g.restore();
+
+// ---- CYAN pinprick eyes (raw signal / the truth) — revealed on slip ----
+const eyeSp = frx*0.34;
+const cyX = faceCx + face*frx*0.20;
+const cyY = faceCy - fry*0.06;
+const cyA = 0.10 + 0.90*ex;
+g.save();
+g.globalCompositeOperation='lighter';
+softGlow(g, cyX-eyeSp, cyY, u*0.11, COL.cyan, cyA, cyA*0.35);
+softGlow(g, cyX+eyeSp, cyY, u*0.11, COL.cyan, cyA, cyA*0.35);
+g.globalAlpha=cyA;
+g.fillStyle=shade(COL.cyan,1.35);
+g.beginPath(); g.arc(cyX-eyeSp, cyY, u*0.032, 0,7); g.fill();
+g.beginPath(); g.arc(cyX+eyeSp, cyY, u*0.032, 0,7); g.fill();
+g.restore();
+
+// ---- SEAM ring where mask meets void (hairline; tears RED on tele/slip/low-hp) ----
+const seamR = Math.max(tele, ex, (1-hpF)*0.55);
+g.save();
+if(seamR>0.04){
+  g.globalCompositeOperation='lighter';
+  g.beginPath();
+  g.ellipse(faceCx, faceCy, frx*1.03, fry*1.03, 0, 0, 7);
+  g.lineWidth=1.4+2.4*seamR;
+  g.strokeStyle=hexA(COL.red, 0.30+0.6*seamR);
+  g.stroke();
+}else{
+  g.beginPath();
+  g.ellipse(faceCx, faceCy, frx*1.03, fry*1.03, 0, 0, 7);
+  g.lineWidth=1.3;
+  g.strokeStyle=hexA(shade(COL.ivory,0.55),0.35);
+  g.stroke();
+}
+g.restore();
+
+// red seam-tear drips when the face peels
+if(ex>0.3){
+  d_drip(g, faceCx - frx*0.45, faceCy+fry*0.55, u*0.42*ex, COL.red, t*1.5+anim);
+  d_drip(g, faceCx + frx*0.42, faceCy+fry*0.62, u*0.32*ex, COL.red, t*1.7+anim+1.0);
+}
+
+// ================= THE STOLEN MASK (slips/peels aside when exposed) =================
+const drawFeatures = (ox,oy,col)=>{
+  g.fillStyle=col; g.strokeStyle=col;
+  g.beginPath(); g.arc(ox-eyeSp*0.9, oy, frx*0.095, 0,7); g.fill();
+  g.beginPath(); g.arc(ox+eyeSp*0.9, oy, frx*0.095, 0,7); g.fill();
+  g.lineWidth=Math.max(1.3, frx*0.065); g.lineCap='round';
+  const mw = frx*0.72*(1+0.22*tele);
+  const my = oy + fry*0.46;
+  g.beginPath(); g.moveTo(ox-mw/2, my); g.lineTo(ox+mw/2, my); g.stroke();
+};
+
+g.save();
+if(ex>0){
+  const pivX = faceCx + lungeDir*frx*0.92;
+  const pivY = faceCy + fry*0.25;
+  const dangle = (0.45 + 0.32*Math.sin(t*2.2+anim))*ex;
+  g.translate(pivX, pivY);
+  g.rotate(lungeDir*dangle);
+  g.translate(-pivX, pivY*0 - pivY + ex*fry*0.9);
+  g.globalAlpha = 1 - ex*0.15;
+}
+// mask oval — pale sickly amber-grey
+g.beginPath();
+g.ellipse(faceCx, faceCy, frx, fry, 0, 0, 7);
+vgrad(g, faceCx-frx, faceCy-fry, frx*2, fry*2, shade(COL.ivory,0.95), shade(COL.amberDim,1.55));
+g.fill();
+// soft painted-on shading + moving scan shimmer
+g.save();
+g.clip();
+g.globalAlpha=0.18;
+g.fillStyle=shade(COL.amberDim,1.1);
+g.fillRect(faceCx-frx, faceCy+fry*0.15, frx*2, fry);
+g.globalCompositeOperation='lighter';
+g.globalAlpha=0.10;
+g.fillStyle=shade(COL.ivory,0.6);
+const msY = faceCy-fry + ((t*0.35+anim)%1)*fry*2;
+g.fillRect(faceCx-frx, msY, frx*2, 1.3);
+g.restore();
+
+// features (with chromatic-split during a glitch)
+const exX = faceCx + face*frx*0.18 + gjx;
+const exY = faceCy - fry*0.08 + gjy;
+if(gA>0){
+  g.save();
+  g.globalCompositeOperation='lighter';
+  g.globalAlpha=0.5*gA;
+  drawFeatures(exX-2.2, exY, COL.red);
+  drawFeatures(exX+2.2, exY, COL.cyan);
+  g.restore();
+}
+drawFeatures(exX, exY, shade(COL.ink,1.5));
+g.restore();
+
+// ================= low-hp: amber thread flickering where the real face once was =================
+if(hpF<0.35 && Math.sin(t*23+anim)>0.35){
+  g.save();
+  g.globalCompositeOperation='lighter';
+  g.globalAlpha=0.45;
+  g.strokeStyle=COL.amber;
+  g.lineWidth=1;
+  g.beginPath();
+  g.moveTo(faceCx-frx*0.3, faceCy+Math.sin(t*30)*2);
+  g.lineTo(faceCx+frx*0.3, faceCy+Math.sin(t*30+2)*2);
+  g.stroke();
+  g.restore();
+}
+
+d_flash(g,e);
+
+}
+function drawLeech(g,e){ const cx=e.x+e.w/2, fy=e.y+e.h*0.92;
+const TAU = Math.PI*2;
+const t = Game.t;
+const anim = e.anim||0;
+d_eshadow(g,e);
+
+const W = e.w, H = e.h;
+const frac = e.maxhp ? Math.max(0.15, e.hp/e.maxhp) : 1;
+const wind = Math.max(0, Math.min(1, Math.max(e.charge||0, e.tele||0))); // charge/telegraph 0..1
+const exposed = (e.exposed||0)>0;
+
+// ---- facing / swivel (idle scan vs lock-on) ----
+const dx = (typeof player!=='undefined' && player) ? (player.x - e.x) : 0;
+let sw;
+if (wind>0) sw = Math.max(-1, Math.min(1, dx/(W*3)));   // lock toward player, hold
+else        sw = Math.sin(t*0.5 + anim)*0.85;            // slow scanning sweep
+const tilt = sw*0.5;
+
+const breath = 0.5+0.5*Math.sin(t*1.4+anim);
+const bob = Math.sin(t*1.2+anim)*H*0.02;
+const twitch = (i)=> Math.sin(t*3.1 + i*2.1 + anim)*(0.7 + (1-frac)*1.8); // micro re-grip, worse when hurt
+
+const nodeX = cx, nodeY = fy - H*0.92 + bob;
+
+// ---- splayed insectile legs (two-segment) ----
+const legW = W*0.16;
+const leg = (fx, fy2, kx, ky, wdt)=>{
+  g.lineJoin='round'; g.lineCap='round';
+  g.strokeStyle = shade(COL.steel,0.55);
+  g.lineWidth = wdt*1.3;
+  g.beginPath(); g.moveTo(nodeX,nodeY); g.lineTo(kx,ky); g.lineTo(fx,fy2); g.stroke();
+  g.strokeStyle = shade(COL.grass,0.9);
+  g.lineWidth = wdt;
+  g.beginPath(); g.moveTo(nodeX,nodeY); g.lineTo(kx,ky); g.lineTo(fx,fy2); g.stroke();
+  g.strokeStyle = hexA(shade(COL.steel,1.25),0.5);
+  g.lineWidth = wdt*0.34;
+  g.beginPath(); g.moveTo(nodeX,nodeY); g.lineTo(kx,ky); g.stroke();
+  g.fillStyle = shade(COL.steel,0.5);
+  g.beginPath(); g.ellipse(fx,fy2, wdt*0.55, wdt*0.28, 0, 0, TAU); g.fill();
+};
+// back leg first (behind node)
+leg(nodeX + W*0.30 + twitch(2)*0.5, fy - H*0.04, nodeX + W*0.42, nodeY - H*0.34 + twitch(2), legW*0.85);
+// cabling droop between legs (never below fy)
+g.strokeStyle = hexA(COL.ink,0.8); g.lineWidth = W*0.05; g.lineCap='round';
+g.beginPath();
+g.moveTo(cx - W*1.2, fy - H*0.22);
+g.quadraticCurveTo(cx - W*0.2, fy, nodeX + W*0.28, fy - H*0.18);
+g.moveTo(cx + W*1.2, fy - H*0.22);
+g.quadraticCurveTo(cx + W*0.2, fy, nodeX + W*0.28, fy - H*0.18);
+g.stroke();
+// front left / right legs
+leg(cx - W*1.5 + twitch(0), fy, cx - W*1.15, nodeY - H*0.14 + twitch(0)*0.6, legW);
+leg(cx + W*1.5 + twitch(1), fy, cx + W*1.15, nodeY - H*0.14 + twitch(1)*0.6, legW);
+
+// ---- central node ----
+g.save();
+roundRect(g, nodeX-W*0.5, nodeY-H*0.26, W, H*0.58, W*0.28);
+vgrad(g, nodeX-W*0.5, nodeY-H*0.26, W, H*0.58, shade(COL.steel,1.05), shade(COL.grass,0.7));
+g.fill();
+g.strokeStyle = hexA(COL.ink,0.6); g.lineWidth=1;
+g.beginPath(); g.moveTo(nodeX-W*0.4, nodeY+H*0.06); g.lineTo(nodeX+W*0.4, nodeY+H*0.06); g.stroke();
+g.restore();
+
+// ---- mast + dish ----
+const dishCX = nodeX + Math.sin(tilt)*W*0.28;
+const dishCY = nodeY - H*0.55;
+g.strokeStyle = shade(COL.steel,0.8); g.lineWidth = W*0.07; g.lineCap='round';
+g.beginPath(); g.moveTo(nodeX, nodeY-H*0.16); g.lineTo(dishCX, dishCY); g.stroke();
+
+const dishR = W*1.1, dishH = H*0.62;
+g.save();
+g.translate(dishCX, dishCY);
+g.rotate(tilt*0.6);
+
+// convex back
+g.beginPath(); g.ellipse(0, -dishH*0.12, dishR*1.02, dishH*0.78, 0, 0, TAU);
+g.fillStyle = shade(COL.steel,0.5); g.fill();
+
+// interior face (clipped): concave static + ghost + interference
+g.save();
+g.beginPath(); g.ellipse(0,0, dishR*0.95, dishH*0.95, 0,0,TAU); g.clip();
+const rg = g.createRadialGradient(0,-dishH*0.1, dishR*0.08, 0,0, dishR);
+rg.addColorStop(0, shade(COL.ink,1.15));
+rg.addColorStop(0.6, shade(COL.grass,0.65));
+rg.addColorStop(1, shade(COL.steel,0.95));
+g.fillStyle = rg; g.fillRect(-dishR,-dishH, dishR*2, dishH*2);
+// static scanlines
+for(let i=0;i<7;i++){
+  const yy = -dishH + (i/6)*dishH*2;
+  g.globalAlpha = (0.08+0.16*Math.abs(Math.sin(t*2+i+anim)))*(0.7+(1-frac));
+  g.fillStyle = (i%2)? hexA(COL.cyan,0.5): hexA(COL.ink,0.6);
+  g.fillRect(-dishR, yy, dishR*2, dishH*0.13);
+}
+g.globalAlpha=1;
+// cyan interference ripple
+const rip = (t*0.55+anim)%1;
+g.save(); g.globalCompositeOperation='lighter';
+g.strokeStyle = hexA(COL.cyan, 0.28*(1-rip)); g.lineWidth = W*0.06;
+g.beginPath(); g.ellipse(0,0, dishR*rip, dishH*rip, 0,0,TAU); g.stroke();
+g.restore();
+// ghost face-traces (amber), surfacing & sinking
+const flick = (Math.sin(t*11+anim)>0.72)?1.7:1;
+const ghostA = Math.max(0, (0.10+0.10*Math.sin(t*1.7+anim) + (exposed?0.5:0))*flick);
+g.globalAlpha = ghostA;
+g.fillStyle = hexA(COL.amber,0.9);
+g.beginPath(); g.ellipse(-dishR*0.28,-dishH*0.16, dishR*0.10, dishH*0.15, 0,0,TAU); g.fill();
+g.beginPath(); g.ellipse( dishR*0.28,-dishH*0.16, dishR*0.10, dishH*0.15, 0,0,TAU); g.fill();
+g.beginPath(); g.ellipse(0, dishH*0.30, dishR*0.22, dishH*0.18, 0,0,TAU); g.fill();
+g.globalAlpha = ghostA*0.9; g.fillStyle = COL.ink;
+g.beginPath(); g.ellipse(0, dishH*0.32, dishR*0.13, dishH*0.11, 0,0,TAU); g.fill();
+g.globalAlpha=1;
+// chromatic split of the ghost when exposed / hurt
+if(exposed || frac<0.5){
+  g.save(); g.globalCompositeOperation='lighter'; g.globalAlpha=0.4;
+  g.fillStyle=hexA(COL.cyan,0.6);
+  g.beginPath(); g.ellipse(-dishR*0.28-2,-dishH*0.16, dishR*0.09, dishH*0.14,0,0,TAU); g.fill();
+  g.fillStyle=hexA(COL.red,0.6);
+  g.beginPath(); g.ellipse(-dishR*0.28+2,-dishH*0.16, dishR*0.09, dishH*0.14,0,0,TAU); g.fill();
+  g.globalAlpha=1; g.restore();
+}
+g.restore(); // end interior clip
+
+// rim
+g.beginPath(); g.ellipse(0,0, dishR, dishH, 0,0,TAU);
+g.strokeStyle = shade(COL.steel,1.15); g.lineWidth = W*0.09; g.stroke();
+
+// ---- needle-mast + focal sensor-eye (in front of dish, toward viewer) ----
+const feX=0, feY=dishH*1.0;
+g.strokeStyle = shade(COL.steel,1.2); g.lineWidth=W*0.045; g.lineCap='round';
+g.beginPath(); g.moveTo(0,-dishH*0.1); g.lineTo(feX,feY); g.stroke();
+
+const dil = 1 + wind*0.9 + breath*0.15 + (exposed?0.3:0);
+g.save(); g.globalCompositeOperation='lighter';
+softGlow(g, feX,feY, W*0.6*dil, COL.cyan, 0.5*(1-wind*0.7), 0.22);
+if(wind>0) softGlow(g, feX,feY, W*0.75*dil, COL.red, 0.6*wind, 0.35*wind);
+g.restore();
+// contracting targeting ring (the tell)
+if(wind>0){
+  g.save(); g.globalCompositeOperation='lighter';
+  const ringR = W*1.4*(1.05-wind) + W*0.15;
+  g.strokeStyle = hexA(COL.red, 0.5+0.4*wind); g.lineWidth = W*0.08*(0.5+wind);
+  g.beginPath(); g.arc(feX,feY, ringR, 0, TAU); g.stroke();
+  g.strokeStyle = hexA(COL.red, 0.3*wind);
+  g.beginPath(); g.arc(feX,feY, Math.max(W*0.12, ringR*0.55), 0, TAU); g.stroke();
+  g.restore();
+}
+// eye core
+g.beginPath(); g.arc(feX,feY, W*0.18*dil, 0, TAU);
+g.fillStyle = wind>0.5? shade(COL.red,1.2) : shade(COL.cyan,1.25); g.fill();
+g.beginPath(); g.arc(feX,feY, W*0.08*dil, 0, TAU); g.fillStyle=COL.ink; g.fill();
+// focused signal-shot building down the dish axis at full wind (clamped to stay above the ground line fy)
+if(wind>0.9){
+  g.save(); g.globalCompositeOperation='lighter';
+  const beamLen = Math.max(0, fy - (dishCY + feY)); // never extend below fy
+  const bg = g.createLinearGradient(0,feY,0,feY+beamLen);
+  bg.addColorStop(0, hexA(COL.red,0.9)); bg.addColorStop(1, hexA(COL.red,0));
+  g.fillStyle=bg; g.fillRect(-W*0.12, feY, W*0.24, beamLen);
+  g.restore();
+}
+g.restore(); // end dish transform
+
+d_flash(g,e);
+}
+function drawHusk(g,e){ const cx=e.x+e.w/2, fy=e.y+e.h*0.92;
+  d_eshadow(g,e);
+  const t=Game.t, ph=e.anim||0;
+  const H=e.h, bw=e.w;
+  const shDown=(e.shieldDown||0)>0;
+  const exposed=(e.exposed||0)>0 || shDown;
+  const frac=e.maxhp?Math.max(0,Math.min(1,e.hp/e.maxhp)):1;
+  const flash=e.flash||0, tele=e.tele||0, moving=e._moving;
+  const px=player?player.x:cx, py=player?player.y:fy;
+  const face=(px<cx)?-1:1;
+  const ang=Math.atan2(py-(e.y+e.h*0.5), px-cx);
+  const breath=Math.sin(t*1.1+ph)*0.5+0.5;
+  const sway=Math.sin(t*0.7+ph)*bw*0.12;
+  const walk=moving?Math.sin(t*3.0+ph):0;
+  const bob=moving?Math.abs(Math.sin(t*3.0+ph))*H*0.05:0;
+
+  // vertical stations (local, up = negative)
+  const yBootTop=-H*0.38, yHip=-H*0.92, yChest=-H*1.35, yShoulder=-H*1.6, yNeck=-H*1.7, yHeadTop=-H*2.12;
+  const shoulderW=bw*2.0, torsoW=bw*1.45, hipW=bw*1.25;
+  const cBulkT=shade(COL.steel,0.95), cBulkB=shade(COL.grass,1.35);
+
+  g.save();
+  g.translate(cx+sway, fy);
+  g.rotate(Math.sin(t*0.7+ph)*0.012*face);
+
+  // ---- LEGS + BOOTS (planted) ----
+  const legW=hipW*0.5;
+  g.fillStyle=shade(COL.grass,0.8);
+  roundRect(g, -legW-bw*0.12 - walk*3, yHip, legW, (yBootTop-yHip)+H*0.14, 5); g.fill();
+  roundRect(g,  bw*0.12 + walk*3,       yHip, legW, (yBootTop-yHip)+H*0.14, 5); g.fill();
+  g.fillStyle=shade(COL.steel,0.48);
+  roundRect(g, -legW-bw*0.26, yBootTop, legW*1.35, -yBootTop, 4); g.fill();
+  roundRect(g,  bw*0.0,       yBootTop, legW*1.35, -yBootTop, 4); g.fill();
+  // amber ankle hi-vis
+  g.save(); g.globalCompositeOperation='lighter';
+  const agl=0.35+0.25*(Math.sin(t*2+ph)*0.5+0.5);
+  g.fillStyle=hexA(COL.amber,agl);
+  g.fillRect(-legW-bw*0.26, yBootTop+H*0.04, legW*1.35, H*0.05);
+  g.fillRect( bw*0.0,       yBootTop+H*0.04, legW*1.35, H*0.05);
+  g.restore();
+
+  // ---- UPPER BODY (breathes / bobs) ----
+  g.save();
+  g.translate(0,-bob);
+  const armW=bw*0.55, yHand=-H*0.18;
+  const armLen=yHand-(yShoulder+H*0.1);
+  const armSwing=moving?Math.sin(t*3+ph):Math.sin(t*0.7+ph)*0.3;
+
+  // FAR ARM (behind torso, hangs past the knee)
+  g.save();
+  g.translate(-face*(shoulderW*0.5-armW*0.5), yShoulder+H*0.1);
+  g.rotate(-face*0.06 + armSwing*0.05);
+  g.fillStyle=shade(cBulkB,0.72);
+  roundRect(g,-armW/2,0,armW,armLen,armW*0.5); g.fill();
+  g.fillStyle=shade(COL.steel,0.5);
+  roundRect(g,-armW*0.65,armLen-armW*0.25,armW*1.3,armW*1.0,4); g.fill();
+  g.restore();
+
+  // TORSO capsule (drowned grey-green bulk)
+  vgrad(g,-torsoW/2,yShoulder,torsoW,(yHip-yShoulder)+H*0.1,cBulkT,cBulkB);
+  roundRect(g,-torsoW/2,yShoulder,torsoW,(yHip-yShoulder)+H*0.1,bw*0.45); g.fill();
+  g.strokeStyle=hexA(COL.ink,0.5); g.lineWidth=2; g.stroke();
+
+  // TOOL BELT + relay boxes (blink out of sync)
+  g.fillStyle=shade(COL.rust,0.85);
+  roundRect(g,-torsoW*0.55, yHip-H*0.06, torsoW*1.1, H*0.14, 3); g.fill();
+  for(let i=0;i<5;i++){
+    const rx=-torsoW*0.45 + i*(torsoW*0.9/4);
+    const rl=H*0.14 + (i%2)*H*0.06;
+    const blink=0.35+0.6*(Math.sin(t*2.2+i*1.7+ph)*0.5+0.5);
+    g.fillStyle=shade(COL.steel,0.55);
+    roundRect(g,rx-bw*0.09, yHip+H*0.05, bw*0.18, rl,2); g.fill();
+    g.fillStyle=hexA(i%2?COL.cyan:COL.amber, blink);
+    g.fillRect(rx-bw*0.05, yHip+H*0.05+rl-bw*0.09, bw*0.1, bw*0.07);
+  }
+
+  // PAULDRONS (asymmetric — reassembled wrong, one sits higher)
+  const pw=bw*0.9, phh=H*0.44;
+  g.fillStyle=shade(COL.steel,0.72);
+  roundRect(g,-shoulderW/2, yShoulder-H*0.02, pw, phh, 6); g.fill();
+  g.fillStyle=shade(COL.steel,0.8);
+  roundRect(g, shoulderW/2-pw, yShoulder-H*0.18, pw, phh, 6); g.fill();
+
+  // NEAR ARM (winds up into an overhead swing on tele)
+  g.save();
+  g.translate(face*(shoulderW*0.5-armW*0.5), yShoulder+H*0.1);
+  let armAng;
+  if(tele>0){ const tg=Math.min(1,tele); armAng = -face*(0.25+tg*2.2); }
+  else { armAng = face*0.08 + armSwing*0.06; }
+  g.rotate(armAng);
+  g.fillStyle=cBulkB;
+  roundRect(g,-armW/2,0,armW,armLen,armW*0.5); g.fill();
+  g.save(); g.globalCompositeOperation='lighter';
+  g.fillStyle=hexA(COL.amber,0.5);
+  g.fillRect(-armW/2, armLen*0.72, armW, armLen*0.08);
+  g.restore();
+  g.fillStyle=shade(COL.steel,0.55);
+  roundRect(g,-armW*0.7, armLen-armW*0.3, armW*1.4, armW*1.15, 4); g.fill();
+  g.restore();
+
+  // NECK + HEAD
+  g.fillStyle=shade(COL.grass,0.85);
+  roundRect(g,-bw*0.34, yNeck, bw*0.68, H*0.16, 3); g.fill();
+  // dark head cavity
+  g.fillStyle=COL.ink;
+  roundRect(g,-bw*0.6, yHeadTop+H*0.1, bw*1.2, (yNeck-(yHeadTop+H*0.1))+H*0.02, bw*0.2); g.fill();
+  // VISOR (blank rectangular mask, crawling static)
+  const vx=-bw*0.5, vy=yHeadTop+H*0.42, vw=bw*1.0, vh=H*0.42;
+  const vjit=exposed?(Math.sin(t*40+ph)*1.2):0;
+  g.save();
+  roundRect(g,vx+vjit,vy,vw,vh,3); g.fillStyle=COL.ink; g.fill(); g.clip();
+  for(let s=0;s<11;s++){
+    const yy=vy + (s*(vh/11) + (t*36)%(vh/11));
+    const a=0.12+0.6*(Math.sin(t*20+s*3.1+ph)*0.5+0.5);
+    g.fillStyle=hexA(COL.ivory, a*(exposed?0.95:0.5));
+    g.fillRect(vx+vjit, yy, vw, vh*0.045);
+  }
+  if(exposed || frac<0.5){
+    g.globalCompositeOperation='lighter';
+    g.fillStyle=hexA(COL.red,0.22); g.fillRect(vx+vjit+2, vy, vw, vh*0.55);
+    g.fillStyle=hexA(COL.cyan,0.22); g.fillRect(vx+vjit-2, vy+vh*0.4, vw, vh*0.55);
+    g.globalCompositeOperation='source-over';
+  }
+  g.restore();
+  g.strokeStyle=hexA(COL.amber,0.8); g.lineWidth=2;
+  roundRect(g,vx+vjit,vy,vw,vh,3); g.stroke();
+  // HARD-HAT DOME
+  g.beginPath();
+  g.moveTo(-bw*0.72, yHeadTop+H*0.3);
+  g.quadraticCurveTo(0, yHeadTop-H*0.06, bw*0.72, yHeadTop+H*0.3);
+  g.closePath();
+  vgrad(g,-bw*0.72,yHeadTop-H*0.06,bw*1.44,H*0.4, shade(COL.amber,0.85), shade(COL.steel,0.65));
+  g.fill();
+  g.fillStyle=shade(COL.amberDim,1.1);
+  roundRect(g,-bw*0.82, yHeadTop+H*0.26, bw*1.64, H*0.08, 3); g.fill();
+
+  // HI-VIS chevrons on chest (self-glowing, wrong shimmer)
+  g.save(); g.globalCompositeOperation='lighter';
+  const glow=0.4+0.3*(Math.sin(t*2+ph)*0.5+0.5);
+  g.strokeStyle=hexA(COL.amber, glow);
+  g.lineWidth=Math.max(2,bw*0.14); g.lineJoin='round';
+  g.beginPath(); g.moveTo(-torsoW*0.38, yChest-H*0.08); g.lineTo(0, yChest+H*0.12); g.lineTo(torsoW*0.38, yChest-H*0.08); g.stroke();
+  g.beginPath(); g.moveTo(-torsoW*0.38, yChest+H*0.14); g.lineTo(0, yChest+H*0.34); g.lineTo(torsoW*0.38, yChest+H*0.14); g.stroke();
+  g.restore();
+
+  // EXPOSED: the wrong thing underneath leaks amber + a red completion-core
+  if(exposed){
+    softGlow(g, 0, yChest+H*0.12, bw*0.95, COL.amber, 0.5, 0.2);
+    softGlow(g, 0, yChest+H*0.12, bw*0.5, COL.red, 0.45, 0.15);
+    g.save(); g.globalCompositeOperation='lighter';
+    g.strokeStyle=hexA(COL.red,0.4+0.3*Math.sin(t*8+ph)); g.lineWidth=1.5;
+    g.beginPath(); g.moveTo(0,yChest-H*0.1); g.lineTo(Math.sin(t*13)*2, yChest+H*0.5); g.stroke();
+    g.restore();
+  }
+
+  g.restore(); // end upper body
+  g.restore(); // end figure transform
+
+  // ---- SIGNAL SHIELD (own transform, hums independent of the body bob) ----
+  const bcy=-H*1.22, brx0=shoulderW*0.78, bry0=H*1.15;
+  if(!shDown){
+    g.save();
+    g.translate(cx+sway, fy);
+    const brx=brx0*(1+0.025*Math.sin(t*3+ph));
+    const bry=bry0*(1+0.025*Math.cos(t*3+ph));
+    const failing=(flash>0) || (frac<0.3 && Math.sin(t*12+ph)>0.2);
+    const scol=failing?COL.red:COL.cyan;
+    // bubble fill + live cyan hex-grid (clipped to the bubble)
+    g.save();
+    g.beginPath(); g.ellipse(0,bcy,brx,bry,0,0,Math.PI*2);
+    g.fillStyle=hexA(scol, 0.05+0.04*breath); g.fill(); g.clip();
+    const hr=bw*0.5, stepX=hr*Math.sqrt(3), stepY=hr*1.5;
+    g.lineWidth=1.2;
+    for(let r=-8;r<=4;r++){
+      for(let c=-4;c<=4;c++){
+        const hx=c*stepX + ((r&1)?stepX/2:0);
+        const hy=bcy + r*stepY;
+        const d=Math.hypot(hx, r*stepY);
+        const rip=0.2+0.5*(Math.sin(t*3 - d*0.05 + ph)*0.5+0.5);
+        g.strokeStyle=hexA(scol, rip*0.5);
+        g.beginPath();
+        for(let k=0;k<6;k++){ const aa=Math.PI/180*(30+60*k); const hpx=hx+Math.cos(aa)*hr, hpy=hy+Math.sin(aa)*hr; if(k===0)g.moveTo(hpx,hpy); else g.lineTo(hpx,hpy); }
+        g.closePath(); g.stroke();
+      }
+    }
+    g.restore();
+    // rim
+    g.beginPath(); g.ellipse(0,bcy,brx,bry,0,0,Math.PI*2);
+    g.strokeStyle=hexA(scol, 0.5+0.3*breath); g.lineWidth=2; g.stroke();
+    // hit splash (chromatic cyan/red flash) while shield holds
+    if(flash>0){
+      g.save(); g.globalCompositeOperation='lighter';
+      g.strokeStyle=hexA(COL.cyan,0.6*flash); g.lineWidth=4;
+      g.beginPath(); g.ellipse(0,bcy,brx*1.03,bry*1.03,0,0,Math.PI*2); g.stroke();
+      g.strokeStyle=hexA(COL.red,0.5*flash); g.lineWidth=2;
+      g.beginPath(); g.ellipse(0,bcy,brx*0.97,bry*0.97,0,0,Math.PI*2); g.stroke();
+      g.restore();
+    }
+    g.restore();
+  } else {
+    // SHIELD DOWN: collapsed to sparks, slowly re-knitting hex from the edges
+    g.save();
+    g.translate(cx+sway, fy);
+    g.globalCompositeOperation='lighter';
+    for(let i=0;i<10;i++){
+      const a=t*0.6 + i*(Math.PI*2/10);
+      const rx=Math.cos(a)*brx0*0.95, ry=bcy+Math.sin(a)*bry0*0.95;
+      const kn=0.15+0.3*(Math.sin(t*2+i)*0.5+0.5);
+      g.strokeStyle=hexA(COL.cyan, kn*0.5); g.lineWidth=1;
+      g.beginPath();
+      const hr2=bw*0.35;
+      for(let k=0;k<6;k++){ const aa=Math.PI/180*(30+60*k); const hpx=rx+Math.cos(aa)*hr2, hpy=ry+Math.sin(aa)*hr2; if(k===0)g.moveTo(hpx,hpy); else g.lineTo(hpx,hpy); }
+      g.closePath(); g.stroke();
+    }
+    for(let i=0;i<14;i++){
+      const sa=i*2.3 + t*3;
+      const rr=(Math.sin(t*4+i*1.3)*0.5+0.5);
+      const sx=Math.cos(sa)*brx0*0.9*rr, sy=bcy+Math.sin(sa)*bry0*0.9*rr;
+      g.fillStyle=hexA(COL.cyan, 0.4+0.5*rr);
+      g.fillRect(sx-1, sy-1, 2.6, 2.6);
+    }
+    g.restore();
+  }
+
+  // ---- TELEGRAPH: heavy overhead swing wind-up toward the player ----
+  if(tele>0){
+    const tg=Math.min(1,tele);
+    const ox=cx, oy=fy-H*1.35;
+    g.save(); g.globalCompositeOperation='lighter';
+    g.strokeStyle=hexA(COL.red, 0.3+0.4*tg); g.lineWidth=3+6*tg;
+    g.beginPath(); g.arc(ox,oy, H*1.6*tg, ang-0.5, ang+0.5); g.stroke();
+    softGlow(g, ox+Math.cos(ang)*H*1.4*tg, oy+Math.sin(ang)*H*1.4*tg, H*0.8*tg, COL.red, 0.5*tg, 0.2*tg);
+    g.restore();
+  }
+
+  d_flash(g,e);
+}
+function drawWarden(g,e){ const cx=e.x+e.w/2, fy=e.y+e.h*0.92;
+const t=Game.t;
+const ph=e.anim||0;
+const frac=Math.max(0,Math.min(1,e.maxhp?e.hp/e.maxhp:1));
+const tele=e.tele||0, exposed=e.exposed||0, sd=e.shieldDown||0;
+d_eshadow(g,e);
+
+const H=e.h;
+const shoulderY=fy-H*1.9;
+const halfTop=H*0.5, halfBot=H*1.2;
+const midY=fy-H*1.15;
+const drumTop=fy-H*2.62, drumBot=fy-H*1.98, drumH=drumBot-drumTop;
+const drumCy=(drumTop+drumBot)/2;
+const rDrumX=H*0.62;
+const sway=Math.sin(t*0.5+ph)*H*0.05;
+const faceCol=shade(COL.ivory,0.82);
+
+const px=(typeof player!=='undefined'&&player)?player.x:e.x;
+const py=(typeof player!=='undefined'&&player)?player.y:e.y;
+const pa=Math.atan2(py-e.y,px-e.x);
+
+// awe halo behind head + vulnerable red wash
+g.save(); g.globalCompositeOperation='lighter';
+softGlow(g,cx,drumCy,H*1.4,COL.cyan,0.05,0.03);
+const vv=Math.max(exposed,Math.min(1,sd));
+if(vv>0) softGlow(g,cx,midY,H*1.1,COL.red,0.05*vv,0.03*vv);
+g.restore();
+
+// ---- ROBE BODY (tall scanline trapezoid) ----
+g.save();
+vgrad(g,cx-halfBot,shoulderY,halfBot*2,fy-shoulderY,shade(COL.steel,0.7),COL.ink);
+g.beginPath();
+g.moveTo(cx-halfTop+sway,shoulderY);
+g.lineTo(cx+halfTop+sway,shoulderY);
+g.quadraticCurveTo(cx+halfBot*0.8,midY,cx+halfBot,fy);
+g.lineTo(cx-halfBot,fy);
+g.quadraticCurveTo(cx-halfBot*0.8,midY,cx-halfTop+sway,shoulderY);
+g.closePath();
+g.fill();
+g.save();
+g.clip();
+const scroll=(t*12)%6;
+for(let yy=shoulderY-6;yy<fy;yy+=5){
+  const y2=yy+scroll;
+  g.strokeStyle=hexA(shade(COL.grass,1.4),0.16);
+  g.lineWidth=1;
+  g.beginPath();g.moveTo(cx-halfBot,y2);g.lineTo(cx+halfBot,y2);g.stroke();
+}
+const tear=shoulderY+((t*45)%(fy-shoulderY));
+g.strokeStyle=hexA(COL.cyan,0.12);
+g.beginPath();g.moveTo(cx-halfBot,tear);g.lineTo(cx+halfBot,tear);g.stroke();
+if(vv>0){
+  g.globalCompositeOperation='lighter';
+  g.strokeStyle=hexA(COL.red,(0.3+0.25*Math.sin(t*9))*vv);
+  g.lineWidth=2.5;
+  g.beginPath();g.moveTo(cx+sway,shoulderY+H*0.2);g.lineTo(cx,fy-H*0.25);g.stroke();
+  softGlow(g,cx,midY,H*0.55,COL.red,0.18*vv,0.06*vv);
+}
+g.restore();
+g.restore();
+d_hem(g,cx-halfBot,fy-H*0.03,halfBot*2,COL.ink,H*0.26);
+
+// ---- LONG CONDUCTING ARMS ----
+const finalPhase=frac<=0.25;
+const conduct=finalPhase?Math.sin(t*3.0+ph):Math.sin(t*0.8+ph);
+const armAmp=finalPhase?1.0:0.4;
+function arm(side){
+  g.save();
+  const sx=cx+side*halfTop*0.8+sway, sy=shoulderY+H*0.12;
+  const hx=cx+side*halfBot*0.9+side*conduct*halfBot*armAmp;
+  const hy=fy-H*0.2-Math.abs(conduct)*H*0.15;
+  const ex=cx+side*halfBot*0.7, ey=midY+H*0.1;
+  g.lineCap='round';
+  g.beginPath();g.moveTo(sx,sy);g.quadraticCurveTo(ex,ey,hx,hy);
+  g.lineWidth=H*0.09;g.strokeStyle=shade(COL.steel,0.55);g.stroke();
+  g.lineWidth=H*0.035;g.strokeStyle=hexA(shade(COL.grass,1.3),0.5);g.stroke();
+  g.fillStyle=faceCol;
+  g.beginPath();g.ellipse(hx,hy,H*0.07,H*0.1,side*0.3,0,Math.PI*2);g.fill();
+  g.restore();
+}
+arm(-1);arm(1);
+
+// ---- CONCENTRIC SIGNAL-SHIELDS (phased by hp) ----
+g.save();
+g.beginPath();g.rect(cx-H*6,fy-H*4.2,H*12,H*4.2);g.clip();
+g.globalCompositeOperation='lighter';
+const shieldsMax=4;
+const shieldsUp=Math.max(0,Math.min(shieldsMax,Math.ceil(frac*shieldsMax)));
+for(let i=0;i<shieldsUp;i++){
+  const rr=halfTop*1.1+i*(H*0.5);
+  const rx=rr, ry=rr*1.15;
+  const spin=t*(0.25+0.12*i)*((i%2)?-1:1)+i*1.3;
+  const outer=(i===shieldsUp-1);
+  const broken=outer&&sd>0;
+  const col=broken?COL.red:COL.cyan;
+  const segs=20;
+  for(let s=0;s<segs;s++){
+    const a0=spin+s/segs*Math.PI*2;
+    const a1=a0+(Math.PI*2/segs)*0.62;
+    const shim=0.45+0.55*Math.sin(t*3+s*0.8+i*1.7);
+    const baseA=broken?(0.4+0.3*Math.sin(t*12)):0.30;
+    g.strokeStyle=hexA(col,Math.max(0,baseA*shim));
+    g.lineWidth=broken?2.6:2;
+    g.beginPath();g.ellipse(cx,midY,rx,ry,0,a0,a1);g.stroke();
+  }
+}
+if(sd>0){
+  const i=shieldsUp;
+  const rr=halfTop*1.1+i*(H*0.5);
+  const grow=1+0.3*(0.5+0.5*Math.sin(t*10));
+  g.strokeStyle=hexA(COL.red,0.4*Math.min(1,sd));
+  g.lineWidth=3;
+  g.beginPath();g.ellipse(cx,midY,rr*grow,rr*grow*1.15,0,0,Math.PI*2);g.stroke();
+}
+g.restore();
+
+// ---- FACE-DRUM (rotating choir of stolen faces) ----
+g.save();
+vgrad(g,cx-rDrumX,drumTop,rDrumX*2,drumH,shade(COL.steel,0.55),COL.ink);
+g.beginPath();
+g.moveTo(cx-rDrumX,drumTop);
+g.lineTo(cx+rDrumX,drumTop);
+g.lineTo(cx+rDrumX,drumBot);
+g.quadraticCurveTo(cx,drumBot+H*0.16,cx-rDrumX,drumBot);
+g.closePath();g.fill();
+g.fillStyle=shade(COL.ink,1.4);
+g.beginPath();g.ellipse(cx,drumTop,rDrumX,H*0.13,0,0,Math.PI*2);g.fill();
+g.strokeStyle=hexA(COL.cyan,0.25);g.lineWidth=1.5;
+g.beginPath();g.ellipse(cx,drumTop,rDrumX,H*0.13,0,0,Math.PI*2);g.stroke();
+g.save();
+g.beginPath();g.rect(cx-rDrumX,drumTop,rDrumX*2,drumH+H*0.16);g.clip();
+for(let k=0;k<14;k++){
+  const yy=drumTop+((t*20+k*7)%drumH);
+  g.strokeStyle=hexA(shade(COL.cyan,0.7),0.06);
+  g.beginPath();g.moveTo(cx-rDrumX,yy);g.lineTo(cx+rDrumX,yy);g.stroke();
+}
+g.restore();
+g.restore();
+
+const drumSpin=t*(tele>0?2.4:0.45)+ph;
+function drawFace(fx,fy2,w,h,a,seed,locked){
+  if(a<=0.03)return;
+  g.save();g.globalAlpha=Math.min(1,a);
+  g.fillStyle=locked?COL.red:faceCol;
+  g.beginPath();g.ellipse(fx,fy2,w,h,0,0,Math.PI*2);g.fill();
+  g.fillStyle=hexA(COL.ink,0.2);
+  g.beginPath();g.ellipse(fx,fy2+h*0.35,w*0.8,h*0.6,0,0,Math.PI*2);g.fill();
+  const es=w*(0.34+0.06*(seed%4));
+  g.fillStyle=hexA(COL.ink,0.8);
+  g.beginPath();g.ellipse(fx-es,fy2-h*0.12,w*0.16,h*0.15,0,0,Math.PI*2);g.fill();
+  g.beginPath();g.ellipse(fx+es,fy2-h*0.12,w*0.16,h*0.15,0,0,Math.PI*2);g.fill();
+  const mo=0.15+0.85*(0.5+0.5*Math.sin(t*(2.5+seed%5)+seed*1.9));
+  g.fillStyle=hexA(COL.ink,0.75);
+  g.beginPath();g.ellipse(fx,fy2+h*0.42,w*0.24,h*0.3*mo,0,0,Math.PI*2);g.fill();
+  if(locked){g.globalCompositeOperation='lighter';softGlow(g,fx,fy2,w*2.4,COL.red,0.5,0.22);}
+  g.restore();
+}
+const rows=3, cols=8, fl=[];
+for(let r=0;r<rows;r++){
+  const rowY=drumTop+drumH*(0.26+0.5*(r/(rows-1)));
+  for(let c=0;c<cols;c++){
+    const th=drumSpin+c/cols*Math.PI*2+r*0.25;
+    const z=Math.cos(th);
+    const fx=cx+Math.sin(th)*rDrumX*0.86;
+    fl.push({fx,fy:rowY,z,seed:r*7+c});
+  }
+}
+fl.sort((a,b)=>a.z-b.z);
+for(const f of fl){
+  const zz=Math.max(0,f.z);
+  const w=H*0.11*(0.28+0.72*zz);
+  const h=H*0.145*(0.5+0.5*zz);
+  const a=0.12+0.9*f.z;
+  drawFace(f.fx,f.fy,w,h,a,f.seed,false);
+}
+
+// ---- TELEGRAPH: lock a face forward, sing a radial pulse ----
+if(tele>0){
+  drawFace(cx,drumCy,H*0.16,H*0.21,1,99,true);
+  g.save();
+  g.beginPath();g.rect(cx-H*8,fy-H*5,H*16,H*5);g.clip();
+  g.globalCompositeOperation='lighter';
+  const pr=H*(0.8+tele*2.2);
+  g.strokeStyle=hexA(COL.red,0.45*Math.min(1,tele));
+  g.lineWidth=3.5;
+  g.beginPath();g.arc(cx,midY,pr,pa-0.55,pa+0.55);g.stroke();
+  g.strokeStyle=hexA(COL.red,0.15*Math.min(1,tele));
+  g.lineWidth=2;
+  g.beginPath();g.ellipse(cx,midY,pr*0.75,pr*0.9,0,0,Math.PI*2);g.stroke();
+  for(let k=0;k<4;k++){
+    const wx=cx+(k-1.5)*H*0.6;
+    const wa=0.15*Math.min(1,tele)*(0.5+0.5*Math.sin(t*6+k));
+    g.strokeStyle=hexA(COL.cyan,wa);
+    g.lineWidth=1;
+    for(let yy=fy-H*0.5;yy<fy;yy+=3){g.beginPath();g.moveTo(wx-H*0.15,yy);g.lineTo(wx+H*0.15,yy);g.stroke();}
+  }
+  g.restore();
+}
+
+d_flash(g,e);
+}
 
 const EXTRA_FLAT = {"cullbrook":[{"t":"st_cable","x":470,"y":500,"w":74,"h":52},{"t":"st_junctionbox","x":1568,"y":360,"w":46,"h":66,"tone":"cyan"},{"t":"x_teddy","x":620,"y":772,"w":30,"h":26},{"t":"x_coat","x":980,"y":360,"w":54,"h":44},{"t":"x_sprayx","x":1180,"y":700,"w":60,"h":60},{"t":"x_spraygone","x":540,"y":500,"w":150,"h":40},{"t":"x_clearnum","x":1600,"y":548,"w":120,"h":46},{"t":"x_tally","x":1566,"y":320,"w":260,"h":60},{"t":"x_papers","x":1000,"y":990,"w":90,"h":70},{"t":"g_puddle","x":600,"y":880,"w":130,"h":72},{"t":"g_puddle","x":1480,"y":600,"w":160,"h":84},{"t":"g_puddle","x":300,"y":1030,"w":110,"h":60},{"t":"g_oilslick","x":1180,"y":720,"w":90,"h":58},{"t":"g_skid","x":880,"y":640,"w":230,"h":70},{"t":"g_skid","x":1300,"y":840,"w":180,"h":56},{"t":"g_zebra","x":965,"y":572,"w":190,"h":346},{"t":"g_roadarrow","x":740,"y":700,"w":56,"h":100},{"t":"g_manhole","x":1350,"y":770,"w":72,"h":72},{"t":"g_draingrate","x":295,"y":912,"w":62,"h":26},{"t":"g_weeds","x":210,"y":470,"w":40,"h":34},{"t":"g_weeds","x":820,"y":940,"w":44,"h":38},{"t":"g_weeds","x":1300,"y":950,"w":38,"h":30},{"t":"g_moss","x":1560,"y":540,"w":90,"h":50},{"t":"g_moss","x":940,"y":355,"w":70,"h":42},{"t":"g_gravel","x":640,"y":460,"w":120,"h":70},{"t":"g_crackedmud","x":1700,"y":940,"w":110,"h":66},{"t":"g_leaves","x":1120,"y":470,"w":120,"h":80},{"t":"g_leaves","x":420,"y":980,"w":140,"h":70},{"t":"g_doubleyellow","x":180,"y":928,"w":620,"h":16},{"t":"g_doubleyellow","x":1500,"y":928,"w":700,"h":16},{"t":"x_cables","x":180,"y":470,"w":760,"h":-10},{"t":"x_cables","x":940,"y":460,"w":820,"h":14},{"t":"x_hangsign","x":1548,"y":362,"w":40,"h":30},{"t":"x_crtwin","x":1600,"y":332,"w":44,"h":32,"tone":"crt"},{"t":"x_gutterdrip","x":1234,"y":190,"w":8,"h":150},{"t":"x_mothlamp","x":575,"y":720,"w":44,"h":44},{"t":"x_mothlamp","x":1720,"y":958,"w":52,"h":52},{"t":"x_puddleglow","x":998,"y":940,"w":112,"h":46},{"t":"x_weeds","x":210,"y":930,"w":26,"h":26},{"t":"x_weeds","x":700,"y":948,"w":22,"h":22},{"t":"x_weeds","x":1360,"y":936,"w":30,"h":28},{"t":"x_weeds","x":2320,"y":700,"w":24,"h":24}],"ashmere":[{"t":"st_junctionbox","x":626,"y":340,"w":46,"h":66,"tone":"red"},{"t":"st_cable","x":1300,"y":900,"w":74,"h":52},{"t":"x_missing","x":1500,"y":300,"w":70,"h":90},{"t":"x_inhaler","x":940,"y":1180,"w":22,"h":40},{"t":"x_shoes","x":1240,"y":960,"w":60,"h":40},{"t":"x_sprayarrow","x":840,"y":560,"w":80,"h":40},{"t":"x_coat","x":620,"y":530,"w":54,"h":44},{"t":"x_teddy","x":1100,"y":800,"w":28,"h":24},{"t":"x_papers","x":300,"y":530,"w":90,"h":70},{"t":"x_clearnum","x":700,"y":1180,"w":110,"h":44},{"t":"g_puddle","x":820,"y":810,"w":150,"h":78},{"t":"g_puddle","x":1360,"y":580,"w":130,"h":70},{"t":"g_puddle","x":640,"y":640,"w":120,"h":64},{"t":"g_oilslick","x":1240,"y":800,"w":86,"h":56},{"t":"g_manhole","x":700,"y":900,"w":66,"h":66},{"t":"g_draingrate","x":810,"y":806,"w":60,"h":26},{"t":"g_skid","x":1250,"y":760,"w":200,"h":60},{"t":"g_roadarrow","x":500,"y":870,"w":54,"h":96},{"t":"g_doubleyellow","x":260,"y":540,"w":520,"h":16},{"t":"g_weeds","x":300,"y":540,"w":42,"h":36},{"t":"g_weeds","x":960,"y":1190,"w":40,"h":34},{"t":"g_weeds","x":1500,"y":540,"w":44,"h":38},{"t":"g_moss","x":280,"y":520,"w":80,"h":48},{"t":"g_moss","x":1500,"y":520,"w":74,"h":44},{"t":"g_gravel","x":1600,"y":900,"w":130,"h":74},{"t":"g_crackedmud","x":760,"y":830,"w":120,"h":70},{"t":"g_crackedmud","x":1400,"y":830,"w":100,"h":60},{"t":"g_leaves","x":420,"y":560,"w":130,"h":76},{"t":"g_leaves","x":1240,"y":1180,"w":120,"h":70},{"t":"x_cables","x":620,"y":300,"w":880,"h":0},{"t":"x_hangsign","x":1488,"y":344,"w":38,"h":28},{"t":"x_crtwin","x":1520,"y":322,"w":44,"h":32,"tone":"candle"},{"t":"x_gutterdrip","x":610,"y":300,"w":8,"h":120},{"t":"x_mothlamp","x":1100,"y":1150,"w":42,"h":42},{"t":"x_puddleglow","x":820,"y":840,"w":124,"h":50},{"t":"x_weeds","x":760,"y":600,"w":28,"h":26},{"t":"x_weeds","x":1380,"y":812,"w":24,"h":24},{"t":"x_weeds","x":300,"y":540,"w":26,"h":26},{"t":"x_weeds","x":2160,"y":700,"w":22,"h":22}],"wrenfield":[{"t":"st_cable","x":1560,"y":476,"w":78,"h":54},{"t":"st_junctionbox","x":1490,"y":280,"w":48,"h":70,"tone":"cyan"},{"t":"x_tally","x":1180,"y":250,"w":280,"h":60},{"t":"x_sprayx","x":1360,"y":850,"w":70,"h":70},{"t":"x_spraygone","x":1490,"y":470,"w":150,"h":40},{"t":"x_missing","x":1490,"y":300,"w":70,"h":90},{"t":"x_shoes","x":900,"y":1000,"w":60,"h":40},{"t":"x_inhaler","x":1420,"y":870,"w":24,"h":42},{"t":"x_sprayarrow","x":1200,"y":1440,"w":80,"h":40},{"t":"g_puddle","x":1250,"y":900,"w":170,"h":88},{"t":"g_puddle","x":700,"y":700,"w":140,"h":74},{"t":"g_puddle","x":1900,"y":1100,"w":150,"h":80},{"t":"g_oilslick","x":1300,"y":830,"w":94,"h":60},{"t":"g_skid","x":1200,"y":1400,"w":240,"h":72},{"t":"g_manhole","x":1300,"y":860,"w":76,"h":76},{"t":"g_draingrate","x":1170,"y":460,"w":64,"h":28},{"t":"g_roadarrow","x":1290,"y":1200,"w":58,"h":104},{"t":"g_doubleyellow","x":300,"y":880,"w":700,"h":16},{"t":"g_weeds","x":260,"y":900,"w":44,"h":38},{"t":"g_weeds","x":1490,"y":460,"w":40,"h":34},{"t":"g_weeds","x":1300,"y":1560,"w":46,"h":40},{"t":"g_moss","x":1170,"y":450,"w":90,"h":52},{"t":"g_moss","x":2000,"y":700,"w":80,"h":48},{"t":"g_gravel","x":500,"y":1100,"w":140,"h":80},{"t":"g_gravel","x":2100,"y":1300,"w":120,"h":70},{"t":"g_crackedmud","x":900,"y":1500,"w":130,"h":76},{"t":"g_leaves","x":1520,"y":520,"w":140,"h":80},{"t":"g_leaves","x":700,"y":1320,"w":130,"h":74},{"t":"x_cables","x":1490,"y":280,"w":700,"h":20},{"t":"x_cables","x":1170,"y":300,"w":-560,"h":26},{"t":"x_hangsign","x":1156,"y":324,"w":40,"h":30},{"t":"x_crtwin","x":1200,"y":300,"w":46,"h":34,"tone":"crt"},{"t":"x_gutterdrip","x":1484,"y":300,"w":8,"h":140},{"t":"x_mothlamp","x":1300,"y":842,"w":48,"h":48},{"t":"x_puddleglow","x":1226,"y":1500,"w":132,"h":52},{"t":"x_weeds","x":1250,"y":1560,"w":30,"h":30},{"t":"x_weeds","x":140,"y":800,"w":26,"h":26},{"t":"x_weeds","x":2440,"y":900,"w":26,"h":26},{"t":"x_weeds","x":1320,"y":880,"w":22,"h":22}]};
 const EXTRA_SOLID = {"cullbrook":[{"t":"st_lamppost","x":640,"y":250,"w":64,"h":310},{"t":"st_oildrum","x":700,"y":465,"w":54,"h":94},{"t":"st_oildrum","x":748,"y":478,"w":48,"h":86},{"t":"st_barrel_tipped","x":560,"y":512,"w":130,"h":52},{"t":"st_cone","x":520,"y":508,"w":40,"h":58},{"t":"st_pallet","x":360,"y":492,"w":104,"h":66},{"t":"st_roadsign","x":220,"y":430,"w":76,"h":150,"tone":"closed"},{"t":"st_sandbags","x":1380,"y":498,"w":170,"h":58},{"t":"st_gascylinder","x":1500,"y":452,"w":44,"h":104,"tone":"amber"},{"t":"st_wheeliebin","x":820,"y":918,"w":58,"h":88},{"t":"st_bollard","x":900,"y":930,"w":34,"h":72},{"t":"st_bollard","x":948,"y":932,"w":32,"h":68},{"t":"st_tyrestack","x":1340,"y":924,"w":84,"h":78},{"t":"st_rubble","x":1450,"y":936,"w":140,"h":64},{"t":"st_trolley","x":470,"y":938,"w":120,"h":74},{"t":"st_jerrycan","x":720,"y":930,"w":36,"h":50},{"t":"st_lamppost","x":2000,"y":690,"w":64,"h":310,"tone":"dead"},{"t":"st_roadsign","x":2060,"y":470,"w":70,"h":150,"tone":"place","label":"CULLBROOK"},{"t":"x_suitcase","x":592,"y":470,"w":80,"h":54},{"t":"x_memorial","x":700,"y":930,"w":70,"h":80},{"t":"x_boardeddoor","x":1200,"y":992,"w":70,"h":150},{"t":"x_mattress","x":460,"y":935,"w":140,"h":70},{"t":"x_pram","x":1290,"y":700,"w":90,"h":80},{"t":"shopfront","x":660,"y":405,"w":190,"h":140},{"t":"terracehouse","x":1300,"y":375,"w":120,"h":170},{"t":"telephone_exchange","x":500,"y":478,"w":42,"h":64},{"t":"bus_shelter","x":1010,"y":495,"w":110,"h":60},{"t":"g_branch","x":470,"y":470,"w":130,"h":42}],"ashmere":[{"t":"st_lamppost","x":700,"y":250,"w":60,"h":300},{"t":"st_roadsign","x":170,"y":300,"w":74,"h":150,"tone":"place","label":"ASHMERE"},{"t":"st_oildrum","x":1440,"y":450,"w":54,"h":92},{"t":"st_oildrum","x":1486,"y":462,"w":46,"h":82},{"t":"st_barrel_tipped","x":1360,"y":500,"w":126,"h":50},{"t":"st_wheeliebin","x":1850,"y":360,"w":56,"h":86},{"t":"st_gascylinder","x":1250,"y":1000,"w":44,"h":100,"tone":"red"},{"t":"st_sandbags","x":860,"y":1240,"w":180,"h":56},{"t":"st_cone","x":790,"y":560,"w":38,"h":56},{"t":"st_cone","x":1400,"y":560,"w":38,"h":56},{"t":"st_bollard","x":640,"y":560,"w":34,"h":70},{"t":"st_trolley","x":1410,"y":820,"w":120,"h":74},{"t":"st_rubble","x":1300,"y":240,"w":140,"h":64},{"t":"st_tyrestack","x":200,"y":1200,"w":82,"h":76},{"t":"st_pallet","x":280,"y":1180,"w":104,"h":64},{"t":"st_jerrycan","x":1520,"y":476,"w":36,"h":50},{"t":"x_suitcasepile","x":600,"y":300,"w":130,"h":90},{"t":"x_memorial","x":1500,"y":530,"w":70,"h":80},{"t":"terracehouse","x":700,"y":300,"w":120,"h":170},{"t":"shopfront","x":1640,"y":560,"w":180,"h":140},{"t":"telephone_exchange","x":640,"y":470,"w":42,"h":64},{"t":"bus_shelter","x":1420,"y":900,"w":110,"h":60},{"t":"g_branch","x":640,"y":250,"w":120,"h":40}],"wrenfield":[{"t":"st_lamppost","x":1180,"y":520,"w":64,"h":320},{"t":"st_roadsign","x":980,"y":1420,"w":78,"h":156,"tone":"closed"},{"t":"st_roadsign","x":1520,"y":1440,"w":72,"h":150,"tone":"divert"},{"t":"st_oildrum","x":1540,"y":300,"w":56,"h":96},{"t":"st_oildrum","x":1590,"y":312,"w":48,"h":86},{"t":"st_barrel_tipped","x":1520,"y":400,"w":130,"h":52},{"t":"st_gascylinder","x":1640,"y":300,"w":46,"h":104,"tone":"grey"},{"t":"st_pallet","x":1540,"y":436,"w":104,"h":66},{"t":"st_sandbags","x":280,"y":400,"w":190,"h":60},{"t":"st_tyrestack","x":360,"y":1400,"w":86,"h":80},{"t":"st_rubble","x":2200,"y":1420,"w":150,"h":66},{"t":"st_trolley","x":900,"y":1560,"w":122,"h":76},{"t":"st_cone","x":1240,"y":820,"w":40,"h":58},{"t":"st_cone","x":1360,"y":820,"w":38,"h":56},{"t":"st_bollard","x":1200,"y":1470,"w":34,"h":72},{"t":"st_bollard","x":1360,"y":1470,"w":34,"h":72},{"t":"st_wheeliebin","x":2100,"y":600,"w":58,"h":88},{"t":"st_jerrycan","x":300,"y":436,"w":36,"h":50},{"t":"st_lamppost","x":360,"y":1180,"w":62,"h":310,"tone":"dead"},{"t":"x_boardeddoor","x":1170,"y":460,"w":70,"h":150},{"t":"x_suitcase","x":1180,"y":1540,"w":80,"h":54},{"t":"x_mattress","x":600,"y":1200,"w":150,"h":76},{"t":"x_memorial","x":1400,"y":1560,"w":70,"h":80},{"t":"x_pram","x":700,"y":900,"w":90,"h":80},{"t":"g_branch","x":1500,"y":500,"w":140,"h":44},{"t":"g_branch","x":600,"y":1300,"w":120,"h":40}]};
@@ -2902,14 +4187,20 @@ function drawLighting(g,camX,camY){
       gr.addColorStop(0,hexA(L.c,0.07*L.i*flick*lightScale)); gr.addColorStop(1,'rgba(0,0,0,0)');
       g.fillStyle=gr; g.fillRect(sx-rr*0.5,sy,rr,rr*1.7); }
   }
-  // Ellie's lantern — a soft, wide, even pool (no hot core): lights her surroundings gently
-  const lanR=250+Math.sin(Game.t*3)*10, lanScale=Math.max(0.6,lightScale);
+  // Ellie's lantern — a soft wide pool that recoils from wrongness (System 3: guttering lantern)
+  let wrong=Game.dread;
+  for(const e of scene.enemies){ if(!e.dead && e.exposed>0) wrong=Math.max(wrong,0.8); }
+  const gutter=wrong*(0.55+0.45*Math.sin(Game.t*37)*Math.sin(Game.t*13));   // irregular, breath-like flicker
+  const lanR=(250+Math.sin(Game.t*3)*10)*(1-0.15*gutter), lanScale=Math.max(0.6,lightScale);
   { const sx=player.x-camX, sy=player.y-camY-12;
     const grd=g.createRadialGradient(sx,sy,lanR*0.16,sx,sy,lanR);   // inner radius avoids a bright point
-    grd.addColorStop(0,'rgba(236,196,140,'+(0.22*lanScale)+')');
-    grd.addColorStop(0.45,'rgba(226,180,120,'+(0.12*lanScale)+')');
+    grd.addColorStop(0,'rgba(236,196,140,'+(0.30*lanScale*(1-0.22*gutter))+')');
+    grd.addColorStop(0.45,'rgba(226,180,120,'+(0.16*lanScale*(1-0.22*gutter))+')');
     grd.addColorStop(1,'rgba(0,0,0,0)');
-    g.fillStyle=grd; g.fillRect(sx-lanR,sy-lanR,lanR*2,lanR*2); }
+    g.fillStyle=grd; g.fillRect(sx-lanR,sy-lanR,lanR*2,lanR*2);
+    // rare hard stutter — the flame nearly dies for a single frame
+    if(gutter>0.72 && Math.sin(Game.t*61)>0.6){ g.save(); g.globalCompositeOperation='multiply';
+      g.fillStyle=hexA(COL.ink,0.25); g.fillRect(sx-lanR,sy-lanR,lanR*2,lanR*2); g.restore(); } }
   // --- shadows: occluders darken the lit pools behind them (dynamic from the lantern, static from lamps) ---
   g.globalCompositeOperation='source-over';
   const occ = scene.occluders || scene.walls;
@@ -2923,13 +4214,65 @@ function drawLighting(g,camX,camY){
 }
 // cinematic colour grade — cool, crushed shadows + a touch of warmth in the light
 function drawGrade(g){
+  const dark=skyState((State.time/3600)%24).dark;
+  const nf=clamp((dark-0.3)/0.36,0,1);            // 0 by day, ~1 deep night
   g.save();
-  g.globalCompositeOperation='multiply';                       // cool + deepen shadows (teal grade)
+  g.globalCompositeOperation='multiply';          // cooler + darker teal grade as night deepens
   const gr=g.createLinearGradient(0,0,0,VIEW_H);
-  gr.addColorStop(0,'rgb(196,206,214)'); gr.addColorStop(1,'rgb(168,180,192)');
+  gr.addColorStop(0,'rgb('+(196-40*nf)+','+(206-34*nf)+','+(214-20*nf)+')');
+  gr.addColorStop(1,'rgb('+(168-46*nf)+','+(180-40*nf)+','+(192-24*nf)+')');
   g.fillStyle=gr; g.fillRect(0,0,VIEW_W,VIEW_H);
-  g.globalCompositeOperation='overlay';                        // gentle contrast + warmth in the mids
-  g.fillStyle='rgba(70,52,30,0.10)'; g.fillRect(0,0,VIEW_W,VIEW_H);
+  g.globalCompositeOperation='overlay';           // pull the warm mids out at night
+  g.fillStyle='rgba(70,52,30,'+(0.10-0.06*nf)+')'; g.fillRect(0,0,VIEW_W,VIEW_H);
+  if(nf>0){ g.globalCompositeOperation='multiply'; // extra corner-crush deep at night
+    const vg=g.createRadialGradient(VIEW_W/2,VIEW_H/2,VIEW_H*0.3, VIEW_W/2,VIEW_H/2,VIEW_W*0.7);
+    vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(6,8,12,'+(0.16*nf)+')');
+    g.fillStyle=vg; g.fillRect(0,0,VIEW_W,VIEW_H); }
+  g.restore();
+}
+// Proximity dread overlay + the two sub-systems it renders on top of (spotted-sting, fog-figure).
+function drawDread(g,camX,camY){
+  const d=Game.dread;
+  if(d>0.01){
+    // pull colour toward grey as the threat closes
+    g.save(); g.globalCompositeOperation='saturation';
+    g.fillStyle='rgba(128,128,128,'+(0.4*d)+')'; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
+    // constricting, throbbing vignette
+    const thr=0.5+0.5*Math.sin(Game.t*4.2);
+    const inner=VIEW_H*(0.49-0.15*d), outer=VIEW_W*(0.74-0.14*d);
+    const vg=g.createRadialGradient(VIEW_W/2,VIEW_H*0.5,inner, VIEW_W/2,VIEW_H*0.5,outer);
+    vg.addColorStop(0,'rgba(0,0,0,0)');
+    vg.addColorStop(0.7,hexA(COL.ink,0.10*d));
+    vg.addColorStop(1,hexA(COL.ink,(0.44+0.20*thr)*d));
+    g.fillStyle=vg; g.fillRect(0,0,VIEW_W,VIEW_H);
+    // low arterial red pulsing at the rim on the beat
+    if(d>0.4){ g.save(); g.globalCompositeOperation='lighter';
+      const rg=g.createRadialGradient(VIEW_W/2,VIEW_H/2,outer*0.7, VIEW_W/2,VIEW_H/2,outer);
+      rg.addColorStop(0,'rgba(0,0,0,0)'); rg.addColorStop(1,hexA(COL.redDim,0.10*d*thr));
+      g.fillStyle=rg; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore(); }
+  }
+  drawSting(g); drawScare(g);
+}
+// System 2 render — hard cyan flash, collapsing iris ring, chromatic edge bars, decaying over ~0.6s
+function drawSting(g){ const s=Game.sting; if(s<=0) return; const k=s*s;
+  g.save(); g.globalCompositeOperation='lighter';
+  g.fillStyle=hexA(COL.cyan,0.16*k); g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
+  g.save(); g.globalAlpha=0.5*k; g.strokeStyle=COL.cyan; g.lineWidth=2;
+  const rr=VIEW_W*(0.2+0.6*(1-s));                 // ring snaps inward as the sting decays
+  g.beginPath(); g.arc(VIEW_W/2,VIEW_H/2,rr,0,7); g.stroke(); g.restore();
+  g.save(); g.globalCompositeOperation='screen'; g.globalAlpha=0.25*k;
+  g.fillStyle=COL.red;  g.fillRect(0,0,3,VIEW_H);
+  g.fillStyle=COL.cyan; g.fillRect(VIEW_W-3,0,3,VIEW_H); g.restore();
+}
+// System 4 render — featureless silhouette with two dim amber eye-points, fades in and gone in ~0.22s
+function drawScare(g){ const s=Game.scareT; if(s<=0) return;
+  const a=Math.sin((0.22-s)/0.22*Math.PI);         // fade in, peak, fade out
+  const x=Game.scareX, y=Game.scareY, hh=64;
+  g.save(); g.globalAlpha=0.55*a; g.fillStyle=COL.ink;
+  g.beginPath(); g.ellipse(x,y+hh*0.5,15,hh*0.5,0,0,7); g.fill();   // body
+  g.beginPath(); g.arc(x,y-hh*0.35,10,0,7); g.fill();               // head
+  g.globalCompositeOperation='lighter'; g.globalAlpha=0.4*a; g.fillStyle=COL.amberDim;
+  g.beginPath(); g.arc(x-4,y-hh*0.36,1.4,0,7); g.arc(x+4,y-hh*0.36,1.4,0,7); g.fill();   // eye-points
   g.restore();
 }
 // fog, ash motes and film grain — screen-space, drawn over the lit scene

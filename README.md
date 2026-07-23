@@ -27,7 +27,8 @@ You are **Ellie Ward**, a field repairer following the trail of your sister Magg
 - **A trace-receiver investigation system** — locate cached audio and telemetry, isolate a voice, and weigh it against physical evidence. Every trace starts *Unverified*.
 - **Documents & records** — dozens of readable notes, letters, transmissions and eerie environmental beats hidden across the world; everything you find is logged.
 - **Choices with consequences** — route scarce power, pick an alliance, and decide what the network *becomes* (Restore / Mesh / Sever). Your path resolves into one of twelve endings.
-- **Small-scale survival combat** — the receiver is a weapon: sweep to expose, discharge to strip shields. Six enemy families, each built on the network's logic.
+- **Small-scale survival combat** — the receiver is a weapon: sweep to expose, discharge to strip shields. Six enemy families, each an uncanny *reconstruction* the network rebuilt wrong, up to the face-drum of the Choir Warden.
+- **Proximity dread** — as a reconstruction closes in, colour drains, the vignette tightens, a heartbeat quickens, and your lantern gutters near the wrongness.
 - **Crafting, a day/night cycle, dynamic 2-D lighting with cast shadows, and a fully procedural audio engine** — no recorded voice, which is also the fiction.
 
 ## Controls
