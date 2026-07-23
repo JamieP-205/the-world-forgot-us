@@ -4,6 +4,17 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] — 2026-07-23
+
+### Added
+- Subtle procedural ambient **music** — a slow, evolving minor pad with sparse, distant cold-piano tones that plays beneath the rain and thunder and grows darker and more dissonant as dread rises.
+- A dense layer of **world detail & animation**: rain-fed puddles with ripples, a wet sheen that tracks the nearest light, thin ground mist that curls with the wind, wind-blown leaves and litter, water dripping from edges, and moths spiralling in lamplight.
+- **Sky & weather drama**: parallax fog banks, embers rising through the light, far-off sheet lightning and jagged forked bolts, rain-on-the-lens streaks, and a breathing vignette.
+- **More tension & scares**: a pale face at a dark window that's gone when you look again, a figure revealed only in a lightning flash, shapes that dart across far alleys, the lantern dying for a long beat, and the sense of being watched the longer you linger.
+
+### Fixed
+- Shadows now read correctly on every item: added an always-on ambient contact shadow under all props and buildings, and stopped small clutter from casting hard directional wedges (which produced an ugly starburst around lamps). Large structures still cast clean directional shadows.
+
 ## [1.2.0] — 2026-07-23
 
 ### Changed

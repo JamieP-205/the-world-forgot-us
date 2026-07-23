@@ -29,7 +29,8 @@ You are **Ellie Ward**, a field repairer following the trail of your sister Magg
 - **Choices with consequences** — route scarce power, pick an alliance, and decide what the network *becomes* (Restore / Mesh / Sever). Your path resolves into one of twelve endings.
 - **Small-scale survival combat** — the receiver is a weapon: sweep to expose, discharge to strip shields. Six enemy families, each an uncanny *reconstruction* the network rebuilt wrong, up to the face-drum of the Choir Warden.
 - **Proximity dread** — as a reconstruction closes in, colour drains, the vignette tightens, a heartbeat quickens, and your lantern gutters near the wrongness.
-- **Crafting, a day/night cycle, dynamic 2-D lighting with cast shadows, and a fully procedural audio engine** — no recorded voice, which is also the fiction.
+- **A living, storm-soaked world** — rain-fed puddles and ripples, drifting fog banks, ground mist, embers, wind-blown litter, sheet lightning and forked bolts, moths in the lamplight, and quiet scares glimpsed at the edge of sight.
+- **Crafting, a day/night cycle, dynamic 2-D lighting with contact + cast shadows, and a fully procedural audio engine** — evolving ambient music beneath the rain and thunder, and no recorded voice, which is also the fiction.
 
 ## Controls
 

@@ -160,6 +160,7 @@ const Audio = (()=> {
     const hp=ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=500;
     rainGain=ctx.createGain(); rainGain.gain.value=0.05;
     src.connect(bp); bp.connect(hp); hp.connect(rainGain); rainGain.connect(master); src.start();
+    try{ startMusic(); }catch(e){}
   }
   function env(g,t0,a,d,peak){ g.gain.setValueAtTime(0.0001,t0);
     g.gain.exponentialRampToValueAtTime(peak,t0+a);
@@ -170,6 +171,106 @@ const Audio = (()=> {
     o.type=type||'square'; o.frequency.value=freq; if(detune)o.detune.value=detune;
     env(g,t,0.006,dur,peak||0.2); o.connect(g); g.connect(master); o.start(t); o.stop(t+dur+0.05);
   }
+  /* ambient music layer */
+// ================= Ambient MUSIC layer =================
+// Slow evolving minor pad + sparse distant cold-piano/music-box tones.
+// Sits under the rain/thunder, darkens/dissonates as Game.dread rises.
+// Self-scheduling via ctx-time + recursive setTimeout (no interval drift:
+// every chord is re-anchored to ctx.currentTime, chords crossfade-overlap).
+
+var musGain, musReverb, musRevGain;
+
+function musImpulse(seconds, decay){            // cheap decaying-noise reverb IR
+  var rate = ctx.sampleRate, len = Math.max(1, (seconds*rate)|0);
+  var buf = ctx.createBuffer(2, len, rate);
+  for(var ch=0; ch<2; ch++){
+    var d = buf.getChannelData(ch);
+    for(var i=0;i<len;i++) d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
+  }
+  return buf;
+}
+
+function initMusicBus(){
+  if(musGain) return;
+  musGain = ctx.createGain();
+  musGain.gain.setValueAtTime(0.0001, ctx.currentTime);         // start silent
+  musGain.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 8); // slow fade-in
+  musGain.connect(master);
+  musReverb = ctx.createConvolver();
+  musReverb.buffer = musImpulse(3.2, 3.0);      // long, distant tail
+  musRevGain = ctx.createGain();
+  musRevGain.gain.value = 0.9;
+  musReverb.connect(musRevGain);
+  musRevGain.connect(musGain);
+}
+
+function musNote(semi){ return 110 * Math.pow(2, semi/12); }     // base = A2
+
+// One pad chord: intervals (semitones over A2) swelling in/out over dur.
+function musPad(intervals, t0, dur){
+  var dread = (window.Game && Game.dread) ? Game.dread : 0;
+  var peak   = 0.16 * (0.8 + dread*0.5);        // a touch louder when tense
+  var cutoff = 620 - dread*260;                 // DARKER as dread rises
+  var lp = ctx.createBiquadFilter();
+  lp.type='lowpass'; lp.frequency.setValueAtTime(cutoff, t0); lp.Q.value=0.7;
+  var g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(peak, t0 + dur*0.35);      // slow swell
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);          // slow release
+  lp.connect(g); g.connect(musGain); g.connect(musReverb);
+  var voices = intervals.slice();
+  if(dread > 0.55) voices.push(intervals[0] + 13);   // b9 crush at high dread
+  for(var i=0;i<voices.length;i++){
+    var o = ctx.createOscillator();
+    o.type='triangle';
+    o.frequency.value = musNote(voices[i]);
+    o.detune.value = (i - voices.length/2) * (4 + dread*10);      // beating widens
+    var vg = ctx.createGain(); vg.gain.value = 1/(voices.length+1);
+    o.connect(vg); vg.connect(lp);
+    o.start(t0); o.stop(t0 + dur + 0.05);
+  }
+}
+
+// Sparse distant single tone (cold piano / music box), soft mallet + long tail.
+function musColdTone(t0){
+  var dread = (window.Game && Game.dread) ? Game.dread : 0;
+  var consonant = [24,27,31,36,39];             // A4 C5 E5 A5 C6 (minor pentatonic)
+  var dissonant = [25,30,33,37,42];             // b9 / tritone / #5 colors
+  var pool = (dread > 0.4 && Math.random() < dread) ? dissonant : consonant;
+  var semi = pool[(Math.random()*pool.length)|0];
+  var o = ctx.createOscillator();
+  o.type = Math.random()<0.5 ? 'sine' : 'triangle';
+  o.frequency.value = musNote(semi);
+  var g = ctx.createGain();
+  var lvl = 0.05 * (0.7 + dread*0.6);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(lvl, t0 + 0.012);          // soft attack (no click)
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + 2.6);         // long lonely decay
+  o.connect(g); g.connect(musGain); g.connect(musReverb);
+  o.start(t0); o.stop(t0 + 2.7);
+}
+
+// Recursive ctx-time scheduler; each call schedules ONE chord + its tones.
+function musicLoop(){
+  var dread = (window.Game && Game.dread) ? Game.dread : 0;
+  var t = ctx.currentTime + 0.06;
+  var prog = musicLoop._prog || (musicLoop._prog = [
+    [0,3,7,10],   // Am7   (A C E G)
+    [-4,0,3,7],   // Fmaj7 (F A C E)
+    [-7,-3,0,5],  // Dm    (D F A)
+    [-5,-1,2,7]   // Em    (E G B)
+  ]);
+  var idx = musicLoop._idx = ((musicLoop._idx==null?-1:musicLoop._idx)+1) % prog.length;
+  var dur = 11 - dread*3 + Math.random()*3;      // ~8..14s, more restless w/ dread
+  musPad(prog[idx], t, dur);
+  var n = (Math.random() < 0.5 + dread*0.4) ? 1 : 0;   // 0-2 sparse tones
+  if(dread > 0.5 && Math.random() < dread) n += 1;
+  for(var k=0;k<n;k++) musColdTone(t + 1.5 + Math.random()*(dur-2));
+  setTimeout(musicLoop, dur*0.85*1000);           // next chord overlaps -> crossfade
+}
+
+function startMusic(){ initMusicBus(); musicLoop(); }
+
   return {
     unlock,
     setOn(v){ on=v; if(master) master.gain.setTargetAtTime(v?0.85:0.0, ctx.currentTime,0.1); },
@@ -1638,6 +1739,576 @@ function resize(){
 addEventListener('resize',resize);
 
 let cam={x:0,y:0};
+
+/* ===== POLISH FEATURES (workflow: world-life + sky-drama + tension) ===== */
+function dp_h(n){ n=(n*374761393+668265263)|0; n=(n^(n>>13))*1274126177|0; return ((n^(n>>16))>>>0)/4294967296; }
+const DP_TILE=240;
+const DBR=[]; (function(){ for(let i=0;i<40;i++){ DBR.push({x:Math.random(),y:Math.random(),vy:0.5+Math.random()*0.8,ph:Math.random()*6.28,sz:2+Math.random()*3,ty:Math.random()<0.4?1:0,rot:Math.random()*6.28,vr:(Math.random()-0.5)*3,px:null,py:0}); } })();
+let DBR_lt=0;
+function gm_h(n){ n=(n*668265263+374761393)|0; n=(n^(n>>15))*2246822519|0; return ((n^(n>>13))>>>0)/4294967296; }
+const GM_TILE=300;
+var _fogInit=false,_fog=[];
+function _initFog(){ if(_fogInit)return; _fogInit=true;
+  var rows=[{y:0.16,col:'#252b31',a:0.05,rr:0.30,sp:0.010},
+            {y:0.42,col:'#2f363d',a:0.06,rr:0.26,sp:0.016},
+            {y:0.74,col:'#3a424a',a:0.07,rr:0.22,sp:0.024}];
+  for(var r=0;r<rows.length;r++){
+    for(var i=0;i<5;i++){
+      _fog.push({ y: rows[r].y + (i%2?0.02:-0.02), col: rows[r].col, a: rows[r].a,
+        rr: rows[r].rr*(0.8+0.4*(((i*7)%5)/5)), sp: rows[r].sp,
+        x: i/5 + r*0.11, ph: i*1.7 + r*2.3, depth: r });
+    }
+  }
+}
+var _embInit=false,_emb=[];
+function _initEmb(){ if(_embInit)return; _embInit=true;
+  for(var i=0;i<28;i++){
+    _emb.push({ x:Math.random(), y:Math.random(), sp:0.02+Math.random()*0.05,
+      sz:0.6+Math.random()*1.6, ph:Math.random()*6.2832, sw:0.4+Math.random()*0.8,
+      warm: Math.random()<0.72 });
+  }
+}
+var _boltPrev=0,_boltPath=null,_boltSide=1;
+function _genBolt(){
+  var pts=[]; var x=0.2+Math.random()*0.6; pts.push([x,0]);
+  var segs=8+((Math.random()*4)|0);
+  for(var i=1;i<=segs;i++){
+    x=clamp(x+(Math.random()-0.5)*0.10,0.05,0.95);
+    pts.push([x,(i/segs)*0.62]);
+  }
+  _boltPath=pts; _boltSide=Math.random()<0.5?-1:1;
+}
+function _strokeBolt(g,w,h){
+  var p=_boltPath; if(!p)return;
+  g.beginPath(); g.moveTo(p[0][0]*w,p[0][1]*h);
+  for(var i=1;i<p.length;i++) g.lineTo(p[i][0]*w,p[i][1]*h);
+  var m=p[(p.length/2)|0];
+  g.moveTo(m[0]*w,m[1]*h);
+  g.lineTo((m[0]+_boltSide*0.12)*w,(m[1]+0.18)*h);
+  g.stroke();
+}
+var _lensInit=false,_lens=[];
+function _initLens(){ if(_lensInit)return; _lensInit=true;
+  for(var i=0;i<18;i++){
+    _lens.push({ x:Math.random(), y:Math.random()*0.35, len:6+Math.random()*22,
+      w:1+Math.random()*1.6, sp:0.004+Math.random()*0.02, ph:Math.random()*6.2832 });
+  }
+}
+var _scanPat=null;
+function _getScan(g){
+  if(_scanPat) return _scanPat;
+  var c=document.createElement('canvas'); c.width=2; c.height=3;
+  var cc=c.getContext('2d');
+  cc.fillStyle='rgba(0,0,0,0.55)'; cc.fillRect(0,2,2,1);
+  _scanPat=g.createPattern(c,'repeat'); return _scanPat;
+}
+// MICRO-SCARE: a pale face at a dark upper window — appears, then gone if you look (approach). Rare, quiet-only.
+const _face={next:9+Math.random()*22, on:false, end:0, wx:0, wy:0, alpha:0};
+// THUNDER-SYNCED: a still figure revealed only at the peak of a lightning flash, absent the rest of the time.
+const _bf={prev:0, show:false, sx:0};
+// A hunched shape DARTS across the far/peripheral band of view, then is gone. Rare, quiet-only.
+const _dart={next:15+Math.random()*26, on:false, t0:0, dur:0.5, y:0, x0:0, dirx:1, len:0};
+// The lantern DIES for a long beat, then snaps back. Rare, quiet-only. Never fully blacks the core.
+const _lan={next:45+Math.random()*75, phase:0, t0:0};
+// SLOW BUILD: stand still too long and the world leans in — vignette tightens, whispers move closer.
+const _lin={px:0, py:0, linger:0, nextW:0, init:false};
+// Faint eyes on a nearby surface whose pupils TRACK you, then fade. Rare, quiet-only.
+const _eyes={next:22+Math.random()*30, on:false, end:0, x:0, y:0, a:0};
+
+// d_puddles
+function d_puddles(g,camX,camY){
+  if(scene.indoor) return;
+  const t=Game.t;
+  const hour=(State.time/3600)%24, sky=skyState(hour);
+  const refl='rgba('+sky.top[0]+','+sky.top[1]+','+sky.top[2]+',';
+  const ix0=Math.floor((camX-DP_TILE)/DP_TILE), ix1=Math.floor((camX+VIEW_W+DP_TILE)/DP_TILE);
+  const iy0=Math.floor((camY-DP_TILE)/DP_TILE), iy1=Math.floor((camY+VIEW_H+DP_TILE)/DP_TILE);
+  g.save();
+  for(let iy=iy0; iy<=iy1; iy++){
+    for(let ix=ix0; ix<=ix1; ix++){
+      const s=(ix*73856093) ^ (iy*19349663);
+      const r0=dp_h(s), r1=dp_h(s+1), r2=dp_h(s+2), r3=dp_h(s+3);
+      if(r0>0.55) continue;                              // ~55% of tiles carry a puddle
+      const cx=ix*DP_TILE + 30 + r1*(DP_TILE-60);
+      const cy=iy*DP_TILE + 30 + r2*(DP_TILE-60);
+      if(cy<500 || cy>935) continue;                     // only on the wet road/verge band
+      const rw=26+r3*40, rh=rw*(0.34+0.10*r1);
+      // reflective wet body — sky-tinted centre fading to dark rim
+      g.globalCompositeOperation='source-over';
+      let gr=g.createRadialGradient(cx,cy-rh*0.35,rh*0.15,cx,cy,rw);
+      gr.addColorStop(0, refl+(0.10+0.06*r2).toFixed(3)+')');
+      gr.addColorStop(0.6,'rgba(20,26,30,0.26)');
+      gr.addColorStop(1,'rgba(10,13,16,0)');
+      g.fillStyle=gr; g.beginPath(); g.ellipse(cx,cy,rw,rh,0,0,7); g.fill();
+      g.strokeStyle=refl+'0.05)'; g.lineWidth=1; g.beginPath(); g.ellipse(cx,cy,rw*0.94,rh*0.94,0,0,7); g.stroke();
+      // rain-fed ripples — two staggered expanding rings, desynced per puddle
+      g.globalCompositeOperation='lighter';
+      const spd=0.6+r3*0.6;
+      for(let k=0;k<2;k++){
+        const ph=(t*spd + r1*3 + k*0.5)%1;
+        const rr=ph*rw*0.92, a=(1-ph)*0.10;
+        if(a<=0.004) continue;
+        g.strokeStyle=refl+a.toFixed(3)+')'; g.lineWidth=1;
+        g.beginPath(); g.ellipse(cx,cy,rr,rr*(rh/rw),0,0,7); g.stroke();
+      }
+    }
+  }
+  g.globalCompositeOperation='source-over'; g.restore();
+}
+
+// d_wetSheen
+function d_wetSheen(g,camX,camY){
+  if(scene.indoor || !scene.lights) return;
+  const t=Game.t;
+  g.save(); g.globalCompositeOperation='lighter';
+  for(const L of scene.lights){
+    if(L.x<camX-200||L.x>camX+VIEW_W+200||L.y<camY-120||L.y>camY+VIEW_H+320) continue;
+    if(L.y>935) continue;                                 // light must be above the wet ground
+    const warm=(L.c===COL.amber||L.c==='#c98a3a');
+    const flick=warm?(0.85+0.15*Math.sin(t*7+L.x)):1;
+    const len=Math.min(150,L.r*0.6), wid=Math.min(28,L.r*0.16), topY=L.y+6;
+    const gr=g.createLinearGradient(L.x,topY,L.x,topY+len);
+    gr.addColorStop(0,hexA(L.c,0.16*L.i*flick));
+    gr.addColorStop(0.5,hexA(L.c,0.05*L.i*flick));
+    gr.addColorStop(1,hexA(L.c,0));
+    g.fillStyle=gr;
+    // wavering specular smear reflected down the wet asphalt
+    g.beginPath();
+    for(let s=0;s<=6;s++){ const f=s/6, y=topY+f*len, wob=Math.sin(t*2+f*5+L.x)*wid*0.25*(1-f); g.lineTo(L.x-wid*(1-f*0.6)+wob, y); }
+    for(let s=6;s>=0;s--){ const f=s/6, y=topY+f*len, wob=Math.sin(t*2+f*5+L.x)*wid*0.25*(1-f); g.lineTo(L.x+wid*(1-f*0.6)+wob, y); }
+    g.closePath(); g.fill();
+  }
+  g.globalCompositeOperation='source-over'; g.restore();
+}
+
+// d_dripEdges
+function d_dripEdges(g,camX,camY){
+  if(scene.indoor) return;
+  const t=Game.t;
+  g.save();
+  const P=scene.props;
+  for(let i=0;i<P.length;i++){ const p=P[i];
+    if(p.w<24||p.h<50) continue;
+    if(p.x+p.w<camX-40||p.x>camX+VIEW_W+40||p.y+p.h<camY-40||p.y>camY+VIEW_H+40) continue;
+    const yTop=p.y+6, yBot=p.y+p.h-3, fall=yBot-yTop;
+    for(let k=0;k<2;k++){
+      const dx=p.x + p.w*(k?0.72:0.26) + ((i*13+k*7)%5-2);
+      const period=1.6+((i*7+k*3)%5)*0.35;
+      const ph=((t + i*0.37 + k*0.8)%period)/period;     // 0..1 fall cycle
+      const dy=yTop+ph*fall;
+      g.globalCompositeOperation='source-over';
+      g.fillStyle='rgba(150,170,180,0.22)'; g.fillRect(dx-0.6, dy-3, 1.4, 4);   // elongated drop
+      g.fillStyle='rgba(185,205,215,0.16)'; g.fillRect(dx-0.4, dy-1, 1.0, 2);   // bright core
+      if(ph>0.86){                                        // impact splash at the base
+        const sfrac=(ph-0.86)/0.14, rr=1+sfrac*5, a=(1-sfrac)*0.16;
+        g.globalCompositeOperation='lighter';
+        g.strokeStyle='rgba(170,190,200,'+a.toFixed(3)+')'; g.lineWidth=1;
+        g.beginPath(); g.ellipse(dx,yBot,rr,rr*0.4,0,0,7); g.stroke();
+        g.fillStyle='rgba(185,205,215,'+(a*1.2).toFixed(3)+')';
+        g.fillRect(dx-2, yBot-sfrac*3, 1,1); g.fillRect(dx+2, yBot-sfrac*2.4, 1,1);
+      }
+    }
+  }
+  g.globalCompositeOperation='source-over'; g.restore();
+}
+
+// d_debris
+function d_debris(g,camX,camY){
+  if(scene.indoor) return;
+  const t=Game.t; let dt=t-DBR_lt; DBR_lt=t; if(dt<0||dt>0.1) dt=0.016;
+  const w=d_wind(t);
+  const vx=(20 + Math.abs(w)*80)*(w<0?-1:1);            // gusts push (and reverse) with the wind
+  const lo=camX-200, hi=camX+VIEW_W+200, span=hi-lo;
+  g.save(); g.globalCompositeOperation='source-over';
+  for(let i=0;i<DBR.length;i++){ const p=DBR[i];
+    if(p.px==null){ p.px=lo+p.x*span; p.py=505+p.y*430; }
+    p.px += vx*p.vy*dt;
+    p.py += Math.sin(t*1.3+p.ph)*0.4 + 4*dt;
+    p.rot += p.vr*dt*(0.5+Math.abs(w));
+    if(p.px<lo) p.px+=span; else if(p.px>hi) p.px-=span; // wrap through the view window
+    if(p.py<505) p.py+=430; else if(p.py>935) p.py-=430;
+    const a=p.ty?0.10:0.18;
+    if(p.ty){                                            // dust mote
+      g.fillStyle='rgba(150,150,140,'+a+')';
+      g.beginPath(); g.arc(p.px,p.py,p.sz*0.5,0,7); g.fill();
+    } else {                                             // tumbling leaf / torn paper
+      g.save(); g.translate(p.px,p.py); g.rotate(p.rot);
+      g.fillStyle=(i%3===0)?'rgba(120,92,50,'+a+')':'rgba(92,90,82,'+a+')';
+      const c=Math.abs(Math.cos(p.rot));
+      g.fillRect(-p.sz, -p.sz*0.6*c, p.sz*2, p.sz*1.2*c+0.6);
+      g.restore();
+    }
+  }
+  g.restore();
+}
+
+// d_groundMist
+function d_groundMist(g,camX,camY){
+  if(scene.indoor) return;
+  const t=Game.t, w=d_wind(t), drift=w*40;
+  g.save(); g.globalCompositeOperation='source-over';
+  const ix0=Math.floor((camX-GM_TILE)/GM_TILE), ix1=Math.floor((camX+VIEW_W+GM_TILE)/GM_TILE);
+  const iy0=Math.floor((camY-GM_TILE)/GM_TILE), iy1=Math.floor((camY+VIEW_H+GM_TILE)/GM_TILE);
+  for(let iy=iy0; iy<=iy1; iy++){
+    for(let ix=ix0; ix<=ix1; ix++){
+      const s=(ix*83492791) ^ (iy*29874531);
+      const r0=gm_h(s), r1=gm_h(s+1), r2=gm_h(s+2), r3=gm_h(s+3);
+      if(r0>0.7) continue;
+      const by=iy*GM_TILE + r2*GM_TILE;
+      if(by<520||by>935) continue;                       // hug the ground band
+      const bx=ix*GM_TILE + r1*GM_TILE;
+      const rad=70+r3*90;
+      const px=bx + drift*(0.6+r1*0.8) + Math.sin(t*0.25+r2*6)*22;   // crawl+curl with wind
+      const py=by + Math.sin(t*0.4+r1*6)*7;
+      const a=(0.05+0.05*r2)*(0.55+0.45*Math.sin(t*0.5+r3*6));       // breathe in/out
+      if(a<=0.004) continue;
+      const gr=g.createRadialGradient(px,py,0,px,py,rad);
+      gr.addColorStop(0,'rgba(150,160,168,'+a.toFixed(3)+')');
+      gr.addColorStop(1,'rgba(150,160,168,0)');
+      g.fillStyle=gr; g.beginPath(); g.ellipse(px,py,rad,rad*0.42,0,0,7); g.fill();
+    }
+  }
+  g.restore();
+}
+
+// d_moths
+function d_mothsFx(g,camX,camY){
+  if(scene.indoor || !scene.lights) return;
+  const t=Game.t;
+  g.save(); g.globalCompositeOperation='lighter';
+  for(const L of scene.lights){
+    if(L.x<camX-120||L.x>camX+VIEW_W+120||L.y<camY-120||L.y>camY+VIEW_H+120) continue;
+    const warm=(L.c===COL.amber||L.c==='#c98a3a'); if(!warm) continue;   // moths favour warm lamps
+    const R=Math.min(34,L.r*0.28);
+    for(let k=0;k<3;k++){
+      const sp=0.6+k*0.22, off=k*2.1;
+      const mx=L.x + Math.cos(t*sp+off)*R*(0.7+0.3*Math.sin(t*0.7+off));
+      const my=(L.y-4) + Math.sin(t*sp*1.3+off)*R*0.55*(0.7+0.3*Math.cos(t*0.9+off));
+      const fl=0.5+0.5*Math.sin(t*18+off*3);            // wing-beat flicker
+      const a=0.12+0.10*fl;
+      g.fillStyle=hexA(L.c,a);
+      g.beginPath(); g.arc(mx,my,1.2+0.6*fl,0,7); g.fill();
+    }
+  }
+  g.globalCompositeOperation='source-over'; g.restore();
+}
+
+// Parallax Fog Banks
+function drawFogBanks(g){
+  _initFog();
+  var w=VIEW_W,h=VIEW_H,t=Game.t,wind=d_wind(t),d=Game.dread||0;
+  g.save(); g.globalCompositeOperation='source-over';
+  for(var k=0;k<_fog.length;k++){
+    var f=_fog[k];
+    var drift=t*f.sp + wind*0.02*(f.depth+1);
+    var m=(f.x+drift)%1.3; if(m<0)m+=1.3; var fx=m-0.15;
+    var cx=fx*w;
+    var cy=(f.y + Math.sin(t*0.2+f.ph)*0.012)*h;
+    var R=f.rr*w;
+    var a=(f.a + 0.03*f.depth)*(1+0.35*d);
+    var grd=g.createRadialGradient(cx,cy,0,cx,cy,R);
+    grd.addColorStop(0,hexA(f.col,a));
+    grd.addColorStop(1,hexA(f.col,0));
+    g.fillStyle=grd;
+    g.beginPath(); g.ellipse(cx,cy,R,R*0.5,0,0,6.2832); g.fill();
+  }
+  g.restore();
+}
+
+// Rising Embers & Ash
+function drawEmbers(g){
+  _initEmb();
+  var w=VIEW_W,h=VIEW_H,t=Game.t,wind=d_wind(t),d=Game.dread||0;
+  g.save(); g.globalCompositeOperation='lighter';
+  for(var i=0;i<_emb.length;i++){
+    var e=_emb[i];
+    var yy=(e.y - t*e.sp)%1; if(yy<0)yy+=1;
+    var cy=yy*h;
+    var sway=Math.sin(t*e.sw+e.ph)*0.02 + wind*0.03;
+    var xx=(e.x+sway)%1; if(xx<0)xx+=1;
+    var cx=xx*w;
+    var edge=clamp(Math.min(yy,1-yy)*2*1.4,0,1);
+    var flick=0.6+0.4*Math.sin(t*6+e.ph*3);
+    var a=0.30*edge*flick*(0.7+0.6*d);
+    if(a<=0.002) continue;
+    var col=e.warm?'#e6a54b':'#5fd0d6';
+    var R=e.sz*2.4;
+    var grd=g.createRadialGradient(cx,cy,0,cx,cy,R);
+    grd.addColorStop(0,hexA(col,a));
+    grd.addColorStop(1,hexA(col,0));
+    g.fillStyle=grd; g.beginPath(); g.arc(cx,cy,R,0,6.2832); g.fill();
+  }
+  g.restore();
+}
+
+// Sheet Lightning & Forked Bolt
+function drawStorm(g){
+  var b=Game.boltT||0;
+  if(b>_boltPrev+0.001) _genBolt();
+  _boltPrev=b;
+  if(b<=0.001) return;
+  var w=VIEW_W,h=VIEW_H,f=clamp(b,0,1);
+  g.save();
+  g.globalCompositeOperation='lighter';
+  var flash=0.10*f;
+  var sg=g.createLinearGradient(0,0,0,h);
+  sg.addColorStop(0,hexA('#cfe4ff',flash));
+  sg.addColorStop(0.5,hexA('#9fb6d8',flash*0.4));
+  sg.addColorStop(1,hexA('#9fb6d8',0));
+  g.fillStyle=sg; g.fillRect(0,0,w,h);
+  if(_boltPath && f>0.15){
+    g.lineJoin='round'; g.lineCap='round';
+    g.strokeStyle=hexA('#bfe0ff',0.5*f); g.lineWidth=6; _strokeBolt(g,w,h);
+    g.strokeStyle=hexA('#ffffff',0.9*f); g.lineWidth=2; _strokeBolt(g,w,h);
+  }
+  g.restore();
+}
+
+// Rain-on-Lens Streaks
+function drawLensRain(g){
+  _initLens();
+  var w=VIEW_W,h=VIEW_H,t=Game.t,bolt=Game.boltT||0;
+  g.save(); g.globalCompositeOperation='source-over';
+  for(var i=0;i<_lens.length;i++){
+    var s=_lens[i];
+    var yy=(s.y + t*s.sp)%0.5;
+    var cx=s.x*w, cy=yy*h;
+    var wob=Math.sin(t*0.7+s.ph)*1.5;
+    var a=0.10+0.06*Math.sin(t*1.3+s.ph)+0.20*bolt;
+    g.strokeStyle=hexA('#0a0c0e',a*0.8); g.lineWidth=s.w+1.2;
+    g.beginPath(); g.moveTo(cx+wob,cy); g.lineTo(cx+wob*0.4,cy+s.len); g.stroke();
+    g.strokeStyle=hexA('#d8cfbf',a*0.9); g.lineWidth=s.w*0.5;
+    g.beginPath(); g.moveTo(cx+wob-0.6,cy+1); g.lineTo(cx+wob*0.4-0.6,cy+s.len*0.9); g.stroke();
+    g.fillStyle=hexA('#d8cfbf',a); g.beginPath(); g.arc(cx+wob,cy+s.len,s.w*0.9,0,6.2832); g.fill();
+  }
+  g.restore();
+}
+
+// Breathing Dread Vignette
+function drawBreathVignette(g){
+  var w=VIEW_W,h=VIEW_H,t=Game.t,d=Game.dread||0;
+  var hb=0;
+  if(d>0.25){
+    var bpm=lerp(0.9,1.8,d);
+    var ph=(t*bpm)%1;
+    hb=(Math.exp(-ph*ph*60)+0.6*Math.exp(-(ph-0.18)*(ph-0.18)*60))*d;
+  }
+  var breathe=Math.sin(t*0.5)*0.5+0.5;
+  var tighten=0.28+0.22*d+0.05*breathe+0.10*hb;
+  var mx=Math.max(w,h);
+  var inner=(0.72-0.30*d-0.06*hb)*mx;
+  var outer=mx*1.05;
+  var cx=w*0.5, cy=h*0.5;
+  var grd=g.createRadialGradient(cx,cy,inner,cx,cy,outer);
+  grd.addColorStop(0,hexA('#0a0c0e',0));
+  grd.addColorStop(1,hexA('#0a0c0e',clamp(tighten,0,0.85)));
+  g.save(); g.globalCompositeOperation='source-over';
+  g.fillStyle=grd; g.fillRect(0,0,w,h); g.restore();
+}
+
+// Dread CRT Wobble & Chromatic Fringe
+function drawDreadCRT(g){
+  var d=Game.dread||0;
+  if(d<0.45) return;
+  var w=VIEW_W,h=VIEW_H,t=Game.t;
+  var k=clamp((d-0.45)/0.55,0,1);
+  g.save();
+  g.globalCompositeOperation='lighter';
+  var off=1.5+2.5*k+Math.sin(t*30)*0.4*k;
+  var r0=Math.min(w,h)*0.35, r1=Math.max(w,h)*0.6, cx=w/2, cy=h/2;
+  var eg=g.createRadialGradient(cx,cy,r0,cx,cy,r1);
+  eg.addColorStop(0,'rgba(0,0,0,0)'); eg.addColorStop(1,hexA('#c8483f',0.05*k));
+  g.fillStyle=eg; g.fillRect(off,0,w,h);
+  var eg2=g.createRadialGradient(cx,cy,r0,cx,cy,r1);
+  eg2.addColorStop(0,'rgba(0,0,0,0)'); eg2.addColorStop(1,hexA('#5fd0d6',0.05*k));
+  g.fillStyle=eg2; g.fillRect(-off,0,w,h);
+  g.globalCompositeOperation='source-over';
+  g.globalAlpha=0.15+0.20*k;
+  g.fillStyle=_getScan(g);
+  g.save(); g.translate(0,Math.sin(t*2)*1.0); g.fillRect(0,-4,w,h+8); g.restore();
+  g.globalAlpha=1;
+  g.restore();
+}
+
+// faceAtWindow
+function drawFaceScare(g,camX,camY){
+  if(!_face.on){
+    if(Game.t>=_face.next && Game.dread<0.22){
+      let best=null,bd=1e9;
+      for(const p of scene.props){
+        if(p.w<120||p.h<90) continue;                 // buildings only
+        const cx=p.x+p.w*0.5, cy=p.y;
+        if(cx<camX-40||cx>camX+VIEW_W+40||cy<camY-40||cy>camY+VIEW_H+40) continue; // on-screen
+        const d=dist2(player.x,player.y,cx,p.y+60);
+        if(d>240*240 && d<560*560 && d<bd){ bd=d; best=p; }   // mid distance, never close
+      }
+      if(best){
+        const slot=Math.floor(Math.random()*3);
+        _face.wx=best.x+30+slot*Math.max(40,(best.w-70)/3);
+        _face.wy=best.y+52;
+        _face.on=true; _face.end=Game.t+3.2+Math.random()*2.2; _face.alpha=0;
+        try{Audio.whisper();}catch(_){}
+      } else { _face.next=Game.t+6+Math.random()*10; }
+    }
+    return;
+  }
+  if(Game.t>_face.end || Game.dread>0.3){ _face.on=false; _face.next=Game.t+24+Math.random()*42; return; }
+  // you 'looked' — get close and it's simply not there
+  if(dist2(player.x,player.y,_face.wx,_face.wy)<200*200){ _face.on=false; _face.next=Game.t+32+Math.random()*46; try{Audio.noticed();}catch(_){} return; }
+  if(_face.wx<camX-30||_face.wx>camX+VIEW_W+30||_face.wy<camY-30||_face.wy>camY+VIEW_H+30) return;
+  const tleft=_face.end-Game.t;
+  _face.alpha=lerp(_face.alpha,(tleft<0.8?tleft/0.8:0.7),0.06);
+  const a=clamp(_face.alpha,0,0.72)*(0.9+Math.sin(Game.t*1.7)*0.1);
+  const x=_face.wx, y=_face.wy;
+  g.save();
+  g.fillStyle=hexA(COL.ink,a*0.9); g.fillRect(x-1,y-1,30,40);            // recessed dark pane
+  g.fillStyle=hexA(COL.skin,a);                                          // pale oval face
+  g.beginPath(); g.ellipse(x+14,y+16,8.5,11,0,0,6.2832); g.fill();
+  g.fillStyle=hexA(COL.ink,a*0.95);                                      // hollow eyes
+  g.beginPath(); g.ellipse(x+10.5,y+14,1.8,2.6,0,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(x+17.5,y+14,1.8,2.6,0,0,6.2832); g.fill();
+  g.fillStyle=hexA(COL.ink,a*0.7); g.fillRect(x+11,y+21,6,1.6);          // faint mouth
+  g.restore();
+}
+
+// boltFigure
+function drawBoltFigure(g){
+  const b=Game.boltT;
+  if(b>0 && _bf.prev<=0){                       // fresh strike this frame
+    _bf.show=(Math.random()<0.45) && Game.dread<0.4;
+    if(_bf.show){
+      const edge=Math.random()<0.5?1:-1;
+      _bf.sx = edge>0 ? VIEW_W*(0.72+Math.random()*0.16) : VIEW_W*(0.12+Math.random()*0.16);
+      try{Audio.dread();}catch(_){}
+    }
+  }
+  _bf.prev=b;
+  if(!_bf.show || b<=0.12) return;              // only during the bright part of the flash
+  const a=clamp((b-0.12)/0.35,0,1)*0.9;
+  const gx=_bf.sx, foot=VIEW_H*0.78, hgt=VIEW_H*0.20, wid=hgt*0.34;
+  g.save();
+  g.globalAlpha=a; g.fillStyle='#05070a';
+  g.beginPath();
+  g.moveTo(gx-wid*0.5,foot);
+  g.lineTo(gx-wid*0.34,foot-hgt*0.62);
+  g.lineTo(gx-wid*0.5,foot-hgt*0.66);
+  g.lineTo(gx-wid*0.22,foot-hgt);
+  g.lineTo(gx+wid*0.22,foot-hgt);
+  g.lineTo(gx+wid*0.5,foot-hgt*0.66);
+  g.lineTo(gx+wid*0.34,foot-hgt*0.62);
+  g.lineTo(gx+wid*0.5,foot);
+  g.closePath(); g.fill();
+  g.beginPath(); g.ellipse(gx,foot-hgt-hgt*0.07,wid*0.26,wid*0.32,0,0,6.2832); g.fill();
+  g.restore();
+}
+
+// alleyDart
+function drawDartScare(g,camX,camY){
+  if(!_dart.on){
+    if(Game.t>=_dart.next && Game.dread<0.24){
+      _dart.on=true; _dart.t0=Game.t; _dart.dur=0.42+Math.random()*0.25;
+      _dart.dirx=Math.random()<0.5?1:-1;
+      _dart.y=camY+VIEW_H*(0.12+Math.random()*0.22);        // upper/peripheral band
+      _dart.len=140+Math.random()*80;
+      _dart.x0=_dart.dirx>0 ? camX-_dart.len-20 : camX+VIEW_W+_dart.len+20;
+      try{Audio.whisper();}catch(_){}
+    }
+    return;
+  }
+  const u=(Game.t-_dart.t0)/_dart.dur;
+  if(u>=1){ _dart.on=false; _dart.next=Game.t+30+Math.random()*52; return; }
+  const travel=(VIEW_W+_dart.len*2+40)*u;
+  const hx=_dart.x0+_dart.dirx*travel, y=_dart.y;
+  const a=Math.sin(u*Math.PI)*0.5;
+  if(a<=0.02) return;
+  const tx=hx-_dart.dirx*_dart.len, bob=Math.sin(u*22)*3;
+  g.save();
+  g.globalAlpha=a;
+  const gr=g.createLinearGradient(tx,0,hx,0);
+  gr.addColorStop(0,'rgba(4,5,7,0)'); gr.addColorStop(1,'rgba(4,5,7,0.85)');
+  g.fillStyle=gr;
+  g.beginPath(); g.ellipse((hx+tx)/2,y+bob,_dart.len*0.5,9,0,0,6.2832); g.fill();  // motion smear
+  g.fillStyle='rgba(3,4,6,0.9)';
+  g.beginPath(); g.ellipse(hx,y+bob-3,8,7,0,0,6.2832); g.fill();                    // hunched head
+  g.restore();
+}
+
+// lanternDeath
+function drawLanternDeath(g){
+  if(_lan.phase===0){
+    if(Game.t>=_lan.next && Game.dread<0.2){ _lan.phase=1; _lan.t0=Game.t; try{Audio.dread();}catch(_){} }
+    return;
+  }
+  const el=Game.t-_lan.t0;
+  let k;
+  if(el<0.5){ k=(el/0.5)*(0.6+0.4*Math.abs(Math.sin(el*40))); }   // stuttering die
+  else if(el<2.1){ k=1; }                                          // long dead beat
+  else if(el<2.4){ k=1-(el-2.1)/0.3; }                             // snap back
+  else { _lan.phase=0; _lan.next=Game.t+55+Math.random()*85; return; }
+  if(el>0.6 && el<2.0 && Math.random()<0.03){ try{Audio.whisper();}catch(_){} } // the dark leans in
+  const cx=VIEW_W/2, cy=VIEW_H/2, R=Math.max(VIEW_W,VIEW_H)*0.62;
+  const gr=g.createRadialGradient(cx,cy,R*0.16,cx,cy,R);
+  gr.addColorStop(0,'rgba(2,3,4,'+(k*0.55)+')');   // core stays readable — never fully blocks play
+  gr.addColorStop(0.5,'rgba(2,3,4,'+(k*0.8)+')');
+  gr.addColorStop(1,'rgba(1,2,3,'+(k*0.96)+')');
+  g.save(); g.fillStyle=gr; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
+}
+
+// lingerLean
+function drawLingerLean(g){
+  if(!_lin.init){ _lin.px=player.x; _lin.py=player.y; _lin.nextW=Game.t+4; _lin.init=true; }
+  const moved=Math.abs(player.x-_lin.px)+Math.abs(player.y-_lin.py);
+  _lin.px=player.x; _lin.py=player.y;
+  if(moved>1.4 || Game.dread>0.28 || Game.overlay){ _lin.linger=Math.max(0,_lin.linger-0.06); }  // move/threat/menu resets
+  else { _lin.linger=Math.min(1,_lin.linger+0.0016); }        // ~10s of stillness to fully lean in
+  if(_lin.linger<=0.02) return;
+  const k=_lin.linger;
+  if(k>0.4 && Game.t>=_lin.nextW){ _lin.nextW=Game.t+lerp(6,2.2,k)+Math.random()*2;
+    try{ Audio.whisper(); if(k>0.8) Audio.dread(); }catch(_){} }   // whispers close in as it deepens
+  const breathe=0.5+0.5*Math.sin(Game.t*0.9);
+  const inset=lerp(0.9,0.5,k)-0.04*breathe;                   // vignette radius tightens with linger
+  const cx=VIEW_W/2, cy=VIEW_H/2, R=Math.hypot(cx,cy);
+  const gr=g.createRadialGradient(cx,cy,R*inset*0.6,cx,cy,R);
+  gr.addColorStop(0,'rgba(0,0,0,0)');
+  gr.addColorStop(1,'rgba(2,3,5,'+(0.5*k)+')');
+  g.save(); g.fillStyle=gr; g.fillRect(0,0,VIEW_W,VIEW_H); g.restore();
+}
+
+// watchingEyes
+function drawWatchingEyes(g,camX,camY){
+  if(!_eyes.on){
+    if(Game.t>=_eyes.next && Game.dread<0.22){
+      let best=null,bd=1e9;
+      for(const p of scene.props){
+        if(p.w<70||p.h<50) continue;
+        const cx=p.x+p.w*0.5, cy=p.y+p.h*0.4;
+        if(cx<camX||cx>camX+VIEW_W||cy<camY||cy>camY+VIEW_H) continue;
+        const d=dist2(player.x,player.y,cx,cy);
+        if(d>170*170 && d<430*430 && d<bd){ bd=d; best=p; _eyes.x=cx; _eyes.y=cy; }
+      }
+      if(best){ _eyes.on=true; _eyes.end=Game.t+4+Math.random()*2.5; _eyes.a=0; try{Audio.whisper();}catch(_){} }
+      else _eyes.next=Game.t+8+Math.random()*12;
+    }
+    return;
+  }
+  if(Game.t>_eyes.end || Game.dread>0.3){ _eyes.on=false; _eyes.next=Game.t+35+Math.random()*55; return; }
+  if(_eyes.x<camX-20||_eyes.x>camX+VIEW_W+20||_eyes.y<camY-20||_eyes.y>camY+VIEW_H+20) return;
+  const tleft=_eyes.end-Game.t;
+  _eyes.a=lerp(_eyes.a,(tleft<1?tleft:0.85),0.05);
+  const a=clamp(_eyes.a,0,0.85), x=_eyes.x, y=_eyes.y;
+  const dx=player.x-x, dy=player.y-y, d=Math.hypot(dx,dy)||1;
+  const px=dx/d*1.6, py=dy/d*1.1;                       // pupils lean toward you
+  g.save();
+  g.fillStyle=hexA(COL.ivory,a*0.5);
+  g.beginPath(); g.ellipse(x-7,y,4.5,2.4,0,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(x+7,y,4.5,2.4,0,0,6.2832); g.fill();
+  g.fillStyle=hexA(COL.ink,a);
+  g.beginPath(); g.ellipse(x-7+px,y+py,1.7,1.9,0,0,6.2832); g.fill();
+  g.beginPath(); g.ellipse(x+7+px,y+py,1.7,1.9,0,0,6.2832); g.fill();
+  g.restore();
+}
+/* ===== end polish features ===== */
+
 function render(){
   const g=CTX;
   g.setTransform(DPR,0,0,DPR,0,0);
@@ -1656,7 +2327,11 @@ function render(){
   drawGround(g);
   if(scene.indoor) drawWalls(g);
   if(!scene.indoor) drawMarks(g);
+  try{d_puddles(g,camX,camY)}catch(_){} try{d_wetSheen(g,camX,camY)}catch(_){}
+  drawGroundShadows(g,camX,camY);   // always-on ambient contact shadows under standing props/buildings
   drawProps(g);
+  try{d_dripEdges(g,camX,camY)}catch(_){} try{d_debris(g,camX,camY)}catch(_){} try{d_groundMist(g,camX,camY)}catch(_){} try{d_mothsFx(g,camX,camY)}catch(_){}
+  try{drawFaceScare(g,camX,camY)}catch(_){} try{drawDartScare(g,camX,camY)}catch(_){} try{drawWatchingEyes(g,camX,camY)}catch(_){}
   drawDoors(g);
   drawDocMarkers(g);
   drawImpacts(g);
@@ -1673,9 +2348,13 @@ function render(){
 
   drawLighting(g, camX, camY);
   drawAtmosphere(g, camX, camY);
+  try{drawFogBanks(g)}catch(_){} try{drawEmbers(g)}catch(_){} try{drawStorm(g)}catch(_){} try{drawBoltFigure(g)}catch(_){}
   drawRainOver(g);        // all rain is screen-space now (never locked to the camera)
+  try{drawLensRain(g)}catch(_){}
   drawGrade(g);           // cinematic colour grade
+  try{drawLanternDeath(g)}catch(_){}
   drawDread(g, camX, camY);   // proximity vignette/desat/beat + spotted-sting + fog-figure, over the graded frame
+  try{drawLingerLean(g)}catch(_){} try{drawBreathVignette(g)}catch(_){} try{drawDreadCRT(g)}catch(_){}
   drawHUD(g);
 
   if(Game.overlay==='dialogue') drawDialogue(g);
@@ -1853,7 +2532,10 @@ function propShadowBox(p){ const sw=p.w*0.52, sh=Math.max(4,p.h*0.11); return { 
 function buildOccluders(sc){
   const occ = sc.walls.slice();          // buildings keep their full footprint
   const solids = [];
-  for(const p of sc.props){ if(OCCLUDER_PROPS.has(p.t)){ solids.push(propFootprint(p)); occ.push(propShadowBox(p)); } }
+  // Only LARGE structures (buildings, lampposts, tall signs) cast directional light-shadows — small clutter
+  // casting hard wedges made an ugly starburst around lamps. Everything still gets an ambient contact shadow
+  // (drawGroundShadows) + blocks movement (solids).
+  for(const p of sc.props){ if(OCCLUDER_PROPS.has(p.t)){ solids.push(propFootprint(p)); if(p.h>=120) occ.push(propShadowBox(p)); } }
   sc.solids = solids;                     // solid props block movement (base footprint)
   return occ;
 }
@@ -1897,6 +2579,28 @@ function drawMarks(g){
     g.strokeStyle='rgba(230,165,75,'+(0.15+pulse*0.15)+')'; g.lineWidth=2;
     g.beginPath(); g.moveTo(m.x-7,m.y+7); g.lineTo(m.x+7,m.y-7); g.stroke();
   }
+}
+// Always-on soft ambient contact shadow under every standing prop/building, so nothing floats.
+// Drawn UNDER props (before drawProps); the directional cast shadows from lights still layer on top at night.
+function drawGroundShadows(g,camX,camY){
+  if(scene.indoor) return;
+  const vx0=camX-60, vy0=camY-60, vx1=camX+VIEW_W+60, vy1=camY+VIEW_H+60;
+  const dark=skyState((State.time/3600)%24).dark;
+  const a=0.28-dark*0.10;                       // a touch stronger by day, softer at night (lights take over)
+  g.save();
+  for(const p of scene.props){
+    const t=p.t;
+    const flat=(t.charCodeAt(0)===103)||t==='lore';   // g_* ground decals + graffiti never cast
+    if(!(OCCLUDER_PROPS.has(t) || (p.h>=55 && !flat))) continue;
+    const bx=p.x+p.w*0.5, by=p.y+p.h*0.9;
+    if(bx<vx0||bx>vx1||by<vy0||by>vy1) continue;
+    const rx=Math.max(12,p.w*0.55), ry=Math.max(5,p.w*0.17);
+    g.save(); g.translate(bx,by); g.scale(1,ry/rx);
+    g.fillStyle='rgba(0,0,0,'+(a*0.5).toFixed(3)+')'; g.beginPath(); g.arc(0,0,rx,0,7); g.fill();
+    g.fillStyle='rgba(0,0,0,'+a.toFixed(3)+')';     g.beginPath(); g.arc(0,0,rx*0.6,0,7); g.fill();
+    g.restore();
+  }
+  g.restore();
 }
 function drawProps(g){
   for(const p of scene.props){ drawProp(g,p); }
