@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] — 2026-07-23
+
+### Added
+- **Exploration now pays off.** Every few records you recover yields salvage — materials that feed your upgrades — and thoroughly combing the county field-hardens Ellie, raising her maximum condition. It all persists across saves.
+- **Escalating stakes.** The reconstructions grow tougher the deeper you push north (Ashmere → Wrenfield → Tollard), so the upgrades you craft actually matter. The Choir Warden stays hand-tuned.
+- A **Field Kit summary** on the pause screen — records recovered, max condition, and which permanent upgrades you've fitted.
+
 ## [1.7.0] — 2026-07-23
 
 ### Added

@@ -456,6 +456,7 @@ function load(){ try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(!s)
   Object.assign(State,{scene:s.scene,hp:s.hp,recv:s.recv,inv:s.inv,flags:s.flags,archive:s.archive,recipes:s.recipes||{},docs:s.docs||[],
     lean:s.lean||{medical:0,radio:0,witness:0,copy:0}});
   if(State.flags && State.flags.upgCoil) State.recvMax=140;   // restore the reinforced-coil capacity upgrade
+  State.hpMax=100+(((State.flags&&State.flags.hpBoosts)||0)*8); // restore max-condition from field-hardening
   loadScene(s.scene,{x:s.px,y:s.py,dir:s.dir}); return true; }catch(e){ return false; } }
 
 /* --------------------------- trace anchors ------------------------- */
@@ -860,9 +861,13 @@ function Enemy(kind,x,y){
   if(kind==='leech'){  base.hp=54; base.speed=0;   base.dmg=18; base.name='Signal Leech'; base.w=26; base.h=24; }
   if(kind==='husk'){   base.hp=120;base.speed=72;  base.dmg=18; base.name='Relay Husk'; base.w=30; base.h=26; base.shieldDown=0; base.pulseCd=2.0; }
   if(kind==='warden'){ base.hp=340;base.speed=66;  base.dmg=22; base.name='Choir Warden'; base.w=38; base.h=32; base.shieldDown=0; base.pulseCd=2.0; }
+  // escalating stakes: reconstructions grow tougher the deeper you push (the boss is already tuned)
+  const tier = dangerTier();
+  if(tier>0 && kind!=='warden'){ base.hp=Math.round(base.hp*(1+tier*0.12)); if(base.speed) base.speed=Math.round(base.speed*(1+tier*0.05)); base.dmg=Math.round(base.dmg*(1+tier*0.10)); }
   base.maxhp=base.hp;
   return base;
 }
+function dangerTier(){ const f=State.flags||{}; return f.tollard?3 : f.wrenfield?2 : f.ashmere?1 : 0; }
 function spawnEnemiesFor(id){
   scene.enemies=[];
   if(id==='cullbrook'){
@@ -1371,10 +1376,20 @@ const Reader = {
     if((d.kind||'')==='radio'){ try{ Audio.ring(); setTimeout(()=>{ try{ Audio.speak(d.body, d.source||'real'); }catch(e){} }, 320); }catch(e){} }
     else if(d.source==='continuity'){ try{Audio.maggie(4);}catch(e){} }
     else { try{Audio.ui();}catch(e){} }
-    if(!State.docs.find(x=>x.id===d.id)){ State.docs.push({id:d.id,title:d.title||d.short||'record',kind:d.kind||'note'}); Game.toast('Recorded: '+(d.title||'a document')); save(); }
+    if(!State.docs.find(x=>x.id===d.id)){ State.docs.push({id:d.id,title:d.title||d.short||'record',kind:d.kind||'note'}); Game.toast('Recorded: '+(d.title||'a document')); save(); onRecordFound(); }
     if(d.rewardItem && !State.flags['rw_'+d.id]){ State.flags['rw_'+d.id]=true; State.inv[d.rewardItem]=(State.inv[d.rewardItem]||0)+1; setTimeout(()=>Game.toast('Found: 1 '+d.rewardItem),400); }
   },
 };
+// exploration pays off: every few records recovered yields salvage, and thorough combing hardens you
+function onRecordFound(){
+  const n=State.docs.length;
+  if(n<=0 || n%4!==0) return;
+  if(n%12===0){ State.flags.hpBoosts=(State.flags.hpBoosts||0)+1; State.hpMax=100+State.flags.hpBoosts*8; State.hp=Math.min(State.hpMax,State.hp+10);
+    setTimeout(()=>Game.toast('Field-hardened by the searching — max condition +8.'),720); }
+  else { const pool=['scrap','battery','cloth','resin']; const it=pool[((n/4)|0)%pool.length]; State.inv[it]=(State.inv[it]||0)+1;
+    setTimeout(()=>Game.toast('Salvaged along the way: +1 '+it),720); }
+  save();
+}
 function openDoc(d){ Reader.open(d); }
 // pull fresh NPC bark lines (cycles so repeat talks reveal more)
 function barkLines(who,n){ const pool=(STORY.barks&&STORY.barks[who])||[]; if(!pool.length||n<=0) return [];
@@ -1506,7 +1521,7 @@ const Game = {
 let _tvx=0,_tvy=0;
 
 function newGame(){
-  Object.assign(State,{ scene:'carriage317', hp:100, recv:100, heat:0,
+  Object.assign(State,{ scene:'carriage317', hp:100, hpMax:100, recv:100, recvMax:100, heat:0,
     inv:{battery:0,scrap:2,cloth:2,resin:1,ration:2,medkit:1}, archive:[], recipes:{}, docs:[],
     flags:{intro:false,hasBattery:false,hasScrap:false,coil:false,mast:false,hollowDown:false,wraithDown:false,
            ashmere:false,power:null,discharge:false,bridge:false,paperPatients:false,schoolRoute:false,maggieLedger:false},
@@ -5610,14 +5625,19 @@ function drawMap(g){
 }
 function drawPause(g){
   g.fillStyle='rgba(4,6,8,.72)'; g.fillRect(0,0,VIEW_W,VIEW_H);
-  const w=420,h=250,x=(VIEW_W-w)/2,y=(VIEW_H-h)/2; panel(g,x,y,w,h,'PAUSED');
+  const w=420,h=272,x=(VIEW_W-w)/2,y=(VIEW_H-h)/2; panel(g,x,y,w,h,'PAUSED');
   g.font='12px monospace'; g.fillStyle=COL.ivory;
+  const F=State.flags||{};
+  const fitted=[F.upgEdge?'Honed Edge':null,F.upgCoil?'Reinforced Coil':null,F.upgCells?'Twin Cells':null].filter(Boolean);
   const rows=[
     'WASD / arrows  move        E interact   C craft',
     'J strike     Q receiver sweep     R discharge'+(State.flags.discharge?'':' (locked)'),
     'Space dodge — time it vs a wind-up for a COUNTER (J for 2× hit)',
     'G  throw flare (drives threats back)     B  drop signal decoy',
     'F heal      M map      I archive',
+    '',
+    'FIELD KIT — records recovered '+((State.docs||[]).length)+'   ·   max condition '+(State.hpMax||100),
+    'fitted: '+(fitted.length?fitted.join(', '):'(craft upgrades at the bench, C)'),
     '',
     'N  toggle sound: '+(Audio.isOn()?'ON':'OFF')+'        Esc  resume',
   ];
