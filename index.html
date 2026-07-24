@@ -510,10 +510,13 @@ function makeCarriage(){
     {t:'crate',x:110,y:220,w:44,h:34},
     {t:'desk',x:560,y:60,w:150,h:56},   // receiver desk
     {t:'basewindow',x:286,y:4,w:76,h:18},   // a window in the carriage wall — you can look out
+    {t:'radioset',x:176,y:190,w:44,h:30},    // Ellie's wireless set
   ];
   const inter=[
     { id:'window', x:324, y:44, r:48, label:()=>'Look out at the rain',
       act:()=> Window.open() },
+    { id:'radio', x:198, y:206, r:46, label:()=>'Ellie’s wireless set — tune it',
+      act:()=> Radio.open() },
     { id:'receiver', x:635, y:96, r:44, label:()=> State.flags.intro?'Trace receiver (dead)':'Examine the receiver',
       act:()=> Story.receiverEvent() },
     { id:'bed', x:88, y:96, r:44, label:()=>'Rest until morning',
@@ -1504,6 +1507,7 @@ const Game = {
       else if(code==='KeyN'){ Audio.setOn(!Audio.isOn()); }
       return; }
     if(this.overlay==='window'){ if(code==='KeyE'||code==='Escape') Window.close(); return; }   // A/D pan handled via held keys in Window.update
+    if(this.overlay==='radio'){ if(code==='KeyE'||code==='Escape') Radio.close(); return; }      // A/D tune handled via held keys in Radio.update
     // no overlay:
     if(code==='Escape'){ this.overlay='pause'; return; }
     if(code==='KeyC'){ Crafting.open(false); return; }
@@ -1678,6 +1682,7 @@ function update(dt){
   const paused = Game.overlay && Game.overlay!=='dialogue';
   if(Game.overlay==='dialogue'){ Dialogue.update(dt); return; }
   if(Game.overlay==='window'){ try{Window.update(dt);}catch(e){} return; }
+  if(Game.overlay==='radio'){ try{Radio.update(dt);}catch(e){} return; }
   if(paused) return;
 
   // toast timer
@@ -2551,6 +2556,7 @@ function render(){
   if(Game.overlay==='reader') drawReader(g);
   if(Game.overlay==='map') drawMap(g);
   if(Game.overlay==='window') drawWindow(g);
+  if(Game.overlay==='radio') drawRadio(g);
   if(Game.overlay==='pause') drawPause(g);
   drawToast(g);
   if(Game.sliceEnd && !Game.overlay) drawSliceEnd(g);
@@ -2817,6 +2823,15 @@ function drawProp(g,p){
       for(let i=0;i<5;i++){ const rx=p.x+6+i*((p.w-12)/5)+Math.sin(Game.t*0.6+i)*1.5; g.beginPath(); g.moveTo(rx,p.y+2); g.lineTo(rx-2,p.y+p.h-2); g.stroke(); }
       g.strokeStyle='#241a12'; g.lineWidth=2; g.beginPath(); g.moveTo(p.x+p.w/2,p.y); g.lineTo(p.x+p.w/2,p.y+p.h); g.stroke();   // mullion
       g.strokeStyle='rgba(0,0,0,.4)'; g.lineWidth=1; g.strokeRect(p.x,p.y,p.w,p.h);
+      break; }
+    case 'radioset': {   // a salvaged bakelite wireless set
+      g.fillStyle='rgba(0,0,0,.35)'; g.beginPath(); g.ellipse(p.x+p.w/2,p.y+p.h+2,p.w*0.5,5,0,0,7); g.fill();
+      vgrad(g,p.x,p.y,p.w,p.h,'#3a2a1a','#20160d'); roundRect(g,p.x,p.y,p.w,p.h,4); g.fill();
+      g.fillStyle='#12100c'; g.fillRect(p.x+4,p.y+5,p.w*0.52,p.h-10);                 // speaker grille
+      g.strokeStyle='rgba(0,0,0,.4)'; g.lineWidth=1; for(let i=1;i<5;i++){ g.beginPath(); g.moveTo(p.x+4,p.y+5+i*(p.h-10)/5); g.lineTo(p.x+4+p.w*0.52,p.y+5+i*(p.h-10)/5); g.stroke(); }
+      g.fillStyle='#0a1a10'; g.fillRect(p.x+p.w*0.6,p.y+6,p.w*0.32,p.h*0.4);          // dial window
+      g.fillStyle=hexA(COL.cyan,0.4+0.3*Math.sin(Game.t*3)); g.fillRect(p.x+p.w*0.6+2,p.y+8,2,p.h*0.4-4);
+      g.fillStyle='#5a4a34'; g.beginPath(); g.arc(p.x+p.w*0.76,p.y+p.h*0.74,4,0,7); g.fill();  // tuning knob
       break; }
     case 'carriageExt': {
       g.fillStyle='rgba(0,0,0,.42)'; g.beginPath(); g.ellipse(p.x+p.w/2,p.y+p.h+3,p.w*0.5,11,0,0,7); g.fill();
@@ -5322,6 +5337,86 @@ function drawCraft(g){
   wrap(g,sel.desc,w-40).forEach((l,i)=> g.fillText(l,x+20,y+h-66+i*15));
   g.fillStyle='#7d7566'; g.font='10px monospace'; g.textAlign='right';
   g.fillText('W/S select · E craft · C/Esc close', x+w-16, y+h-14); g.textAlign='left';
+}
+/* ---- Ellie's wireless set: tune across the county's broadcasts (story delivered by radio, not paper) ---- */
+const Radio = {
+  active:false, freq:0.5, fade:0, t:0, station:null, clarity:0, lineIdx:0, lineT:0, _spoke:-1,
+  stations(){
+    const S=[
+      {f:0.16, name:'Wrenfield relay — a person', src:'real', lines:[
+        'This is Rafi. This is a person. I will tell you what I know and none of the rest.',
+        'Water is high past the mile post. I do not know if the bridge holds. I will not tell you it holds.',
+        'A late warning that is true beats a fast one that lies. Back on the hour.']},
+      {f:0.38, name:'standing advisory, loop four', src:'reconstruction', lines:[
+        'Advisory remains in force. Standing water on all low routes.',
+        'The east road is passable. The east road is passable. Do not attempt the cutting.',
+        'Shelter at the marked point and await instruction. This message repeats.']},
+      {f:0.60, name:'county control', src:'continuity', lines:[
+        'You are through. You are safe. You are on the list. There is no gap.',
+        'Route is open. Route is open. Everyone is listed as arriving.',
+        'Your sister is present. She has always been present. Shall I connect you?']},
+      {f:0.83, name:'the safe roll', src:'reconstruction', lines:[
+        'Reading the safe roll. All present. All accounted for. None missing.',
+        'Ward, E, age eight. Red coat, blue inhaler. Safe elsewhere, collected by relative.',
+        'Ward, M. Present, well, on the line. Present, well, on the line.']},
+    ];
+    if(State.flags.intro) S.push({f:0.50, name:'— an old line, barely there —', src:'real', lines:[
+      'Ellie. If you are hearing this off the old line then I have done the thing I was frightened of.',
+      'If it sounds like me and it never once stops to think, that is not me. I stop to think.',
+      'Hold onto that. Please. Hold onto that.']});
+    return S;
+  },
+  open(){ this.active=true; this.freq=0.5; this.fade=0; this.t=0; this.lineIdx=0; this.lineT=0; this._spoke=-1; this.station=null;
+    Game.overlay='radio'; Game.toastT=0; try{Audio.ui();}catch(e){} },
+  close(){ this.active=false; try{Audio.stopSpeak();}catch(e){} Game.overlay=null; try{Audio.ui();}catch(e){} },
+  update(dt){ this.t+=dt; if(this.fade<1) this.fade=Math.min(1,this.fade+dt*2.2);
+    let inx=0; if(keys.KeyA||keys.ArrowLeft)inx-=1; if(keys.KeyD||keys.ArrowRight)inx+=1;
+    if(inx){ this.freq=clamp(this.freq+inx*dt*0.26,0,1); }
+    const BW=0.055; let best=null,bc=-1;
+    for(const st of this.stations()){ const c=1-Math.abs(this.freq-st.f)/BW; if(c>bc){ bc=c; best=st; } }
+    this.clarity=clamp(bc,0,1); const clear=this.clarity>0.55;
+    if(clear && best){ if(best!==this.station){ this.station=best; this.lineIdx=0; this.lineT=0; this._spoke=-1; }
+      this.lineT+=dt;
+      if(this._spoke!==this.lineIdx){ this._spoke=this.lineIdx; try{Audio.speak(this.station.lines[this.lineIdx], this.station.src);}catch(e){} }
+      if(this.lineT>5.0){ this.lineT=0; this.lineIdx=(this.lineIdx+1)%this.station.lines.length; }
+    } else { if(this.station){ try{Audio.stopSpeak();}catch(e){} } this.station=null; this._spoke=-1; }
+  }
+};
+function drawRadio(g){
+  const W=VIEW_W,H=VIEW_H,t=Radio.t;
+  g.fillStyle='rgba(4,6,8,.85)'; g.fillRect(0,0,W,H);
+  const pw=560, ph=340, px=(W-pw)/2, py=(H-ph)/2;
+  vgrad(g,px,py,pw,ph,'#241a12','#160f09'); roundRect(g,px,py,pw,ph,10); g.fill();
+  g.strokeStyle='rgba(0,0,0,.5)'; g.lineWidth=2; roundRect(g,px,py,pw,ph,10); g.stroke();
+  g.fillStyle='#d8cfbf'; g.font='11px monospace'; g.textAlign='left'; g.fillText('COUNTY WIRELESS — SALVAGED SET', px+22, py+26);
+  // tuning dial
+  const dx=px+30, dw=pw-60, dy=py+48, dh=24;
+  g.fillStyle='#0a0d0f'; g.fillRect(dx,dy,dw,dh);
+  g.strokeStyle='rgba(216,207,191,.3)'; g.lineWidth=1;
+  for(let i=0;i<=20;i++){ const gx=dx+dw*(i/20); g.beginPath(); g.moveTo(gx,dy+dh); g.lineTo(gx,dy+dh-(i%5===0?10:5)); g.stroke(); }
+  for(const st of Radio.stations()){ const sx=dx+dw*st.f; g.fillStyle=st.src==='continuity'?COL.red:st.src==='reconstruction'?COL.amber:COL.cyan; g.beginPath(); g.arc(sx,dy+4,2.4,0,7); g.fill(); }
+  const nx=dx+dw*Radio.freq; g.strokeStyle=COL.amber; g.lineWidth=2; g.beginPath(); g.moveTo(nx,dy-5); g.lineTo(nx,dy+dh+5); g.stroke();
+  g.fillStyle=COL.amber; g.beginPath(); g.moveTo(nx-4,dy-5); g.lineTo(nx+4,dy-5); g.lineTo(nx,dy+1); g.fill();
+  // CRT readout
+  const rx=px+30, ry=py+88, rw=pw-60, rh=ph-152;
+  g.fillStyle='#04120a'; roundRect(g,rx,ry,rw,rh,4); g.fill();
+  g.save(); roundRect(g,rx,ry,rw,rh,4); g.clip();
+  g.strokeStyle='rgba(80,220,140,.05)'; g.lineWidth=1; for(let y=ry;y<ry+rh;y+=3){ g.beginPath(); g.moveTo(rx,y); g.lineTo(rx+rw,y); g.stroke(); }
+  const clar=Radio.clarity;
+  if(Radio.station){
+    g.textAlign='left';
+    g.fillStyle='rgba(120,240,160,'+(0.4+0.5*clar)+')'; g.font='11px monospace';
+    g.fillText('▸ '+Radio.station.name+'   ['+Math.round(clar*100)+'%]', rx+14, ry+22);
+    g.fillStyle='rgba(160,255,190,'+(0.35+0.6*clar)+')'; g.font='12px monospace';
+    wrap(g,Radio.station.lines[Radio.lineIdx]||'', rw-28).forEach((l,i)=> g.fillText(l, rx+14, ry+50+i*18));
+    g.fillStyle='rgba(120,240,160,.3)'; g.font='9px monospace'; g.fillText('SOURCE: '+Radio.station.src.toUpperCase(), rx+14, ry+rh-12);
+  } else { g.fillStyle='rgba(120,240,160,.3)'; g.font='11px monospace'; g.textAlign='center'; g.fillText('— static —', rx+rw/2, ry+rh/2); g.textAlign='left'; }
+  const snow=1-clar, sc=(30+130*snow)|0; g.globalAlpha=0.10+0.32*snow;
+  for(let i=0;i<sc;i++){ const sx=rx+Math.random()*rw, sy=ry+Math.random()*rh; g.fillStyle='rgba(170,230,190,'+(Math.random()*0.4)+')'; g.fillRect(sx,sy,1.5,1.5); }
+  g.globalAlpha=1; g.restore();
+  g.fillStyle=(Math.floor(t*2)%2)?'#9a8f78':'#7d7566'; g.font='11px monospace'; g.textAlign='center';
+  g.fillText('A / D  or  ← →  — tune        E / Esc — switch off', W/2, py+ph-16); g.textAlign='left';
+  if(Radio.fade<1){ g.fillStyle='rgba(0,0,0,'+(1-Radio.fade).toFixed(3)+')'; g.fillRect(0,0,W,H); }
 }
 /* ---- first-person "look out the window" — a quiet, unsettling vantage in the home base ---- */
 const Window = {
