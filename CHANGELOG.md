@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.10.0] — 2026-07-24
+
+### Added
+- **Character rapport arcs.** Talk to the survivors more than once and their story unfolds — Idris, Imogen, Leena, Owen, Gwen, Rafi, Tom and Mara each reveal, conversation by conversation, their method, their loss on Blank Night, and a truth that deepens the mystery (Imogen's copy that "still bit its nails"; Owen's eleven minutes "still running"; Mara's warm door with no keyhole). Each arc holds on a closing line once you've heard it through.
+- **A ramping sequence of revelations.** As you push deeper north, Ellie's understanding escalates — a payphone logging calls with no line, a memorial whose "safe" column is longer than the dead, the two records of her own, Maggie who woke it and died undoing it, and the tin with a sun the copy can paint but never counts the rays of.
+
 ## [1.9.0] — 2026-07-24
 
 ### Added
